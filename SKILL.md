@@ -46,6 +46,7 @@ Priority: high | normal | low
 Budget: unlimited | <constraint>
 Autonomy: full | ask-first | research-only
 Checkin: daily | weekly | on-demand
+Channel: <discord channel id or name for check-ins>
 
 ## Goal
 <High-level description of what this project aims to achieve>
