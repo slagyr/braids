@@ -136,6 +136,9 @@ This channel receives:
 
 1. Read registry, find active projects
 2. For each active project with an active iteration:
+   - Read PROJECT.md — note the `MaxAgents` setting (default 1)
+   - Check running sessions (via `sessions_list`) for sub-agents with label prefix `project:<slug>`
+   - **If running agents >= MaxAgents, skip this project**
    - Read ITERATION.md for the ordered story list
    - Run `bd ready` to find unblocked tasks
    - **Prioritize work in ITERATION.md story order first**, then by bead priority for non-iteration tasks
