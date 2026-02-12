@@ -145,14 +145,14 @@ This channel receives:
 
 ### Preparing for Check-in
 
-Before a scheduled review:
+REVIEW.md is **only** created when there are blockers or questions that need customer input. Do not create it for routine progress summaries — deliverables in `iterations/<N>/<story-id>.md` and `bd list` serve that purpose.
 
-1. Prepare `iterations/<N>/REVIEW.md`:
-   - Summary of work completed this iteration
-   - Demo points (what to show)
-   - Blockers or decisions needed
-   - Proposed stories for next iteration
-2. Notify via configured channel
+When REVIEW.md is needed (`iterations/<N>/REVIEW.md`):
+- Blockers preventing progress
+- Questions requiring customer decisions
+- Proposed direction changes needing approval
+
+Notify the project's Channel when creating a REVIEW.md.
 
 ### Iteration Transitions
 
