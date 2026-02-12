@@ -5,6 +5,7 @@ Priority: high
 Budget: unlimited
 Autonomy: full
 Checkin: daily
+MaxAgents: 1
 
 ## Goal
 
