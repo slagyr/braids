@@ -127,10 +127,12 @@ When creating a project, create a dedicated Discord text channel for notificatio
 - Set the channel topic to the project goal from PROJECT.md
 - Record the channel id in PROJECT.md's `Channel` field
 
-This channel receives:
+This channel is for **planning and notifications only** — all actual work happens asynchronously via beads and the cron worker. The channel receives:
 - Iteration completion notifications
 - Blocker/question alerts
 - Check-in review summaries
+
+During check-in meetings in the channel, the agent should **only create beads and plan iterations** — not do project work. Work happens between meetings via the autonomous worker.
 
 ### Working a Project (Background Sessions)
 
