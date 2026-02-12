@@ -111,9 +111,26 @@ Each story produces `iterations/<N>/<story-id>.md`:
 2. Initialize git: `git init`
 3. Initialize beads: `bd init`
 4. Write PROJECT.md
-5. Create `iterations/001/` with ITERATION.md and initial stories via `bd create`
-6. Add to `~/projects/registry.md`
-7. Commit
+5. Create a Discord channel for check-ins (see below)
+6. Set the `Channel` field in PROJECT.md to the new channel id
+7. Create `iterations/001/` with ITERATION.md and initial stories via `bd create`
+8. Add to `~/projects/registry.md`
+9. Commit
+
+### Discord Channel for Check-ins
+
+When creating a project, create a dedicated Discord text channel for notifications and check-ins:
+
+- Use the `message` tool with `action: channel-create`
+- Name: `project-<slug>` (e.g., `project-my-app`)
+- Place under a "Projects" category if one exists (create it if not)
+- Set the channel topic to the project goal from PROJECT.md
+- Record the channel id in PROJECT.md's `Channel` field
+
+This channel receives:
+- Iteration completion notifications
+- Blocker/question alerts
+- Check-in review summaries
 
 ### Working a Project (Background Sessions)
 
