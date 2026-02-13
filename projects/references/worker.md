@@ -1,0 +1,1 @@
+/Users/micahmartin/.openclaw/skills/projects/references/worker.md
