@@ -245,11 +245,26 @@ Sub-agents spawned for project work use the label convention `project:<slug>` (e
 When the cron worker fires, it follows this sequence for each active project:
 
 1. Read `PROJECT.md` to get `MaxWorkers` (default 1)
-2. Call `sessions_list` and count sessions whose label starts with `project:<slug>`
-3. If `running workers >= MaxWorkers`, skip the project entirely
-4. Otherwise, proceed to claim and work tasks
+2. Call `sessions_list` and collect sessions whose label starts with `project:<slug>`
+3. **Detect and clean up zombie sessions** (see below) — exclude them from the count
+4. If `healthy running workers >= MaxWorkers`, skip the project entirely
+5. Otherwise, proceed to claim and work tasks
 
 This ensures the system never over-subscribes a project. For most projects, `MaxWorkers: 1` is appropriate — it keeps work sequential and avoids merge conflicts or duplicated effort. Increase it for projects with independent, parallelizable workstreams.
+
+### Zombie Session Detection
+
+A **zombie session** is a worker that has finished (or stalled) but still appears in the session list. Without cleanup, zombies block new workers from spawning due to `MaxWorkers` limits.
+
+The orchestrator detects zombies using these criteria (in priority order):
+
+1. **Non-running status** — sessions with status `completed`, `failed`, `error`, or `stopped` are excluded from the worker count
+2. **Closed bead** — if the bead id from the session label is already closed, the worker is done but the session lingered
+3. **Excessive runtime** — sessions running longer than 60 minutes are treated as likely zombies
+
+When a zombie is detected, the orchestrator kills the session and sends a brief notification to the project's Channel (if `blocker` notifications are enabled).
+
+See `references/orchestrator.md` §Zombie Detection for full details.
 
 ### Orchestrator vs Worker Architecture
 
