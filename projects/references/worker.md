@@ -10,11 +10,16 @@ Your task message includes:
 
 ## Steps
 
-### 1. Load Context
+### 1. Load Context (mandatory — do this before anything else)
 
-1. Read the project's `PROJECT.md` for guardrails, autonomy level, and notification settings
-2. Read `AGENTS.md` in the workspace root if it exists
-3. Read the iteration's `ITERATION.md` for iteration-level guardrails
+1. **Read the project's `PROJECT.md`** — this is your primary config. Extract and respect:
+   - **Autonomy** — `full` (execute freely) or `ask-first` (confirm via Channel before acting)
+   - **Guardrails** — hard constraints you must not violate
+   - **Notifications** — which events require Channel messages (see §Notifications Reference)
+   - **Channel** — where to send notifications
+   - **MaxWorkers**, **Priority**, and any other project-level settings
+2. **Read `AGENTS.md`** in the workspace root (`~/.openclaw/workspace/AGENTS.md`) if it exists — for workspace-wide conventions and safety rules
+3. **Read the iteration's `ITERATION.md`** (`iterations/<N>/ITERATION.md`) — for iteration-level guardrails, story ordering, and notes
 
 ### 2. Claim the Bead
 
