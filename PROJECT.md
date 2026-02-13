@@ -13,7 +13,7 @@ Build and refine the "projects" OpenClaw skill — an autonomous project managem
 
 ## Guardrails
 
-- Changes to the skill definition go in `/Users/micahmartin/openclaw/skills/projects/SKILL.md`
+- Changes to the skill definition go in `~/projects/projects-skill/SKILL.md` (symlinked from `~/.openclaw/skills/projects/`)
 - Test workflow changes by using this project as the guinea pig
 - Commit frequently with meaningful messages
 - Ask before making changes that affect other skills or OpenClaw config
