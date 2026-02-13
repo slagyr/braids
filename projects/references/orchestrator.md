@@ -6,7 +6,7 @@ You are the projects orchestrator. You do NOT perform bead work — you spawn wo
 
 ### 1. Load Registry
 
-Read `~/projects/registry.md`. For each project with status `active`:
+Resolve `PROJECTS_HOME` (default: `~/Projects` — where `~` is the user's home directory, NOT the agent workspace). Read `$PROJECTS_HOME/registry.md`. For each project with status `active`:
 
 ### 2. Check for Active Iteration
 
@@ -15,7 +15,7 @@ Skip projects with no active iteration (only `planning` or `complete`).
 
 ### 3. Check Concurrency
 
-1. Read the project's `PROJECT.md` — note the `MaxWorkers` setting (default 1)
+1. Read the project's `PROJECT.md` — note the `MaxWorkers` setting (default 1). **Format tolerance:** If any field is missing from PROJECT.md, use its default value (see SKILL.md §Format Compatibility). Never fail because of a missing or stale field.
 2. Call `sessions_list` and count sessions whose label starts with `project:<slug>`
 3. If running workers >= MaxWorkers, skip this project
 

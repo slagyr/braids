@@ -13,11 +13,13 @@ Your task message includes:
 ### 1. Load Context (mandatory — do this before anything else)
 
 1. **Read the project's `PROJECT.md`** — this is your primary config. Extract and respect:
-   - **Autonomy** — `full` (execute freely) or `ask-first` (confirm via Channel before acting)
+   - **Autonomy** — `full` (execute freely) or `ask-first` (confirm via Channel before acting). Default: `full`
    - **Guardrails** — hard constraints you must not violate
-   - **Notifications** — which events require Channel messages (see §Notifications Reference)
-   - **Channel** — where to send notifications
+   - **Notifications** — which events require Channel messages (see §Notifications Reference). Default: all `on`
+   - **Channel** — where to send notifications. If missing, skip notifications silently
    - **MaxWorkers**, **Priority**, and any other project-level settings
+
+   **Format tolerance:** If any field is missing from PROJECT.md, use its default value (see SKILL.md §Format Compatibility). Never fail or block because of a missing field — degrade gracefully.
 2. **Read `AGENTS.md`** in the workspace root (`~/.openclaw/workspace/AGENTS.md`) if it exists — for workspace-wide conventions and safety rules
 3. **Read the iteration's `ITERATION.md`** (`iterations/<N>/ITERATION.md`) — for iteration-level guardrails, story ordering, and notes
 

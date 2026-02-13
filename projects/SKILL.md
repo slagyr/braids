@@ -7,10 +7,18 @@ description: Autonomous background project management with iterative delivery. U
 
 Manage long-running autonomous projects with iterative delivery cycles.
 
+## Path Convention
+
+**`~` always means the user's home directory** (e.g., `/Users/micah` or `/home/micah`), NOT the agent workspace directory. Never create project files inside `~/.openclaw/workspace/`.
+
+**`PROJECTS_HOME`** defines where all projects live. Default: `~/Projects`
+
+Resolve `PROJECTS_HOME` at the start of every session. Check if a custom value is set in the registry file; otherwise use the default. All paths below that reference `PROJECTS_HOME` use this resolved value.
+
 ## Directory Layout
 
 ```
-~/projects/
+$PROJECTS_HOME/
   registry.md                    # Master list of all projects
   <project-slug>/                # Each project is its own git repo
     PROJECT.md                   # Goals, guardrails, autonomy
@@ -24,14 +32,14 @@ Manage long-running autonomous projects with iterative delivery cycles.
         ...
 ```
 
-## Registry Format (`~/projects/registry.md`)
+## Registry Format (`$PROJECTS_HOME/registry.md`)
 
 ```markdown
 # Projects
 
 | Slug | Status | Priority | Path |
 |------|--------|----------|------|
-| my-project | active | normal | ~/projects/my-project |
+| my-project | active | normal | $PROJECTS_HOME/my-project |
 ```
 
 Statuses: `active`, `paused`, `blocked`. No "complete" — pause permanently instead.
@@ -130,14 +138,14 @@ Each story produces `iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<i
 
 ### Creating a Project
 
-1. Create directory under `~/projects/<slug>/`
+1. Create directory under `$PROJECTS_HOME/<slug>/`
 2. Initialize git: `git init`
 3. Initialize beads: `bd init`
 4. Write PROJECT.md
 5. Create a Discord channel for check-ins (see below)
 6. Set the `Channel` field in PROJECT.md to the new channel id
 7. Create `iterations/001/` with ITERATION.md and initial stories via `bd create`
-8. Add to `~/projects/registry.md`
+8. Add to `$PROJECTS_HOME/registry.md`
 9. Commit
 
 ### Channel for Check-ins
@@ -262,6 +270,42 @@ Workers handle errors via a structured escalation path (see `references/worker.m
 3. **Questions** — Notify Channel, continue other aspects if possible
 4. **Guardrail conflicts** — Never violate; block and escalate
 5. **Partial completion** — Write deliverable for completed work, block with context
+
+## Format Compatibility
+
+When the skill format evolves, existing projects may have stale PROJECT.md or ITERATION.md files. The system handles this gracefully at two levels:
+
+### Worker Tolerance (Automatic)
+
+Workers and orchestrators **must be tolerant of older formats**. When reading PROJECT.md or ITERATION.md:
+
+- **Missing fields → use defaults.** If a field doesn't exist, use its default value silently. Key defaults:
+  - `MaxWorkers` → `1`
+  - `Autonomy` → `full`
+  - `Priority` → `normal`
+  - `Checkin` → `on-demand`
+  - `Channel` → (none — skip notifications if missing)
+  - `Notifications` table → all events `on`
+  - ITERATION.md `Guardrails` section → (none — no extra constraints)
+  - ITERATION.md `Notes` section → (none)
+- **Unknown fields → ignore.** Projects may have custom fields. Don't error on them.
+- **Old field names → treat as missing.** If a field was renamed, treat the old name as absent and apply the default. Don't try to map old names automatically.
+
+This means workers never crash or block due to a missing field in PROJECT.md or ITERATION.md. They degrade gracefully.
+
+### Skill Migration (User-Triggered)
+
+For intentional format updates, users can request migration via the project's Channel. See `references/migration.md`.
+
+### Breaking Changes (Migration Beads)
+
+When a skill update introduces a **breaking change** that tolerance alone can't handle (e.g., a required new directory, a fundamentally restructured workflow, or removed functionality), the skill maintainer should:
+
+1. Create migration beads in affected projects describing the required changes
+2. Document the breaking change and migration path in the skill's commit message
+3. Update `references/migration.md` if the migration process itself changes
+
+Breaking changes should be rare. Prefer additive, backwards-compatible changes whenever possible.
 
 ## Skill Migration
 
