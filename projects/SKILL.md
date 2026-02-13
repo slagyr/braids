@@ -7,6 +7,10 @@ description: Autonomous background project management with iterative delivery. U
 
 Manage long-running autonomous projects with iterative delivery cycles.
 
+## First-Time Setup
+
+For initial installation (symlink, `bd`, `PROJECTS_HOME`, orchestrator cron), follow [`references/init.md`](references/init.md).
+
 ## Path Convention
 
 **`~` always means the user's home directory** (e.g., `/Users/micah` or `/home/micah`), NOT the agent workspace directory. Never create project files inside `~/.openclaw/workspace/`.

@@ -4,29 +4,24 @@ Autonomous background project management for OpenClaw agents. Enables long-runni
 
 ## Installation
 
-1. Copy the `projects/` skill directory into your OpenClaw skills folder:
+**Automated setup:** Have your agent follow [`references/init.md`](projects/references/init.md) — it walks through every step: symlink the skill, verify `bd`, create `PROJECTS_HOME`, set up the orchestrator cron, and optionally scaffold your first project.
+
+**Manual setup:** See below.
+
+1. Symlink the skill into OpenClaw's skills folder:
    ```
-   cp -r projects/ ~/.openclaw/skills/projects/
-   ```
-   Or if using the shared skills directory:
-   ```
-   cp -r projects/ /path/to/openclaw/skills/projects/
+   ln -s /path/to/projects-skill/projects ~/.openclaw/skills/projects
    ```
 
 2. Install [beads](https://github.com/openclaw/beads) (`bd`) for task tracking:
    ```
-   # Follow beads installation instructions
    bd --version
    ```
 
-3. Create the projects directory:
+3. Create the projects directory and registry:
    ```
-   mkdir -p ~/projects
-   ```
-
-4. Create the registry:
-   ```
-   cat > ~/projects/registry.md << 'EOF'
+   mkdir -p ~/Projects
+   cat > ~/Projects/registry.md << 'EOF'
    # Projects
 
    | Slug | Status | Priority | Path |
@@ -34,10 +29,7 @@ Autonomous background project management for OpenClaw agents. Enables long-runni
    EOF
    ```
 
-5. (Optional) Set up a cron job for autonomous work sessions:
-   ```
-   # Via OpenClaw cron tool — see SKILL.md for recommended config
-   ```
+4. Set up the orchestrator cron job (see SKILL.md §Cron Integration)
 
 ## Requirements
 
