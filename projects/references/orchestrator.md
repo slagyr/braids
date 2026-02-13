@@ -86,7 +86,8 @@ For each bead to work on (up to MaxWorkers - running workers):
 sessions_spawn(
   task: "Project: <path>\nBead: <bead-id>\nIteration: <N>\nChannel: <channel>",
   label: "project:<slug>:<bead-id>",
-  runTimeoutSeconds: <WorkerTimeout from PROJECT.md, default 1800>
+  runTimeoutSeconds: <WorkerTimeout from PROJECT.md, default 1800>,
+  cleanup: "delete"
 )
 ```
 
