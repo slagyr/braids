@@ -1,6 +1,6 @@
 # Iteration 004
 
-- **Status:** planning
+- **Status:** active
 
 ## Stories
 - projects-skill-9xp: AGENTS.md as universal entry point: point to worker.md, support non-orchestrator agents
