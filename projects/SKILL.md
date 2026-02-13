@@ -58,6 +58,7 @@ Statuses: `active`, `paused`, `blocked`. No "complete" — pause permanently ins
 - **Checkin:** daily | weekly | on-demand
 - **Channel:** <discord channel id or name for check-ins>
 - **MaxWorkers:** <number, default 1>
+- **WorkerTimeout:** <seconds, default 1800>
 
 ## Goal
 <High-level description of what this project aims to achieve>
