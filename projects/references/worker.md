@@ -179,3 +179,5 @@ Check the **Notifications** table in PROJECT.md. Events:
 - `blocker`: A blocker prevents progress
 
 If the Notifications table is missing, treat all events as `on`.
+
+**Mentions:** If a Notify value contains `mention <@user-ref>` (e.g., `on (mention <@123456>)`), include that mention in the notification message. This triggers phone alerts on supported platforms (Discord, Slack, etc.).

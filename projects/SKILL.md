@@ -70,7 +70,7 @@ Statuses: `active`, `paused`, `blocked`. No "complete" — pause permanently ins
 | iteration-start | on |
 | bead-start | on |
 | bead-complete | on |
-| iteration-complete | on |
+| iteration-complete | on (mention <@user-id>) |
 | no-ready-beads | on |
 | question | on |
 | blocker | on |
@@ -102,6 +102,18 @@ Workers send notifications to the project's Channel based on the Notifications t
 | blocker | A blocker prevents progress |
 
 All events default to `on` if the table is missing from PROJECT.md.
+
+### Mentions
+
+On channels that support mentions (Discord, Slack, etc.), use `mention <user-ref>` in the Notify column to ping the project owner. This is useful for high-signal events like `iteration-complete` or `blocker` where a phone notification is desired.
+
+Example:
+```
+| iteration-complete | on (mention <@discord-user-id>) |
+| blocker | on (mention <@discord-user-id>) |
+```
+
+Workers should include the mention in the notification message when the Notify value contains a `mention` directive.
 
 ## ITERATION.md Format
 
