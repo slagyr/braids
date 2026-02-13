@@ -14,7 +14,7 @@
 | iteration-start | on |
 | bead-start | on |
 | bead-complete | on |
-| iteration-complete | on |
+| iteration-complete | on (mention <@274692642116337664>) |
 | no-ready-beads | on |
 | question | on |
 | blocker | on |
