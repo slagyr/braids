@@ -141,13 +141,14 @@ Each story produces `iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<i
 8. Add to `~/projects/registry.md`
 9. Commit
 
-### Discord Channel for Check-ins
+### Channel for Check-ins
 
-When creating a project, create a dedicated Discord text channel for notifications and check-ins:
+Each project needs a channel for notifications and check-ins. Set the `Channel` field in PROJECT.md to a channel id or name.
 
+When creating a new channel (e.g., on Discord):
 - Use the `message` tool with `action: channel-create`
-- Name: `project-<slug>` (e.g., `project-my-app`)
-- Place under a "Projects" category if one exists (create it if not)
+- Choose any descriptive name (e.g., `project-my-app`, `my-app-updates`, etc.)
+- Optionally place it under a category
 - Set the channel topic to the project goal from PROJECT.md
 - Record the channel id in PROJECT.md's `Channel` field
 
