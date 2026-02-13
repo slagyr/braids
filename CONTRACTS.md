@@ -20,7 +20,7 @@ This document defines the invariants that the orchestrator, worker, and file for
 - **Required fields:** Status, Priority, Autonomy (all others have defaults)
 - **Defaults when missing:**
   - `MaxWorkers` → 1
-  - `WorkerTimeout` → 1800
+  - `WorkerTimeout` → 3600
   - `Autonomy` → full
   - `Priority` → normal
   - `Checkin` → on-demand
