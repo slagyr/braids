@@ -22,6 +22,7 @@ $PROJECTS_HOME/
   registry.md                    # Master list of all projects
   STATUS.md                      # Auto-generated progress dashboard (see references/status-dashboard.md)
   <project-slug>/                # Each project is its own git repo
+    AGENTS.md                    # Universal entry point for any agent landing in the repo
     PROJECT.md                   # Goals, guardrails, autonomy
     .beads/                      # bd task tracking
     iterations/
@@ -78,6 +79,12 @@ Statuses: `active`, `paused`, `blocked`. No "complete" — pause permanently ins
 ```
 
 No "current focus" here — beads (`bd ready`) determines what to work on.
+
+## AGENTS.md Template
+
+Every project gets an `AGENTS.md` as the universal entry point for any agent landing in the repo — whether spawned by the orchestrator, manually directed by a human, or exploring on their own.
+
+See the project's own `AGENTS.md` for the canonical version. The template lives in `references/agents-template.md`.
 
 ## Notifications
 
@@ -143,12 +150,13 @@ Each story produces `iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<i
 1. Create directory under `$PROJECTS_HOME/<slug>/`
 2. Initialize git: `git init`
 3. Initialize beads: `bd init`
-4. Write PROJECT.md
-5. Create a Discord channel for check-ins (see below)
-6. Set the `Channel` field in PROJECT.md to the new channel id
-7. Create `iterations/001/` with ITERATION.md and initial stories via `bd create`
-8. Add to `$PROJECTS_HOME/registry.md`
-9. Commit
+4. Write `AGENTS.md` (see template below)
+5. Write `PROJECT.md`
+6. Create a Discord channel for check-ins (see below)
+7. Set the `Channel` field in PROJECT.md to the new channel id
+8. Create `iterations/001/` with ITERATION.md and initial stories via `bd create`
+9. Add to `$PROJECTS_HOME/registry.md`
+10. Commit
 
 ### Channel for Check-ins
 
