@@ -148,16 +148,33 @@ Each story produces `iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<i
 
 ### Creating a Project
 
-1. Create directory under `$PROJECTS_HOME/<slug>/`
-2. Initialize git: `git init`
-3. Initialize beads: `bd init`
-4. Write `AGENTS.md` (see template below)
-5. Write `PROJECT.md`
-6. Create a Discord channel for check-ins (see below)
-7. Set the `Channel` field in PROJECT.md to the new channel id
-8. Create `iterations/001/` with ITERATION.md and initial stories via `bd create`
-9. Add to `$PROJECTS_HOME/registry.md`
-10. Commit
+Use the `projects-init` script to automate project scaffolding:
+
+```bash
+# From the skill's bin directory (auto-available if skill is installed):
+projects-init <slug>
+
+# Or with a custom projects home:
+projects-init <slug> --projects-home ~/MyProjects
+```
+
+This creates the full project structure in one step:
+1. Creates `$PROJECTS_HOME/<slug>/` directory
+2. Initializes git repository
+3. Initializes beads (`bd init`)
+4. Generates `AGENTS.md` from the skill template
+5. Creates `PROJECT.md` with a template (fill in the TODOs)
+6. Creates `iterations/001/ITERATION.md` in planning status
+7. Adds the project to `$PROJECTS_HOME/registry.md`
+8. Makes an initial git commit
+
+After running `projects-init`, complete the setup:
+1. Edit `PROJECT.md` — fill in the Goal, Guardrails, and other TODOs
+2. Create a channel for check-ins (see below)
+3. Set the `Channel` field in PROJECT.md to the new channel id
+4. Add stories: `cd $PROJECTS_HOME/<slug> && bd create "Story title"`
+5. Update `iterations/001/ITERATION.md` with story references
+6. Set iteration status to `active` when ready for work
 
 ### Channel for Check-ins
 

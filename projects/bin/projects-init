@@ -1,0 +1,230 @@
+#!/usr/bin/env bash
+# projects-init — Initialize a new project with full directory structure,
+# AGENTS.md, PROJECT.md template, bd init, and registry entry.
+#
+# Usage: projects-init <slug> [--projects-home <path>]
+#
+# This script automates steps 1-9 of the "Creating a Project" workflow
+# from the projects skill SKILL.md.
+
+set -euo pipefail
+
+PROJECTS_HOME="${PROJECTS_HOME:-$HOME/Projects}"
+SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# ─── Parse arguments ─────────────────────────────────────────────────
+
+usage() {
+  echo "Usage: projects-init <slug> [--projects-home <path>]"
+  echo ""
+  echo "Creates a new project with:"
+  echo "  - Git repository"
+  echo "  - bd init (task tracking)"
+  echo "  - AGENTS.md (from skill template)"
+  echo "  - PROJECT.md (template with TODOs)"
+  echo "  - iterations/001/ITERATION.md (planning status)"
+  echo "  - Registry entry in \$PROJECTS_HOME/registry.md"
+  exit 1
+}
+
+SLUG=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --projects-home)
+      PROJECTS_HOME="$2"
+      shift 2
+      ;;
+    --help|-h)
+      usage
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage
+      ;;
+    *)
+      if [ -z "$SLUG" ]; then
+        SLUG="$1"
+      else
+        echo "Unexpected argument: $1" >&2
+        usage
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [ -z "$SLUG" ]; then
+  echo "Error: project slug is required" >&2
+  usage
+fi
+
+# Validate slug format (lowercase, digits, hyphens)
+if ! echo "$SLUG" | grep -qE '^[a-z0-9][a-z0-9-]*[a-z0-9]$'; then
+  if ! echo "$SLUG" | grep -qE '^[a-z0-9]$'; then
+    echo "Error: slug must be lowercase alphanumeric with hyphens (e.g., my-project)" >&2
+    exit 1
+  fi
+fi
+
+PROJECT_DIR="$PROJECTS_HOME/$SLUG"
+REGISTRY="$PROJECTS_HOME/registry.md"
+TEMPLATE="$SKILL_DIR/references/agents-template.md"
+
+# ─── Pre-flight checks ───────────────────────────────────────────────
+
+if [ -d "$PROJECT_DIR" ]; then
+  echo "Error: directory already exists: $PROJECT_DIR" >&2
+  exit 1
+fi
+
+if [ -f "$REGISTRY" ] && grep -q "| $SLUG |" "$REGISTRY"; then
+  echo "Error: slug '$SLUG' already exists in registry" >&2
+  exit 1
+fi
+
+if ! command -v bd >/dev/null 2>&1; then
+  echo "Error: bd not found in PATH" >&2
+  exit 1
+fi
+
+if ! command -v git >/dev/null 2>&1; then
+  echo "Error: git not found in PATH" >&2
+  exit 1
+fi
+
+# ─── Create project ──────────────────────────────────────────────────
+
+echo "Creating project: $SLUG"
+
+# 1. Create directory
+mkdir -p "$PROJECT_DIR"
+echo "  ✓ Created $PROJECT_DIR"
+
+# 2. Initialize git
+(cd "$PROJECT_DIR" && git init -q)
+echo "  ✓ Initialized git repository"
+
+# 3. Initialize bd
+(cd "$PROJECT_DIR" && bd init -q)
+echo "  ✓ Initialized bd task tracking"
+
+# 4. Write AGENTS.md from template
+if [ -f "$TEMPLATE" ]; then
+  cp "$TEMPLATE" "$PROJECT_DIR/AGENTS.md"
+  echo "  ✓ Created AGENTS.md (from skill template)"
+else
+  cat > "$PROJECT_DIR/AGENTS.md" << 'AGENTS_EOF'
+# AGENTS.md
+
+This project is managed by the **projects** skill. Read `PROJECT.md` for goals, guardrails, and settings.
+
+## How to Work on This Project
+
+**If you were spawned by the orchestrator** (your task message includes `Project:` and `Bead:` fields):
+→ Follow `~/.openclaw/skills/projects/references/worker.md`
+
+**If you're here on your own** (manual session, human asked you to help, etc.):
+1. Read `PROJECT.md` — understand the goal and guardrails
+2. Find the active iteration: look in `iterations/*/ITERATION.md` for `Status: active`
+3. Run `bd ready` to see available work
+4. Pick a bead, then follow the worker workflow: `~/.openclaw/skills/projects/references/worker.md`
+
+## Quick Reference
+
+```bash
+bd ready              # List unblocked tasks
+bd show <id>          # View task details
+bd update <id> --claim  # Claim a task
+bd update <id> -s closed  # Close completed task
+bd list               # List all tasks
+bd dep list <id>      # List dependencies
+```
+
+## Session Completion
+
+Work is NOT complete until `git push` succeeds.
+
+```bash
+git add -A && git commit -m "<summary> (<bead-id>)"
+git pull --rebase
+bd sync
+git push
+```
+AGENTS_EOF
+  echo "  ✓ Created AGENTS.md (inline fallback)"
+fi
+
+# 5. Write PROJECT.md template
+cat > "$PROJECT_DIR/PROJECT.md" << 'PROJECT_EOF'
+# TODO: Project Name
+
+- **Status:** active
+- **Priority:** normal
+- **Autonomy:** full
+- **Checkin:** on-demand
+- **Channel:** TODO
+- **MaxWorkers:** 1
+
+## Notifications
+
+| Event | Notify |
+|-------|--------|
+| iteration-start | on |
+| bead-start | on |
+| bead-complete | on |
+| iteration-complete | on |
+| no-ready-beads | on |
+| question | on |
+| blocker | on |
+
+## Goal
+
+TODO: Describe what this project aims to achieve.
+
+## Guardrails
+
+TODO: Define project-specific constraints and boundaries.
+PROJECT_EOF
+echo "  ✓ Created PROJECT.md (template — fill in TODOs)"
+
+# 6. Create iteration 001
+mkdir -p "$PROJECT_DIR/iterations/001"
+cat > "$PROJECT_DIR/iterations/001/ITERATION.md" << 'ITER_EOF'
+# Iteration 001
+
+- **Status:** planning
+
+## Stories
+
+## Guardrails
+
+## Notes
+ITER_EOF
+echo "  ✓ Created iterations/001/ITERATION.md"
+
+# 7. Add to registry
+mkdir -p "$PROJECTS_HOME"
+if [ ! -f "$REGISTRY" ]; then
+  cat > "$REGISTRY" << 'REG_EOF'
+# Projects
+
+| Slug | Status | Priority | Path |
+|------|--------|----------|------|
+REG_EOF
+  echo "  ✓ Created registry.md"
+fi
+
+echo "| $SLUG | active | normal | ~/Projects/$SLUG |" >> "$REGISTRY"
+echo "  ✓ Added to registry"
+
+# 8. Initial commit
+(cd "$PROJECT_DIR" && git add -A && git commit -q -m "Initialize project: $SLUG")
+echo "  ✓ Initial commit"
+
+echo ""
+echo "Done! Next steps:"
+echo "  1. Edit $PROJECT_DIR/PROJECT.md — fill in the TODOs"
+echo "  2. Create a channel for check-ins and set the Channel field"
+echo "  3. Add stories: cd $PROJECT_DIR && bd create \"Story title\""
+echo "  4. Update iterations/001/ITERATION.md with story references"
+echo "  5. Set iteration status to 'active' when ready for work"
