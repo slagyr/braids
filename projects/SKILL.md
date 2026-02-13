@@ -52,6 +52,18 @@ MaxWorkers: <number, default 1>
 ## Goal
 <High-level description of what this project aims to achieve>
 
+## Notifications
+
+| Event | Notify |
+|-------|--------|
+| iteration-start | on |
+| bead-start | on |
+| bead-complete | on |
+| iteration-complete | on |
+| no-ready-beads | on |
+| question | on |
+| blocker | on |
+
 ## Guardrails
 <Project-specific constraints and boundaries>
 ```
@@ -60,11 +72,19 @@ No "current focus" here — beads (`bd ready`) determines what to work on.
 
 ## Notifications
 
-Send a message to the project's Channel when:
-- All stories planned for the current iteration are complete
-- No more ready (unblocked) beads exist for the project
-- A question arises that requires customer input
-- A blocker is encountered that prevents progress
+Workers send notifications to the project's Channel based on the Notifications table in PROJECT.md. Each event type can be toggled `on` or `off` per project.
+
+| Event | Description |
+|-------|-------------|
+| iteration-start | An iteration begins (status changed to active) |
+| bead-start | A worker claims and begins working on a bead |
+| bead-complete | A worker completes a bead (include summary in notification) |
+| iteration-complete | All stories in the current iteration are done |
+| no-ready-beads | No unblocked beads remain for the project |
+| question | A question arises needing customer input |
+| blocker | A blocker prevents progress |
+
+All events default to `on` if the table is missing from PROJECT.md.
 
 ## ITERATION.md Format
 

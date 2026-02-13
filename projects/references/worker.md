@@ -30,11 +30,17 @@ For each task:
 
 ## 5. Notify
 
-Send a message to the project's `Channel` (from PROJECT.md) when:
+Check the **Notifications** table in PROJECT.md. For each event type set to `on`, send a message to the project's `Channel` when that event occurs:
 
-- All stories in the current iteration are complete
-- No more ready (unblocked) beads exist
-- A blocker or question needs customer input
+- `bead-start`: You claimed a bead — notify with bead id and title
+- `bead-complete`: You completed a bead — notify with summary of what was done
+- `iteration-complete`: All stories in the current iteration are done
+- `no-ready-beads`: No unblocked beads remain
+- `question`: A question needs customer input
+- `blocker`: A blocker prevents progress
+- `iteration-start`: An iteration status changed to active
+
+If the Notifications table is missing, treat all events as `on`.
 
 ## 6. Respect Boundaries
 

@@ -7,6 +7,18 @@ Autonomy: full
 Checkin: daily
 MaxWorkers: 1
 
+## Notifications
+
+| Event | Notify |
+|-------|--------|
+| iteration-start | on |
+| bead-start | on |
+| bead-complete | on |
+| iteration-complete | on |
+| no-ready-beads | on |
+| question | on |
+| blocker | on |
+
 ## Goal
 
 Build and refine the "projects" OpenClaw skill — an autonomous project management system that enables OpenClaw agents to work on multiple long-running projects in the background with iterative delivery, parallel sub-agent execution, and structured check-ins.
