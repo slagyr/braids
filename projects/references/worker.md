@@ -29,25 +29,39 @@ Run `bd update <bead-id> --claim` in the project directory.
 
 If notifications `bead-start` is `on`, send a message to the Channel with the bead id and title.
 
-### 3. Do the Work
+### 3. Verify Dependencies
+
+Before starting work, check that all dependencies for this bead are satisfied:
+
+1. Run `bd dep list <bead-id>` to see what this bead depends on
+2. If any dependency is **not closed**, the bead should not be worked on:
+   - Mark as blocked: `bd update <bead-id> -s blocked`
+   - If notifications `blocker` is `on`, notify the Channel: list the unresolved dependencies by id and title
+   - **Stop work** — do not proceed
+
+This check catches race conditions where a bead was ready when the orchestrator spawned the worker but a dependency was reopened or added before work began.
+
+**Transitive dependencies:** You only need to check direct dependencies. `bd ready` already handles transitive chains — if a direct dependency is open because *its* dependency is unresolved, the direct dependency won't be closed, which is sufficient.
+
+### 4. Do the Work
 
 Execute the work described in the bead. Respect:
 - **Autonomy** field in PROJECT.md (full = do it, ask-first = ask via Channel)
 - **Guardrails** in PROJECT.md and ITERATION.md are hard constraints
 
-### 4. Write Deliverable
+### 5. Write Deliverable
 
 Write output to `iterations/<N>/<id-suffix>-<descriptive-name>.md`
 (e.g., `uu0-orchestrator-refactor.md`)
 
-### 5. Close the Bead
+### 6. Close the Bead
 
 1. `bd update <bead-id> -s closed`
 2. `git add -A && git commit -m "<summary> (<bead-id>)"`
 
 If notifications `bead-complete` is `on`, send a message to the Channel with a summary.
 
-### 6. Check Iteration Completion
+### 7. Check Iteration Completion
 
 Run `bd ready` in the project directory. If no open beads remain for the iteration, and all iteration stories are closed:
 - Update ITERATION.md status to `complete`
