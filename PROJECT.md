@@ -9,7 +9,7 @@ MaxAgents: 1
 
 ## Goal
 
-Build and refine the "projects" OpenClaw skill — an autonomous project management system that enables Zane to work on multiple long-running projects in the background with iterative delivery, parallel sub-agent execution, and structured check-ins.
+Build and refine the "projects" OpenClaw skill — an autonomous project management system that enables OpenClaw agents to work on multiple long-running projects in the background with iterative delivery, parallel sub-agent execution, and structured check-ins.
 
 ## Guardrails
 
