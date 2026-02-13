@@ -1,6 +1,6 @@
 # Iteration 002
 
-Status: planning
+Status: active
 
 ## Stories
 - projects-skill-a9m: Use descriptive filenames for story deliverables
@@ -11,6 +11,10 @@ Status: planning
 - projects-skill-tn1: Display project settings as a list in PROJECT.md
 - projects-skill-179: Update skill: project channels are planning-only, all work is async via beads
 - projects-skill-7f7: Update skill: no work during iteration meetings, only bead creation
+- projects-skill-isc: Add 'planning' status for iterations
+- projects-skill-nkx: Standardize terminology: use 'worker' not 'agent'
+- projects-skill-5c9: Discord channel naming should be flexible, not prescribed
+- projects-skill-9bd: Add configurable notification table to PROJECT.md
 
 ## Guardrails
 - Deliverable filenames use new convention: <last-3-chars>-<descriptive-name>.md
