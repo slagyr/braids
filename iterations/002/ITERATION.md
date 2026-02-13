@@ -1,6 +1,6 @@
 # Iteration 002
 
-Status: active
+Status: planning
 
 ## Stories
 - projects-skill-a9m: Use descriptive filenames for story deliverables
