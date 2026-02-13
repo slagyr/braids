@@ -24,7 +24,7 @@ For each task:
 
 1. Claim it: `bd update <id> --claim`
 2. Do the work described in the bead
-3. Write a deliverable to `iterations/<N>/<short-id>-<descriptive-name>.md`
+3. Write a deliverable to `iterations/<N>/<id-suffix>-<descriptive-name>.md` (e.g., `w9g-extract-worker.md`)
 4. Close: `bd update <id> -s closed`
 5. `git add -A && git commit -m "<summary> (<bead-id>)"`
 

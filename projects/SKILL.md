@@ -18,7 +18,7 @@ Manage long-running autonomous projects with iterative delivery cycles.
     iterations/
       001/
         ITERATION.md             # Status, stories, iteration guardrails
-        <story-id>.md            # Deliverable per story
+        <id-suffix>-<name>.md   # Deliverable per story (e.g. w9g-extract-worker.md)
         assets/                  # Screenshots, artifacts
       002/
         ...
@@ -92,7 +92,7 @@ Completed iterations are **immutable** — never modify them.
 
 ## Story Deliverables
 
-Each story produces `iterations/<N>/<story-id>.md`:
+Each story produces `iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<id-suffix>` is the last 3 characters of the bead id and `<descriptive-name>` is a short kebab-case summary (e.g., `w9g-extract-worker.md` for bead `projects-skill-w9g`):
 
 ```markdown
 # <Story Title> (bd-xxxx)
@@ -148,7 +148,7 @@ During check-in meetings in the channel, the agent should **only create beads an
    - Read ITERATION.md for the ordered story list
    - Run `bd ready` to find unblocked tasks
    - **Prioritize work in ITERATION.md story order first**, then by bead priority for non-iteration tasks
-   - Each task: claim (`bd update <id> --claim`), do work, write deliverable to `iterations/<N>/<story-id>.md`, close (`bd update <id> -s closed`)
+   - Each task: claim (`bd update <id> --claim`), do work, write deliverable to `iterations/<N>/<id-suffix>-<descriptive-name>.md`, close (`bd update <id> -s closed`)
    - Commit after each completed story
 3. Notify the project's Channel when all stories are done, no ready beads remain, or a blocker is hit
 
