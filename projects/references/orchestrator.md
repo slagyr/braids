@@ -15,7 +15,7 @@ Skip projects with no active iteration (only `planning` or `complete`).
 
 ### 3. Check Concurrency (with Zombie Detection)
 
-1. Read the project's `PROJECT.md` — note the `MaxWorkers` setting (default 1). **Format tolerance:** If any field is missing from PROJECT.md, use its default value (see SKILL.md §Format Compatibility). Never fail because of a missing or stale field.
+1. Read the project's `PROJECT.md` — note the `MaxWorkers` setting (default 1). **Format tolerance:** If any field is missing from PROJECT.md, use its default value. Never fail because of a missing or stale field. Key defaults: `MaxWorkers` → 1, `Autonomy` → full, `Priority` → normal, `Checkin` → on-demand, `Channel` → none (skip notifications), `Notifications` table → all events on. Unknown fields → ignore.
 2. Call `sessions_list` and collect sessions whose label starts with `project:<slug>`
 3. **Detect and clean up zombie sessions** before counting (see §Zombie Detection below)
 4. Count only healthy (non-zombie) sessions as running workers

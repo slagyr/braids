@@ -19,7 +19,7 @@ Your task message includes:
    - **Channel** — where to send notifications. If missing, skip notifications silently
    - **MaxWorkers**, **Priority**, and any other project-level settings
 
-   **Format tolerance:** If any field is missing from PROJECT.md, use its default value (see SKILL.md §Format Compatibility). Never fail or block because of a missing field — degrade gracefully.
+   **Format tolerance:** If any field is missing from PROJECT.md, use its default value. Never fail or block because of a missing field — degrade gracefully. Key defaults: `MaxWorkers` → 1, `Autonomy` → full, `Priority` → normal, `Checkin` → on-demand, `Channel` → none (skip notifications), `Notifications` table → all events on. Unknown fields → ignore.
 2. **Read `AGENTS.md`** in the workspace root (`~/.openclaw/workspace/AGENTS.md`) if it exists — for workspace-wide conventions and safety rules
 3. **Read `AGENTS.md`** in the project root (if it exists) — this is the project-level entry point with project-specific conventions. (If you arrived here *via* the project's AGENTS.md, you've already read it.)
 4. **Read the iteration's `ITERATION.md`** (`iterations/<N>/ITERATION.md`) — for iteration-level guardrails, story ordering, and notes
