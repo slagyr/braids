@@ -1,6 +1,6 @@
 # Iteration 005
 
-- **Status:** active
+- **Status:** complete
 
 ## Stories
 - projects-skill-9zf: Migrate all tests to speclj + Babashka — replace bash test scripts
