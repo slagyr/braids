@@ -29,5 +29,5 @@ Build and refine the "projects" OpenClaw skill — an autonomous project managem
 - Test workflow changes by using this project as the guinea pig
 - Commit frequently with meaningful messages
 - Ask before making changes that affect other skills or OpenClaw config
-- **Test-first development:** Write or update tests BEFORE implementing a feature or fix. Every bead that adds or changes behavior must include a corresponding test. Run the test suite (`tests/run.sh`) before closing a bead — all tests must pass.
+- **Test-first development:** Write or update tests BEFORE implementing a feature or fix. Every bead that adds or changes behavior must include a corresponding test. Tests are written in **speclj on Babashka** — no bash test scripts. Run the test suite before closing a bead — all specs must pass.
 - **No untested changes:** If you can't write a test for it, document why in the deliverable. Structural tests, simulation tests, and contract checks are all valid test types.
