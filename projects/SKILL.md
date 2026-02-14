@@ -185,7 +185,15 @@ This channel is for **planning and notifications only** — all actual work happ
 - Blocker/question alerts
 - Check-in review summaries
 
-During check-in meetings in the channel, the agent should **only create beads and plan iterations** — not do project work. Work happens between meetings via the autonomous worker.
+### Channel Agent Convention
+
+The channel/main session agent must **not** modify project files directly. Its role is strictly limited to:
+- **Creating beads** (stories/tasks)
+- **Planning and activating iterations**
+- **Reviewing deliverables**
+- **Answering questions** and unblocking workers
+
+All file changes — SKILL.md, worker.md, orchestrator.md, PROJECT.md, CONTRACTS.md, reference docs, etc. — must go through beads assigned to workers. This ensures every change is tracked, tested, and committed through the standard bead lifecycle. The channel agent should never `Edit` or `Write` project files itself; instead, it creates a bead describing the desired change and lets a worker execute it.
 
 ### Working a Project (Background Sessions)
 

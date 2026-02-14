@@ -177,3 +177,12 @@ No modifications to iterations with `Status: complete` — files, ITERATION.md, 
 
 ### 4.6 Bead Lifecycle
 Valid bead state transitions: `open` → `in_progress` (claim) → `closed` | `blocked`. Blocked beads can be reopened. Closed beads are final.
+
+### 4.7 Channel Agent — Beads Only
+The channel/main session agent must not modify project files directly. Its role in the project channel is limited to:
+- Creating beads (stories/tasks)
+- Planning and activating iterations
+- Reviewing deliverables
+- Answering questions and unblocking workers
+
+All file changes (SKILL.md, worker.md, orchestrator.md, PROJECT.md, CONTRACTS.md, reference docs, etc.) must go through beads assigned to workers. This ensures changes are tracked, tested, and committed through the standard bead lifecycle.

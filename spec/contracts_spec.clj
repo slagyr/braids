@@ -93,6 +93,13 @@
       (it (str "event '" event "' documented")
         (should-contain event content))))
 
+  ;; Channel agent guardrail
+  (context "Channel Agent Guardrail"
+    (it "channel agent must not modify project files directly"
+      (should-match #"(?i)channel.*must not.*modify.*project files.*directly|channel.*only.*create beads|beads only" content))
+    (it "SKILL.md documents channel convention"
+      (should-match #"(?i)channel.*convention|channel.*planning.*notifications.*only|channel agent.*must not" (slurp skill))))
+
   ;; Valid statuses
   (context "Valid Statuses"
     (it "registry statuses: active, paused, blocked"
