@@ -105,8 +105,6 @@
                       (should (re-find #"(?i)Status:" icontent))
                       (should-contain "## Stories" icontent)
                       (should (contains? #{"planning" "active" "complete"} iter-status))
-                      (when (= iter-status "complete")
-                        (should (fs/exists? (str iter-dir "/RETRO.md"))))
                       (when (= iter-status "active")
                         (doseq [story-line (->> (str/split-lines icontent)
                                                 (filter #(re-find #"^- [a-z]" %))

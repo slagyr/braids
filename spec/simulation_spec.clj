@@ -68,13 +68,11 @@
                             count)]
       (should (<= active-count 1))))
 
-  (it "completed iteration has RETRO.md"
+  (it "completed iteration does not require RETRO.md"
     (fs/create-dirs (str test-project "/iterations/000"))
     (spit (str test-project "/iterations/000/ITERATION.md")
       "# Iteration 000\n- **Status:** complete\n## Stories\n- test-sim-zzz: Completed bead\n")
-    (spit (str test-project "/iterations/000/RETRO.md")
-      "# Iteration 000 Retrospective\n## Summary\nTest.\n## Completed\n| Bead | Title | Deliverable |\n|------|-------|-----------|\n| test-sim-zzz | Completed bead | zzz-completed.md |\n")
-    (should (fs/exists? (str test-project "/iterations/000/RETRO.md"))))
+    (should-not (fs/exists? (str test-project "/iterations/000/RETRO.md"))))
 
   (it "completed iteration status is complete"
     (should-contain "complete" (slurp (str test-project "/iterations/000/ITERATION.md")))))
@@ -198,21 +196,17 @@
   (it "partial deliverable documents remaining work"
     (should-contain "## Remaining" (slurp (str test-project "/iterations/001/bbb-second-test-bead.md")))))
 
-;; ── Scenario 11: RETRO.md Format ──
+;; ── Scenario 11: RETRO.md Removal Verification ──
 
-(describe "Scenario 11: RETRO.md Format"
-  (before-all
-    (setup-test-project!)
-    (fs/create-dirs (str test-project "/iterations/000"))
-    (spit (str test-project "/iterations/000/ITERATION.md") "# Iteration 000\n- **Status:** complete\n## Stories\n- test-sim-zzz: Completed bead\n")
-    (spit (str test-project "/iterations/000/RETRO.md") "# Iteration 000 Retrospective\n## Summary\nTest.\n## Completed\n| Bead | Title | Deliverable |\n|------|-------|-----------|\n| test-sim-zzz | Completed bead | zzz-completed.md |\n"))
-
-  (it "RETRO.md has Summary section"
-    (should-contain "## Summary" (slurp (str test-project "/iterations/000/RETRO.md"))))
-  (it "RETRO.md has Completed table"
-    (should-contain "## Completed" (slurp (str test-project "/iterations/000/RETRO.md"))))
-  (it "RETRO.md is in completed iteration"
-    (should-contain "complete" (slurp (str test-project "/iterations/000/ITERATION.md")))))
+(describe "Scenario 11: RETRO.md feature removed"
+  (it "worker.md does not reference RETRO.md generation"
+    (let [worker (slurp (str home "/.openclaw/skills/projects/references/worker.md"))]
+      (should-not (re-find #"Generate.*Retrospective|auto-generate.*RETRO" worker))))
+  (it "worker.md does not reference .completing lock"
+    (let [worker (slurp (str home "/.openclaw/skills/projects/references/worker.md"))]
+      (should-not (str/includes? worker ".completing"))))
+  (it "CONTRACTS.md does not have RETRO.md section"
+    (should-not (re-find #"### \d+\.\d+ RETRO\.md" contracts))))
 
 ;; ── Scenario 12: Orchestrator Invariants ──
 
@@ -254,33 +248,17 @@
   (it "project files not in workspace"
     (should-contain "never created inside" contracts)))
 
-;; ── Scenario 16: Iteration Completion Guard ──
+;; ── Scenario 16: Iteration Completion (simplified) ──
 
-(describe "Scenario 16: Iteration Completion Guard"
-  (before-all (setup-test-project!))
-
-  (context "worker.md documents the guard"
-    (it "documents .completing"
-      (should-contain ".completing" (slurp (str home "/.openclaw/skills/projects/references/worker.md"))))
-    (it "specifies atomic file creation as lock"
-      (should-contain "already exists" (slurp (str home "/.openclaw/skills/projects/references/worker.md"))))
-    (it "instructs workers to skip if lock exists"
-      (should (re-find #"(?i)(skip|abort|stop).*iteration.*(complet|RETRO)" (slurp (str home "/.openclaw/skills/projects/references/worker.md"))))))
-
-  (context "CONTRACTS.md documents the invariant"
-    (it "documents iteration completion atomicity"
-      (should-contain ".completing" contracts))
-    (it "specifies only one worker completes an iteration"
-      (should (re-find #"(?i)(one|single|first).*worker.*(complet|RETRO|iteration)" contracts))))
-
-  (context "guard simulation"
-    (it "lock file does not exist initially"
-      (should-not (fs/exists? (str test-project "/iterations/001/.completing"))))
-    (it "lock file exists after first worker creates it"
-      (spit (str test-project "/iterations/001/.completing") "worker-1")
-      (should (fs/exists? (str test-project "/iterations/001/.completing"))))
-    (it "second worker detects lock and skips"
-      (should (fs/exists? (str test-project "/iterations/001/.completing"))))))
+(describe "Scenario 16: Iteration Completion (simplified)"
+  (it "worker.md documents simple iteration completion"
+    (let [worker (slurp (str home "/.openclaw/skills/projects/references/worker.md"))]
+      (should (re-find #"Update ITERATION.md status to.*complete" worker))))
+  (it "no .completing lock mechanism in worker.md"
+    (let [worker (slurp (str home "/.openclaw/skills/projects/references/worker.md"))]
+      (should-not (str/includes? worker ".completing"))))
+  (it "no .completing lock mechanism in CONTRACTS.md"
+    (should-not (str/includes? contracts ".completing"))))
 
 ;; Cleanup
 (fs/delete-tree test-tmp)

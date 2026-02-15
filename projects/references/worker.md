@@ -66,58 +66,11 @@ If notifications `bead-complete` is `on`, send a message to the Channel with a s
 
 ### 7. Check Iteration Completion
 
-Run `bd ready` in the project directory. If no open beads remain for the iteration, and all iteration stories are closed, proceed with the **completion guard**:
+Run `bd ready` in the project directory. If no open beads remain for the iteration, and all iteration stories are closed:
 
-**Completion guard (prevents duplicate notifications):** Before generating RETRO.md or sending notifications, check if `iterations/<N>/.completing` already exists. If it does, another worker is already completing this iteration — **skip iteration completion entirely** (no RETRO, no ITERATION.md update, no notification). If it does not exist, create it immediately (contents: your bead id) to claim the completion lock. Only the first worker to create `.completing` proceeds.
-
-After acquiring the lock:
-- Generate the iteration retrospective (see below)
 - Update ITERATION.md status to `complete`
 - If notifications `iteration-complete` is `on`, notify the Channel
 - Commit: `git add -A && git commit -m "Complete iteration <N>"`
-
-### 8. Generate Iteration Retrospective
-
-When an iteration completes, auto-generate `iterations/<N>/RETRO.md` summarizing the iteration. This provides a structured record for check-ins and future planning.
-
-**Inputs to review:**
-- ITERATION.md (stories list, guardrails, notes)
-- All deliverable files in the iteration directory (`*.md` except ITERATION.md and RETRO.md)
-- Bead metadata via `bd list` (check timing, blockers, priorities)
-
-**Format:**
-
-```markdown
-# Iteration <N> Retrospective
-
-## Summary
-<2-3 sentence overview: what the iteration set out to do and what was achieved>
-
-## Completed
-| Bead | Title | Deliverable |
-|------|-------|-------------|
-| <id> | <title> | <filename> |
-
-## Blocked / Incomplete
-| Bead | Title | Reason |
-|------|-------|--------|
-(omit section if none)
-
-## Key Decisions
-- <Important decisions made during the iteration>
-
-## Lessons Learned
-- <What went well, what didn't, process improvements>
-
-## Carry-Forward
-- <Beads or topics to carry into the next iteration>
-```
-
-**Guidelines:**
-- Keep it concise — this is a reference document, not a narrative
-- Pull "Key Decisions" and "Lessons Learned" from deliverable content and any blockers encountered
-- "Carry-Forward" should list blocked/incomplete beads plus any new work identified during the iteration
-- If the iteration had no blockers or incomplete work, omit those sections
 
 ## Error Handling & Escalation
 

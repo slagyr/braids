@@ -53,20 +53,13 @@ This document defines the invariants that the orchestrator, worker, and file for
 - **One deliverable per bead** per iteration
 - **Required sections:** Summary (at minimum)
 
-### 1.5 RETRO.md
-
-- **Location:** `iterations/<N>/RETRO.md`
-- **Created:** Only when an iteration completes (all stories closed)
-- **Required sections:** Summary, Completed table
-- **Optional sections:** Blocked/Incomplete, Key Decisions, Lessons Learned, Carry-Forward
-
-### 1.6 STATUS.md
+### 1.5 STATUS.md
 
 - **Location:** `$PROJECTS_HOME/STATUS.md`
 - **Auto-generated:** Overwritten every orchestrator run; never hand-edit
 - **Contains:** Timestamp, per-project summary with iteration status and bead counts
 
-### 1.7 .orchestrator-state.json
+### 1.6 .orchestrator-state.json
 
 - **Location:** `$PROJECTS_HOME/.orchestrator-state.json`
 - **Fields:** `idleSince` (ISO timestamp or null), `idleReason` (string or null), `lastRunAt` (ISO timestamp)
@@ -135,7 +128,7 @@ Beads are closed only after the deliverable is written. Sequence: work → write
 Every bead closure includes a git commit. Format: `"<summary> (<bead-id>)"`.
 
 ### 3.7 Iteration Completion Check
-After closing a bead, the worker checks if the iteration is complete. If so, it must first acquire the `.completing` lock file (`iterations/<N>/.completing`). Only the first worker to create this file proceeds with RETRO.md generation, ITERATION.md update, commit, and notification. If `.completing` already exists, the worker must skip iteration completion entirely. This ensures only one worker completes an iteration even when multiple beads close simultaneously.
+After closing a bead, the worker checks if the iteration is complete (no open beads remain). If so, the worker updates ITERATION.md status to `complete`, sends the iteration-complete notification, and commits.
 
 ### 3.8 Notification Discipline
 Workers only send notifications for events that are `on` in the project's Notifications table. If `Channel` is missing, all notifications are silently skipped.
@@ -173,7 +166,7 @@ Workers with `ask-first` autonomy must confirm via Channel before executing. `fu
 All project work is committed and pushed. Work is not complete until `git push` succeeds.
 
 ### 4.5 Completed Iterations Are Immutable
-No modifications to iterations with `Status: complete` — files, ITERATION.md, deliverables, RETRO.md are all frozen.
+No modifications to iterations with `Status: complete` — files, ITERATION.md, and deliverables are all frozen.
 
 ### 4.6 Bead Lifecycle
 Valid bead state transitions: `open` → `in_progress` (claim) → `closed` | `blocked`. Blocked beads can be reopened. Closed beads are final.

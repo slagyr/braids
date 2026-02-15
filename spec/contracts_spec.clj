@@ -28,8 +28,10 @@
 
   (context "File Format Subsections"
     (it "documents all file formats"
-      (doseq [fmt ["registry.md" "PROJECT.md" "ITERATION.md" "RETRO.md" "STATUS.md" ".orchestrator-state.json"]]
+      (doseq [fmt ["registry.md" "PROJECT.md" "ITERATION.md" "STATUS.md" ".orchestrator-state.json"]]
         (should-contain fmt content)))
+    (it "does not document RETRO.md (removed feature)"
+      (should-not (re-find #"### \d+\.\d+ RETRO\.md" content)))
     (it "documents deliverable format"
       (should-contain "Deliverable" content)))
 
@@ -64,10 +66,10 @@
       (should (re-find #"(?i)deliverable.*required|produces a deliverable" content)))
     (it "git commit on completion"
       (should-contain "git commit" content))
-    (it "iteration completion lock (.completing)"
-      (should-contain ".completing" content))
-    (it "RETRO.md generation on iteration completion"
-      (should (re-find #"(?i)RETRO\.md.*generat|generat.*RETRO\.md" content)))
+    (it "no .completing lock mechanism (removed with RETRO feature)"
+      (should-not (str/includes? content ".completing")))
+    (it "no RETRO.md generation (removed feature)"
+      (should-not (re-find #"(?i)RETRO\.md" content)))
     (it "format tolerance"
       (should (re-find #"(?i)format tolerance" content)))
     (it "notification discipline"

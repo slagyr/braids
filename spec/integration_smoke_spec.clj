@@ -34,7 +34,7 @@
   (let [suffix (bead-suffix bead-id)
         files (fs/glob iter-dir "*.md")
         names (map #(str (fs/file-name %)) files)
-        filtered (remove #(#{"ITERATION.md" "RETRO.md"} %) names)]
+        filtered (remove #(#{"ITERATION.md"} %) names)]
     (some (fn [n]
             (or (str/starts-with? n (str suffix "-"))
                 (= n (str bead-id ".md"))))
@@ -93,7 +93,6 @@
 
                         ;; Completed iteration checks
                         (when (= iter-status "complete")
-                          (should (fs/exists? (str iter-dir "/RETRO.md")))
                           (let [bead-ids (extract-bead-ids icontent)]
                             (doseq [bid bead-ids]
                               (should (find-deliverable iter-dir bid))
@@ -138,7 +137,7 @@
                             full-ids (set bead-ids)]
                         (doseq [f (fs/glob iter-dir "*.md")]
                           (let [fname (str (fs/file-name f))]
-                            (when-not (#{"ITERATION.md" "RETRO.md"} fname)
+                            (when-not (#{"ITERATION.md"} fname)
                               (let [prefix (first (str/split fname #"-"))
                                     no-ext (str/replace fname #"\.md$" "")]
                                 (should (or (contains? suffixes prefix)
