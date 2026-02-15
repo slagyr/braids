@@ -2,8 +2,8 @@
  :paths ["spec"]
  :tasks {test {:doc "Run all specs"
                :requires ([babashka.fs :as fs]
-                          [speclj.core :as speclj])
-               :task (do
-                       (doseq [f (sort (map str (fs/glob "spec" "*_spec.clj")))]
-                         (load-file f))
-                       (speclj/run-specs))}}}
+                          [speclj.main :as speclj])
+               :task (apply speclj/-main "-c"
+                       "spec"
+                       "-s" "src"
+                       *command-line-args*)}}}

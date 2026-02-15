@@ -6,7 +6,7 @@
 (def home (System/getProperty "user.home"))
 (def project-root (str (System/getProperty "user.dir")))
 (def contracts-path (str project-root "/CONTRACTS.md"))
-(def skill-path (str home "/.openclaw/skills/projects/SKILL.md"))
+(def skill-path (str project-root "/projects/SKILL.md"))
 
 (def content (when (fs/exists? contracts-path) (slurp contracts-path)))
 (def skill-content (when (fs/exists? skill-path) (slurp skill-path)))
