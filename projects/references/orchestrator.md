@@ -43,12 +43,12 @@ Resolve `PROJECTS_HOME` (default: `~/Projects` — where `~` is the user's home 
 
 ### 2. Check for Active Iteration
 
-For each active project, scan `iterations/*/ITERATION.md` for one with `Status: active`.
+For each active project, scan `.project/iterations/*/ITERATION.md` for one with `Status: active`.
 Skip projects with no active iteration (only `planning` or `complete`).
 
 ### 3. Check Concurrency (with Zombie Detection)
 
-1. Read the project's `PROJECT.md` — note the `MaxWorkers` setting (default 1). **Format tolerance:** If any field is missing from PROJECT.md, use its default value. Never fail because of a missing or stale field. Key defaults: `MaxWorkers` → 1, `WorkerTimeout` → 3600, `Autonomy` → full, `Priority` → normal, `Checkin` → on-demand, `Channel` → none (skip notifications), `Notifications` table → all events on. Unknown fields → ignore.
+1. Read the project's `.project/PROJECT.md` — note the `MaxWorkers` setting (default 1). **Format tolerance:** If any field is missing from `.project/PROJECT.md`, use its default value. Never fail because of a missing or stale field. Key defaults: `MaxWorkers` → 1, `WorkerTimeout` → 3600, `Autonomy` → full, `Priority` → normal, `Checkin` → on-demand, `Channel` → none (skip notifications), `Notifications` table → all events on. Unknown fields → ignore.
 2. Call `sessions_list` and collect sessions whose label starts with `project:<slug>`
 3. **Detect and clean up zombie sessions** before counting (see §Zombie Detection below)
 4. Count only healthy (non-zombie) sessions as running workers
@@ -76,7 +76,7 @@ A **zombie session** is a worker that has finished its work (or failed) but whos
 
 1. Run `bd ready` in the project directory to find unblocked tasks
 2. Prioritize tasks listed in ITERATION.md story order first, then by bead priority
-3. If no ready beads exist, check Notifications in PROJECT.md — if `no-ready-beads` is `on`, send a message to the project's `Channel`
+3. If no ready beads exist, check Notifications in `.project/PROJECT.md` — if `no-ready-beads` is `on`, send a message to the project's `Channel`
 
 ### 5. Spawn Worker
 
@@ -86,7 +86,7 @@ For each bead to work on (up to MaxWorkers - running workers):
 sessions_spawn(
   task: "Project: <path>\nBead: <bead-id>\nIteration: <N>\nChannel: <channel>",
   label: "project:<slug>:<bead-id>",
-  runTimeoutSeconds: <WorkerTimeout from PROJECT.md, default 3600>,
+  runTimeoutSeconds: <WorkerTimeout from .project/PROJECT.md, default 3600>,
   cleanup: "delete"
 )
 ```

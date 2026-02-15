@@ -12,14 +12,14 @@
 
 (defn setup-test-project! []
   (fs/delete-tree test-project)
-  (fs/create-dirs (str test-project "/iterations/001"))
+  (fs/create-dirs (str test-project "/.project/iterations/001"))
 
-  (spit (str test-project "/PROJECT.md")
+  (spit (str test-project "/.project/PROJECT.md")
     "# Test Simulation Project\n\n- **Status:** active\n- **Priority:** high\n- **Autonomy:** full\n- **Checkin:** daily\n- **Channel:** test-channel-123\n- **MaxWorkers:** 2\n- **WorkerTimeout:** 1800\n\n## Notifications\n\n| Event | Notify |\n|-------|--------|\n| iteration-start | on |\n| bead-start | on |\n| bead-complete | on |\n| iteration-complete | on |\n| no-ready-beads | on |\n| question | on |\n| blocker | on |\n\n## Goal\n\nTest project for simulation tests.\n\n## Guardrails\n\n- This is a test project\n")
 
   (spit (str test-project "/AGENTS.md") "# Test Project AGENTS.md\nRead worker.md for instructions.\n")
 
-  (spit (str test-project "/iterations/001/ITERATION.md")
+  (spit (str test-project "/.project/iterations/001/ITERATION.md")
     "# Iteration 001\n\n- **Status:** active\n\n## Stories\n- test-sim-aaa: First test bead\n- test-sim-bbb: Second test bead (depends on aaa)\n- test-sim-ccc: Third test bead (independent)\n")
 
   (spit (str test-tmp "/registry.md")
@@ -30,21 +30,21 @@
 (describe "Scenario 1: PROJECT.md Field Defaults"
   (before-all
     (setup-test-project!)
-    (spit (str test-project "/PROJECT.md")
+    (spit (str test-project "/.project/PROJECT.md")
       "# Minimal Project\n\n- **Status:** active\n- **Priority:** normal\n- **Autonomy:** full\n\n## Goal\nMinimal test.\n\n## Guardrails\n- None\n"))
 
   (it "Status field present"
-    (should-contain "Status:" (slurp (str test-project "/PROJECT.md"))))
+    (should-contain "Status:" (slurp (str test-project "/.project/PROJECT.md"))))
   (it "MaxWorkers missing (default 1 applies)"
-    (should-not (str/includes? (slurp (str test-project "/PROJECT.md")) "MaxWorkers")))
+    (should-not (str/includes? (slurp (str test-project "/.project/PROJECT.md")) "MaxWorkers")))
   (it "WorkerTimeout missing (default 1800 applies)"
-    (should-not (str/includes? (slurp (str test-project "/PROJECT.md")) "WorkerTimeout")))
+    (should-not (str/includes? (slurp (str test-project "/.project/PROJECT.md")) "WorkerTimeout")))
   (it "Channel missing (default: skip notifications)"
-    (should-not (str/includes? (slurp (str test-project "/PROJECT.md")) "Channel:")))
+    (should-not (str/includes? (slurp (str test-project "/.project/PROJECT.md")) "Channel:")))
   (it "Checkin missing (default: on-demand)"
-    (should-not (str/includes? (slurp (str test-project "/PROJECT.md")) "Checkin:")))
+    (should-not (str/includes? (slurp (str test-project "/.project/PROJECT.md")) "Checkin:")))
   (it "Notifications table missing (default: all on)"
-    (should-not (str/includes? (slurp (str test-project "/PROJECT.md")) "Notifications"))))
+    (should-not (str/includes? (slurp (str test-project "/.project/PROJECT.md")) "Notifications"))))
 
 ;; ── Scenario 2: Iteration Lifecycle ──
 
@@ -52,43 +52,43 @@
   (before-all (setup-test-project!))
 
   (it "ITERATION.md has Status"
-    (should (re-find #"(?i)Status:" (slurp (str test-project "/iterations/001/ITERATION.md")))))
+    (should (re-find #"(?i)Status:" (slurp (str test-project "/.project/iterations/001/ITERATION.md")))))
   (it "ITERATION.md has Stories section"
-    (should-contain "## Stories" (slurp (str test-project "/iterations/001/ITERATION.md"))))
+    (should-contain "## Stories" (slurp (str test-project "/.project/iterations/001/ITERATION.md"))))
   (it "iteration status is active"
-    (should-contain "active" (slurp (str test-project "/iterations/001/ITERATION.md"))))
+    (should-contain "active" (slurp (str test-project "/.project/iterations/001/ITERATION.md"))))
 
   (it "at most one active iteration"
-    (fs/create-dirs (str test-project "/iterations/002"))
-    (spit (str test-project "/iterations/002/ITERATION.md")
+    (fs/create-dirs (str test-project "/.project/iterations/002"))
+    (spit (str test-project "/.project/iterations/002/ITERATION.md")
       "# Iteration 002\n- **Status:** planning\n## Stories\n- test-sim-ddd: Future bead\n")
-    (let [active-count (->> (fs/glob test-project "iterations/*/ITERATION.md")
+    (let [active-count (->> (fs/glob test-project ".project/iterations/*/ITERATION.md")
                             (map #(slurp (str %)))
                             (filter #(re-find #"Status:.*active" %))
                             count)]
       (should (<= active-count 1))))
 
   (it "completed iteration does not require RETRO.md"
-    (fs/create-dirs (str test-project "/iterations/000"))
-    (spit (str test-project "/iterations/000/ITERATION.md")
+    (fs/create-dirs (str test-project "/.project/iterations/000"))
+    (spit (str test-project "/.project/iterations/000/ITERATION.md")
       "# Iteration 000\n- **Status:** complete\n## Stories\n- test-sim-zzz: Completed bead\n")
-    (should-not (fs/exists? (str test-project "/iterations/000/RETRO.md"))))
+    (should-not (fs/exists? (str test-project "/.project/iterations/000/RETRO.md"))))
 
   (it "completed iteration status is complete"
-    (should-contain "complete" (slurp (str test-project "/iterations/000/ITERATION.md")))))
+    (should-contain "complete" (slurp (str test-project "/.project/iterations/000/ITERATION.md")))))
 
 ;; ── Scenario 3: Deliverable Naming ──
 
 (describe "Scenario 3: Deliverable Naming"
   (before-all
     (setup-test-project!)
-    (spit (str test-project "/iterations/001/aaa-first-test-bead.md")
+    (spit (str test-project "/.project/iterations/001/aaa-first-test-bead.md")
       "# First Test Bead\n\n## Summary\nCompleted the first test bead.\n"))
 
   (it "deliverable file created"
-    (should (fs/exists? (str test-project "/iterations/001/aaa-first-test-bead.md"))))
+    (should (fs/exists? (str test-project "/.project/iterations/001/aaa-first-test-bead.md"))))
   (it "deliverable has Summary section"
-    (should-contain "## Summary" (slurp (str test-project "/iterations/001/aaa-first-test-bead.md"))))
+    (should-contain "## Summary" (slurp (str test-project "/.project/iterations/001/aaa-first-test-bead.md"))))
   (it "deliverable name matches convention"
     (should (re-find #"^[a-z0-9]{3}-[a-z0-9-]+\.md$" "aaa-first-test-bead.md"))))
 
@@ -130,11 +130,11 @@
   (before-all (setup-test-project!))
 
   (it "PROJECT.md exists (context step 1)"
-    (should (fs/exists? (str test-project "/PROJECT.md"))))
+    (should (fs/exists? (str test-project "/.project/PROJECT.md"))))
   (it "Project AGENTS.md exists (context step 3)"
     (should (fs/exists? (str test-project "/AGENTS.md"))))
   (it "ITERATION.md exists (context step 4)"
-    (should (fs/exists? (str test-project "/iterations/001/ITERATION.md"))))
+    (should (fs/exists? (str test-project "/.project/iterations/001/ITERATION.md"))))
   (it "Workspace AGENTS.md exists (context step 2)"
     (should (fs/exists? (str home "/.openclaw/workspace/AGENTS.md")))))
 
@@ -186,15 +186,15 @@
 (describe "Scenario 10: Worker Error Handling"
   (before-all
     (setup-test-project!)
-    (spit (str test-project "/iterations/001/bbb-second-test-bead.md")
+    (spit (str test-project "/.project/iterations/001/bbb-second-test-bead.md")
       "# Second Test Bead (Partial)\n\n## Summary\nPartially completed.\n\n## Remaining\n- Complete integration after aaa lands\n"))
 
   (it "partial deliverable written"
-    (should (fs/exists? (str test-project "/iterations/001/bbb-second-test-bead.md"))))
+    (should (fs/exists? (str test-project "/.project/iterations/001/bbb-second-test-bead.md"))))
   (it "partial deliverable has Summary"
-    (should-contain "## Summary" (slurp (str test-project "/iterations/001/bbb-second-test-bead.md"))))
+    (should-contain "## Summary" (slurp (str test-project "/.project/iterations/001/bbb-second-test-bead.md"))))
   (it "partial deliverable documents remaining work"
-    (should-contain "## Remaining" (slurp (str test-project "/iterations/001/bbb-second-test-bead.md")))))
+    (should-contain "## Remaining" (slurp (str test-project "/.project/iterations/001/bbb-second-test-bead.md")))))
 
 ;; ── Scenario 11: RETRO.md Removal Verification ──
 

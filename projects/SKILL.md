@@ -27,16 +27,16 @@ $PROJECTS_HOME/
   STATUS.md                      # Auto-generated progress dashboard (see references/status-dashboard.md)
   <project-slug>/                # Each project is its own git repo
     AGENTS.md                    # Universal entry point for any agent landing in the repo
-    PROJECT.md                   # Goals, guardrails, autonomy
+    .project/
+      PROJECT.md                 # Goals, guardrails, autonomy
+      iterations/
+        001/
+          ITERATION.md           # Status, stories, iteration guardrails
+          <id-suffix>-<name>.md # Deliverable per story (e.g. w9g-extract-worker.md)
+          assets/                # Screenshots, artifacts
+        002/
+          ...
     .beads/                      # bd task tracking
-    iterations/
-      001/
-        ITERATION.md             # Status, stories, iteration guardrails
-        <id-suffix>-<name>.md   # Deliverable per story (e.g. w9g-extract-worker.md)
-        RETRO.md                 # Auto-generated retrospective (created on iteration completion)
-        assets/                  # Screenshots, artifacts
-      002/
-        ...
 ```
 
 ## Registry Format (`$PROJECTS_HOME/registry.md`)
@@ -52,6 +52,8 @@ $PROJECTS_HOME/
 Statuses: `active`, `paused`, `blocked`. No "complete" — pause permanently instead.
 
 ## PROJECT.md Format
+
+**Location:** `.project/PROJECT.md`
 
 ```markdown
 # <Project Name>
@@ -93,7 +95,7 @@ See the project's own `AGENTS.md` for the canonical version. The template lives 
 
 ## Notifications
 
-Workers send notifications to the project's Channel based on the Notifications table in PROJECT.md. Each event type can be toggled `on` or `off` per project.
+Workers send notifications to the project's Channel based on the Notifications table in `.project/PROJECT.md`. Each event type can be toggled `on` or `off` per project.
 
 | Event | Description |
 |-------|-------------|
@@ -105,7 +107,7 @@ Workers send notifications to the project's Channel based on the Notifications t
 | question | A question arises needing customer input |
 | blocker | A blocker prevents progress |
 
-All events default to `on` if the table is missing from PROJECT.md.
+All events default to `on` if the table is missing from `.project/PROJECT.md`.
 
 ### Mentions
 
@@ -123,6 +125,8 @@ Example:
 Workers should include the mention in the notification message when the Notify value contains a `mention` directive.
 
 ## ITERATION.md Format
+
+**Location:** `.project/iterations/<N>/ITERATION.md`
 
 ```markdown
 # Iteration <N>
@@ -148,7 +152,7 @@ Completed iterations are **immutable** — never modify them.
 
 ## Story Deliverables
 
-Each story produces `iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<id-suffix>` is the last 3 characters of the bead id and `<descriptive-name>` is a short kebab-case summary (e.g., `w9g-extract-worker.md` for bead `projects-skill-w9g`):
+Each story produces `.project/iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<id-suffix>` is the last 3 characters of the bead id and `<descriptive-name>` is a short kebab-case summary (e.g., `w9g-extract-worker.md` for bead `projects-skill-w9g`):
 
 ```markdown
 # <Story Title> (bd-xxxx)
@@ -199,21 +203,21 @@ All file changes — SKILL.md, worker.md, orchestrator.md, PROJECT.md, CONTRACTS
 
 1. Read registry, find active projects
 2. For each active project with an active iteration:
-   - Read PROJECT.md — note the `MaxWorkers` setting (default 1)
+   - Read `.project/PROJECT.md` — note the `MaxWorkers` setting (default 1)
    - Check running sessions (via `sessions_list`) for workers with label prefix `project:<slug>`
    - **If running workers >= MaxWorkers, skip this project**
    - Read ITERATION.md for the ordered story list
    - Run `bd ready` to find unblocked tasks
    - **Prioritize work in ITERATION.md story order first**, then by bead priority for non-iteration tasks
-   - Each task: claim (`bd update <id> --claim`), do work, write deliverable to `iterations/<N>/<id-suffix>-<descriptive-name>.md`, close (`bd update <id> -s closed`)
+   - Each task: claim (`bd update <id> --claim`), do work, write deliverable to `.project/iterations/<N>/<id-suffix>-<descriptive-name>.md`, close (`bd update <id> -s closed`)
    - Commit after each completed story
 3. Notify the project's Channel when all stories are done, no ready beads remain, or a blocker is hit
 
 ### Preparing for Check-in
 
-REVIEW.md is **only** created when there are blockers or questions that need customer input. Do not create it for routine progress summaries — deliverables in `iterations/<N>/<story-id>.md` and `bd list` serve that purpose.
+REVIEW.md is **only** created when there are blockers or questions that need customer input. Do not create it for routine progress summaries — deliverables in `.project/iterations/<N>/<story-id>.md` and `bd list` serve that purpose.
 
-When REVIEW.md is needed (`iterations/<N>/REVIEW.md`):
+When REVIEW.md is needed (`.project/iterations/<N>/REVIEW.md`):
 - Blockers preventing progress
 - Questions requiring customer decisions
 - Proposed direction changes needing approval
@@ -266,7 +270,7 @@ The projects system supports parallel worker execution with configurable concurr
 
 ### MaxWorkers
 
-Each project's `PROJECT.md` includes a `MaxWorkers` field (default: 1) that controls how many workers can work on the project simultaneously. This prevents resource contention and keeps work serialized when needed.
+Each project's `.project/PROJECT.md` includes a `MaxWorkers` field (default: 1) that controls how many workers can work on the project simultaneously. This prevents resource contention and keeps work serialized when needed.
 
 ### Session Labeling
 
@@ -276,7 +280,7 @@ Sub-agents spawned for project work use the label convention `project:<slug>` (e
 
 When the cron worker fires, it follows this sequence for each active project:
 
-1. Read `PROJECT.md` to get `MaxWorkers` (default 1)
+1. Read `.project/PROJECT.md` to get `MaxWorkers` (default 1)
 2. Call `sessions_list` and collect sessions whose label starts with `project:<slug>`
 3. **Detect and clean up zombie sessions** (see below) — exclude them from the count
 4. If `healthy running workers >= MaxWorkers`, skip the project entirely
@@ -331,11 +335,13 @@ Workers handle errors via a structured escalation path (see `references/worker.m
 
 ## Format Compatibility
 
-When the skill format evolves, existing projects may have stale PROJECT.md or ITERATION.md files. The system handles this gracefully at two levels:
+When the skill format evolves, existing projects may have stale `.project/PROJECT.md` or ITERATION.md files. The system handles this gracefully at two levels:
 
 ### Worker Tolerance (Automatic)
 
-Workers and orchestrators **must be tolerant of older formats**. When reading PROJECT.md or ITERATION.md:
+Workers and orchestrators **must be tolerant of older formats**. When reading `.project/PROJECT.md` or ITERATION.md:
+
+- **Directory migration fallback:** If `.project/PROJECT.md` doesn't exist, check for `PROJECT.md` at root. Similarly, if `.project/iterations/` doesn't exist, check `iterations/` at root. This provides backwards compatibility during migration.
 
 - **Missing fields → use defaults.** If a field doesn't exist, use its default value silently. Key defaults:
   - `MaxWorkers` → `1`

@@ -11,21 +11,21 @@ User requests migration via the project's Channel (e.g., "update to latest skill
 ### 1. Read Current Skill Format
 
 Read `~/.openclaw/skills/projects/SKILL.md` and extract the canonical formats for:
-- `PROJECT.md` (fields, structure, notifications table)
+- `.project/PROJECT.md` (fields, structure, notifications table)
 - `ITERATION.md` (fields, structure)
 - Directory layout conventions
 
 ### 2. Read Project Files
 
 Read the project's existing:
-- `PROJECT.md`
+- `.project/PROJECT.md`
 - Active `ITERATION.md` (current iteration)
 - Any completed iteration files (for reference, but these are immutable)
 
 ### 3. Diff and Identify Gaps
 
 Compare the project's files against the canonical format. Common migrations:
-- Missing fields in PROJECT.md (e.g., new settings added to the skill)
+- Missing fields in `.project/PROJECT.md` (e.g., new settings added to the skill)
 - Changed field names or structure
 - Missing Notifications table
 - ITERATION.md format changes
@@ -53,14 +53,35 @@ For each gap found:
 - **Custom fields**: Preserve any project-specific fields not in the canonical format. Migration is additive.
 - **Conflicts**: If a project field contradicts the new format (e.g., renamed field with different semantics), flag it as a question in the Channel rather than guessing.
 
+## Known Breaking Changes
+
+### .project/ directory migration (iteration 006)
+
+`PROJECT.md` and `iterations/` moved into `.project/` to reduce root clutter. AGENTS.md stays at root.
+
+**Migration steps for existing projects:**
+
+```bash
+cd <project-root>
+mkdir -p .project
+git mv PROJECT.md .project/PROJECT.md
+git mv iterations .project/iterations
+git add -A && git commit -m "Migrate to .project/ directory layout"
+```
+
+**Also update:**
+- Project's `AGENTS.md` — change references from `PROJECT.md` to `.project/PROJECT.md` and `iterations/` to `.project/iterations/`
+
+**Tolerance:** Workers check `.project/PROJECT.md` first. If not found, they should fall back to `PROJECT.md` at root for backwards compatibility during the migration period.
+
 ## Example Channel Message
 
 ```
 📋 **Skill Migration Report** for <project-name>
 
 **Changes applied:**
-- Added `MaxWorkers: 1` to PROJECT.md (new field, default value)
-- Added Notifications table to PROJECT.md (all events set to `on`)
+- Added `MaxWorkers: 1` to `.project/PROJECT.md` (new field, default value)
+- Added Notifications table to `.project/PROJECT.md` (all events set to `on`)
 - Updated ITERATION.md to include `## Guardrails` section (empty)
 
 **No changes needed:**

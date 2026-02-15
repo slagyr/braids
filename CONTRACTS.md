@@ -12,11 +12,11 @@ This document defines the invariants that the orchestrator, worker, and file for
 - **Required columns:** Slug, Status, Priority, Path
 - **Valid statuses:** `active`, `paused`, `blocked` (never `complete`)
 - **Slug uniqueness:** No two rows share the same Slug
-- **Path validity:** Each Path must point to an existing directory containing `PROJECT.md`
+- **Path validity:** Each Path must point to an existing directory containing `.project/PROJECT.md`
 
 ### 1.2 PROJECT.md
 
-- **Location:** `<project-root>/PROJECT.md`
+- **Location:** `<project-root>/.project/PROJECT.md`
 - **Required fields:** Status, Priority, Autonomy (all others have defaults)
 - **Defaults when missing:**
   - `MaxWorkers` → 1
@@ -38,7 +38,7 @@ This document defines the invariants that the orchestrator, worker, and file for
 
 ### 1.3 ITERATION.md
 
-- **Location:** `<project-root>/iterations/<N>/ITERATION.md`
+- **Location:** `<project-root>/.project/iterations/<N>/ITERATION.md`
 - **Required fields:** Status
 - **Valid statuses:** `planning`, `active`, `complete`
 - **At most one active iteration per project** at any time
@@ -48,7 +48,7 @@ This document defines the invariants that the orchestrator, worker, and file for
 
 ### 1.4 Deliverable Files
 
-- **Location:** `iterations/<N>/<id-suffix>-<descriptive-name>.md`
+- **Location:** `.project/iterations/<N>/<id-suffix>-<descriptive-name>.md`
 - **Naming:** `<id-suffix>` = last 3 characters of bead id; `<descriptive-name>` = short kebab-case summary
 - **One deliverable per bead** per iteration
 - **Required sections:** Summary (at minimum)
@@ -107,7 +107,7 @@ STATUS.md is regenerated at the end of every full orchestrator run (not skipped 
 
 ### 3.1 Context Loading Order
 Workers must read context in this order before any work:
-1. PROJECT.md
+1. `.project/PROJECT.md`
 2. Workspace AGENTS.md (`~/.openclaw/workspace/AGENTS.md`)
 3. Project AGENTS.md
 4. ITERATION.md for the assigned iteration

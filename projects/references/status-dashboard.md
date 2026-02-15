@@ -43,8 +43,8 @@ Write to `$PROJECTS_HOME/STATUS.md`. This file is **auto-generated and overwritt
 
 For each active project in the registry:
 
-1. Read `PROJECT.md` for project name, status, priority, autonomy
-2. Find the active iteration (scan `iterations/*/ITERATION.md` for `Status: active`)
+1. Read `.project/PROJECT.md` for project name, status, priority, autonomy
+2. Find the active iteration (scan `.project/iterations/*/ITERATION.md` for `Status: active`)
 3. Run `bd list` in the project directory to get all beads
 4. Count beads by status (closed, in_progress, open, blocked)
 5. List non-closed beads as "Active beads"

@@ -14,7 +14,7 @@ Use `bd show <bead-id>` to get the bead title and details.
 
 ### 1. Load Context (mandatory — do this before anything else)
 
-1. **Read the project's `PROJECT.md`** — this is your primary config. Extract and respect:
+1. **Read the project's `.project/PROJECT.md`** — this is your primary config. Extract and respect:
    - **Autonomy** — `full` (execute freely) or `ask-first` (confirm via Channel before acting). Default: `full`
    - **Guardrails** — hard constraints you must not violate
    - **Notifications** — which events require Channel messages (see §Notifications Reference). Default: all `on`
@@ -24,7 +24,7 @@ Use `bd show <bead-id>` to get the bead title and details.
    **Format tolerance:** If any field is missing from PROJECT.md, use its default value. Never fail or block because of a missing field — degrade gracefully. Key defaults: `MaxWorkers` → 1, `WorkerTimeout` → 3600, `Autonomy` → full, `Priority` → normal, `Checkin` → on-demand, `Channel` → none (skip notifications), `Notifications` table → all events on. Unknown fields → ignore.
 2. **Read `AGENTS.md`** in the workspace root (`~/.openclaw/workspace/AGENTS.md`) if it exists — for workspace-wide conventions and safety rules
 3. **Read `AGENTS.md`** in the project root (if it exists) — this is the project-level entry point with project-specific conventions. (If you arrived here *via* the project's AGENTS.md, you've already read it.)
-4. **Read the iteration's `ITERATION.md`** (`iterations/<N>/ITERATION.md`) — for iteration-level guardrails, story ordering, and notes
+4. **Read the iteration's `ITERATION.md`** (`.project/iterations/<N>/ITERATION.md`) — for iteration-level guardrails, story ordering, and notes
 
 ### 2. Claim the Bead
 
@@ -54,7 +54,7 @@ Execute the work described in the bead. Respect:
 
 ### 5. Write Deliverable
 
-Write output to `iterations/<N>/<id-suffix>-<descriptive-name>.md`
+Write output to `.project/iterations/<N>/<id-suffix>-<descriptive-name>.md`
 (e.g., `uu0-orchestrator-refactor.md`)
 
 ### 6. Close the Bead
@@ -127,7 +127,7 @@ If you complete some but not all of the bead's work:
 
 ## Notifications Reference
 
-Check the **Notifications** table in PROJECT.md. Events:
+Check the **Notifications** table in `.project/PROJECT.md`. Events:
 - `bead-start`: You claimed a bead
 - `bead-complete`: You completed a bead
 - `iteration-complete`: All stories in the current iteration are done

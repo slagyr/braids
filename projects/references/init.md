@@ -66,7 +66,7 @@ Use the OpenClaw cron tool to register this. The orchestrator runs every 5 minut
 
 ### 5. (Optional) Create Your First Project
 
-Follow [`project-creation.md`](project-creation.md) — an interactive guide that walks through gathering project info, scaffolding the directory, and generating real PROJECT.md content.
+Follow [`project-creation.md`](project-creation.md) — an interactive guide that walks through gathering project info, scaffolding the directory, and generating real `.project/PROJECT.md` content.
 
 ## Verification
 

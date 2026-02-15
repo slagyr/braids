@@ -47,6 +47,16 @@
       (and (zero? (:exit r)) (not (str/blank? (:out r)))))
     (catch Exception _ false)))
 
+(defn resolve-iterations-dir [resolved]
+  (if (fs/directory? (str resolved "/.project/iterations"))
+    (str resolved "/.project/iterations")
+    (str resolved "/iterations")))
+
+(defn resolve-project-md [resolved]
+  (if (fs/exists? (str resolved "/.project/PROJECT.md"))
+    (str resolved "/.project/PROJECT.md")
+    (str resolved "/PROJECT.md")))
+
 ;; ── Integration tests per project ──
 
 (when (fs/exists? registry)
@@ -59,7 +69,8 @@
             [slug status _priority path] cols
             resolved (str/replace (or path "") "~" home)]
         (when (and slug (not= slug "Slug") (not (str/starts-with? slug "-"))
-                   (fs/directory? resolved) (fs/exists? (str resolved "/PROJECT.md")))
+                   (fs/directory? resolved)
+                   (fs/exists? (resolve-project-md resolved)))
 
           (describe (str "Integration: " slug)
 
@@ -82,66 +93,71 @@
 
             ;; Iteration checks
             (it "iterations are valid"
-              (when (fs/directory? (str resolved "/iterations"))
-                (doseq [iter-dir (sort (fs/list-dir (str resolved "/iterations")))]
-                  (let [iter-name (str (fs/file-name iter-dir))
-                        iter-md (str iter-dir "/ITERATION.md")]
-                    (when (and (fs/directory? iter-dir) (re-matches #"\d{3}" iter-name) (fs/exists? iter-md))
-                      (let [icontent (slurp iter-md)
-                            iter-status (some-> (re-find #"(?i)Status:\*\*\s*(.*)|Status:\s*(.*)" icontent)
-                                                rest (->> (remove nil?) first str/trim))]
+              (let [iterations-dir (resolve-iterations-dir resolved)]
+                (when (fs/directory? iterations-dir)
+                  (doseq [iter-dir (sort (fs/list-dir iterations-dir))]
+                    (let [iter-name (str (fs/file-name iter-dir))
+                          iter-md (str iter-dir "/ITERATION.md")]
+                      (when (and (fs/directory? iter-dir) (re-matches #"\d{3}" iter-name) (fs/exists? iter-md))
+                        (let [icontent (slurp iter-md)
+                              iter-status (some-> (re-find #"(?i)Status:\*\*\s*(.*)|Status:\s*(.*)" icontent)
+                                                  rest (->> (remove nil?) first str/trim))]
 
-                        ;; Completed iteration checks
-                        (when (= iter-status "complete")
-                          (let [bead-ids (extract-bead-ids icontent)]
-                            (doseq [bid bead-ids]
-                              (should (find-deliverable iter-dir bid))
-                              (let [bd-status (get-bead-status resolved bid)]
-                                (when (not= bd-status "UNKNOWN")
-                                  (should= "CLOSED" bd-status)))
-                              (should (git-has-commit? resolved bid)))))
-
-                        ;; Active iteration checks
-                        (when (= iter-status "active")
-                          (let [bead-ids (extract-bead-ids icontent)
-                                statuses (map (fn [bid] [bid (get-bead-status resolved bid)]) bead-ids)
-                                closed-count (count (filter #(= "CLOSED" (second %)) statuses))
-                                total-count (count bead-ids)]
-                            (doseq [[bid bd-status] statuses]
-                              (when (= bd-status "CLOSED")
+                          ;; Completed iteration checks
+                          (when (= iter-status "complete")
+                            (let [bead-ids (extract-bead-ids icontent)]
+                              (doseq [bid bead-ids]
                                 (should (find-deliverable iter-dir bid))
-                                (should (git-has-commit? resolved bid)))
-                              (should-not= "UNKNOWN" bd-status))
-                            ;; All beads closed but iteration still active = bad
-                            (when (and (pos? total-count) (= closed-count total-count))
-                              (should false))))))))))
+                                (let [bd-status (get-bead-status resolved bid)]
+                                  (when (not= bd-status "UNKNOWN")
+                                    (should= "CLOSED" bd-status)))
+                                (should (git-has-commit? resolved bid)))))
+
+                          ;; Active iteration checks
+                          (when (= iter-status "active")
+                            (let [bead-ids (extract-bead-ids icontent)
+                                  statuses (map (fn [bid] [bid (get-bead-status resolved bid)]) bead-ids)
+                                  closed-count (count (filter #(= "CLOSED" (second %)) statuses))
+                                  total-count (count bead-ids)]
+                              (doseq [[bid bd-status] statuses]
+                                (when (= bd-status "CLOSED")
+                                  (should (find-deliverable iter-dir bid))
+                                  (should (git-has-commit? resolved bid)))
+                                (should-not= "UNKNOWN" bd-status))
+                              ;; All beads closed but iteration still active = bad
+                              (when (and (pos? total-count) (= closed-count total-count))
+                                (should false)))))))))))
 
             ;; At most one active iteration
             (it "at most one active iteration"
-              (let [active-count (->> (fs/glob resolved "iterations/*/ITERATION.md")
-                                      (map #(slurp (str %)))
-                                      (filter #(re-find #"Status:.*active" %))
-                                      count)]
+              (let [idir (resolve-iterations-dir resolved)
+                    active-count (if (fs/directory? idir)
+                                   (->> (fs/glob idir "*/ITERATION.md")
+                                        (map #(slurp (str %)))
+                                        (filter #(re-find #"Status:.*active" %))
+                                        count)
+                                   0)]
                 (should (<= active-count 1))))
 
             ;; Orphaned deliverables
             (it "no orphaned deliverables"
-              (when (fs/directory? (str resolved "/iterations"))
-                (doseq [iter-dir (sort (fs/list-dir (str resolved "/iterations")))]
-                  (let [iter-name (str (fs/file-name iter-dir))
-                        iter-md (str iter-dir "/ITERATION.md")]
-                    (when (and (fs/directory? iter-dir) (re-matches #"\d{3}" iter-name) (fs/exists? iter-md))
-                      (let [icontent (slurp iter-md)
-                            bead-ids (extract-bead-ids icontent)
-                            suffixes (set (map bead-suffix bead-ids))
-                            full-ids (set bead-ids)]
-                        (doseq [f (fs/glob iter-dir "*.md")]
-                          (let [fname (str (fs/file-name f))]
-                            (when-not (#{"ITERATION.md"} fname)
-                              (let [prefix (first (str/split fname #"-"))
-                                    no-ext (str/replace fname #"\.md$" "")]
-                                (should (or (contains? suffixes prefix)
-                                            (contains? full-ids no-ext))))))))))))))))))
+              (let [idir (resolve-iterations-dir resolved)]
+                (when (fs/directory? idir)
+                  (doseq [iter-dir (sort (fs/list-dir idir))]
+                    (let [iter-name (str (fs/file-name iter-dir))
+                          iter-md (str iter-dir "/ITERATION.md")]
+                      (when (and (fs/directory? iter-dir) (re-matches #"\d{3}" iter-name) (fs/exists? iter-md))
+                        (let [icontent (slurp iter-md)
+                              bead-ids (extract-bead-ids icontent)
+                              suffixes (set (map bead-suffix bead-ids))
+                              full-ids (set bead-ids)]
+                          (doseq [f (fs/glob iter-dir "*.md")]
+                            (let [fname (str (fs/file-name f))]
+                              (when-not (#{"ITERATION.md"} fname)
+                                (let [prefix (first (str/split fname #"-"))
+                                      no-ext (str/replace fname #"\.md$" "")]
+                                  (should (or (contains? suffixes prefix)
+                                              (contains? full-ids no-ext)))))))))))))))))))
 
   ;; ── Cross-project checks ──
 

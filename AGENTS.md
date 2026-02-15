@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This project is managed by the **projects** skill. Read `PROJECT.md` for goals, guardrails, and settings.
+This project is managed by the **projects** skill. Read `.project/PROJECT.md` for goals, guardrails, and settings.
 
 ## How to Work on This Project
 
@@ -9,8 +9,8 @@ This project is managed by the **projects** skill. Read `PROJECT.md` for goals, 
   (or online: https://raw.githubusercontent.com/slagyr/project-skill/refs/heads/main/projects/references/worker.md)
 
 **If you're here on your own** (manual session, human asked you to help, etc.):
-1. Read `PROJECT.md` — understand the goal and guardrails
-2. Find the active iteration: look in `iterations/*/ITERATION.md` for `Status: active`
+1. Read `.project/PROJECT.md` — understand the goal and guardrails
+2. Find the active iteration: look in `.project/iterations/*/ITERATION.md` for `Status: active`
 3. Run `bd ready` to see available work
 4. Pick a bead, then follow the worker workflow: `~/.openclaw/skills/projects/references/worker.md`
    (or online: https://raw.githubusercontent.com/slagyr/project-skill/refs/heads/main/projects/references/worker.md)

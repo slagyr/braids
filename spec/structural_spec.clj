@@ -76,14 +76,21 @@
           (when (and slug (not= slug "Slug") (not (str/starts-with? slug "-")))
             ;; Project structure
             (should (fs/directory? resolved))
-            (should (fs/exists? (str resolved "/PROJECT.md")))
+            ;; PROJECT.md in .project/ (new) or root (legacy)
+            (let [project-md-path (if (fs/exists? (str resolved "/.project/PROJECT.md"))
+                                    (str resolved "/.project/PROJECT.md")
+                                    (str resolved "/PROJECT.md"))
+                  iterations-dir (if (fs/directory? (str resolved "/.project/iterations"))
+                                   (str resolved "/.project/iterations")
+                                   (str resolved "/iterations"))]
+            (should (fs/exists? project-md-path))
             (should (fs/exists? (str resolved "/AGENTS.md")))
             (should (fs/directory? (str resolved "/.beads")))
-            (should (fs/directory? (str resolved "/iterations")))
+            (should (fs/directory? iterations-dir))
             (should (fs/directory? (str resolved "/.git")))
 
             ;; PROJECT.md fields
-            (let [pmd (slurp-safe (str resolved "/PROJECT.md"))]
+            (let [pmd (slurp-safe project-md-path)]
               (should (re-find #"(?im)(^\- \*\*Status:\*\*|^Status:)" pmd))
               (should-contain "## Goal" pmd)
               (should-contain "## Guardrails" pmd))
@@ -93,8 +100,8 @@
             (should (contains? #{"high" "normal" "low"} priority))
 
             ;; Iteration validation
-            (when (fs/directory? (str resolved "/iterations"))
-              (doseq [iter-dir (sort (fs/list-dir (str resolved "/iterations")))]
+            (when (fs/directory? iterations-dir)
+              (doseq [iter-dir (sort (fs/list-dir iterations-dir))]
                 (let [iter-name (str (fs/file-name iter-dir))
                       iter-md (str iter-dir "/ITERATION.md")]
                   (when (and (fs/directory? iter-dir) (re-matches #"\d{3}" iter-name) (fs/exists? iter-md))
@@ -112,7 +119,7 @@
                           (when-let [bead-id (some-> (re-find #"([a-z]+-[a-z0-9-]+)" story-line) second)]
                             (let [r (p/shell {:dir resolved :out :string :err :string :continue true}
                                              "bd" "show" bead-id)]
-                              (should= 0 (:exit r)))))))))))))))))
+                              (should= 0 (:exit r))))))))))))))))))
 
 ;; ── Spawn Config ──
 
@@ -132,8 +139,12 @@
         (let [cols (->> (str/split line #"\|") (map str/trim) (remove str/blank?))
               [slug status _priority path] cols
               resolved (str/replace (or path "") "~" home)]
-          (when (and slug (= status "active") (fs/exists? (str resolved "/PROJECT.md")))
-            (let [pmd (slurp (str resolved "/PROJECT.md"))]
+          (when (and slug (= status "active"))
+            (let [pmd-path (if (fs/exists? (str resolved "/.project/PROJECT.md"))
+                             (str resolved "/.project/PROJECT.md")
+                             (str resolved "/PROJECT.md"))]
+            (when (fs/exists? pmd-path)
+            (let [pmd (slurp pmd-path)]
               ;; MaxWorkers
               (let [mw (some-> (re-find #"MaxWorkers.*?(\d+)" pmd) second)]
                 (when mw (should (pos? (parse-long mw)))))
@@ -142,4 +153,4 @@
               ;; iteration-complete mention
               (let [ic-line (some->> (str/split-lines pmd) (filter #(str/includes? % "iteration-complete")) first)]
                 (when (and ic-line (re-find #"(?i)on" ic-line))
-                  (should (re-find #"mention.*<@\d+>" ic-line)))))))))))
+                  (should (re-find #"mention.*<@\d+>" ic-line)))))))))))))
