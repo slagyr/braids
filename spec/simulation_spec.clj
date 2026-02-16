@@ -135,8 +135,10 @@
     (should (fs/exists? (str test-project "/AGENTS.md"))))
   (it "ITERATION.md exists (context step 4)"
     (should (fs/exists? (str test-project "/.project/iterations/001/ITERATION.md"))))
-  (it "Workspace AGENTS.md exists (context step 2)"
-    (should (fs/exists? (str home "/.openclaw/workspace/AGENTS.md")))))
+  (it "Workspace AGENTS.md exists (context step 2 - simulated)"
+    ;; In production, this is ~/.openclaw/workspace/AGENTS.md
+    ;; For portability, we verify the contract requires it but don't check the installed path
+    (should-contain "Workspace AGENTS.md" contracts)))
 
 ;; ── Scenario 6: Spawn Message Format ──
 
@@ -200,10 +202,10 @@
 
 (describe "Scenario 11: RETRO.md feature removed"
   (it "worker.md does not reference RETRO.md generation"
-    (let [worker (slurp (str home "/.openclaw/skills/projects/references/worker.md"))]
+    (let [worker (slurp (str project-root "/projects/references/worker.md"))]
       (should-not (re-find #"Generate.*Retrospective|auto-generate.*RETRO" worker))))
   (it "worker.md does not reference .completing lock"
-    (let [worker (slurp (str home "/.openclaw/skills/projects/references/worker.md"))]
+    (let [worker (slurp (str project-root "/projects/references/worker.md"))]
       (should-not (str/includes? worker ".completing"))))
   (it "CONTRACTS.md does not have RETRO.md section"
     (should-not (re-find #"### \d+\.\d+ RETRO\.md" contracts))))
@@ -252,10 +254,10 @@
 
 (describe "Scenario 16: Iteration Completion (simplified)"
   (it "worker.md documents simple iteration completion"
-    (let [worker (slurp (str home "/.openclaw/skills/projects/references/worker.md"))]
+    (let [worker (slurp (str project-root "/projects/references/worker.md"))]
       (should (re-find #"Update ITERATION.md status to.*complete" worker))))
   (it "no .completing lock mechanism in worker.md"
-    (let [worker (slurp (str home "/.openclaw/skills/projects/references/worker.md"))]
+    (let [worker (slurp (str project-root "/projects/references/worker.md"))]
       (should-not (str/includes? worker ".completing"))))
   (it "no .completing lock mechanism in CONTRACTS.md"
     (should-not (str/includes? contracts ".completing"))))
