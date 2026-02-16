@@ -5,11 +5,16 @@ Autonomous background project management for OpenClaw agents. Enables long-runni
 ## Install
 
 ```bash
-git clone https://github.com/slagyr/braids.git
-ln -s "$(pwd)/braids/braids" ~/.openclaw/skills/braids
+bash <(curl -fsSL https://raw.githubusercontent.com/slagyr/project-skill/main/install.sh)
 ```
 
-That's it. Your agent can now follow [`references/init.md`](braids/references/init.md) to complete setup (verify dependencies, create braids home, configure the orchestrator cron, and scaffold your first project).
+This clones the repo to `~/.openclaw/braids-skill` and symlinks the skill into OpenClaw. To install to a custom location, set `BRAIDS_INSTALL_DIR` first:
+
+```bash
+BRAIDS_INSTALL_DIR=~/my/path bash <(curl -fsSL https://raw.githubusercontent.com/slagyr/project-skill/main/install.sh)
+```
+
+Once installed, ask your agent to "set up braids" to complete first-time setup (verify dependencies, create braids home, configure the orchestrator cron, and scaffold your first project). See [`references/init.md`](braids/references/init.md) for details.
 
 ## Details
 
