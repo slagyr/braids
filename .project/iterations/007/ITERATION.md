@@ -1,6 +1,6 @@
 # Iteration 007
 
-Status: active
+Status: complete
 
 ## Stories
 - projects-skill-3j9: Specs must not assume OpenClaw is installed
