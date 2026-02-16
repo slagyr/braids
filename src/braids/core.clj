@@ -3,10 +3,12 @@
             [braids.ready :as ready]
             [braids.ready-io :as ready-io]
             [braids.orch :as orch]
-            [braids.orch-io :as orch-io]))
+            [braids.orch-io :as orch-io]
+            [braids.list-io :as list-io]))
 
 (def commands
-  {"ready"     {:command :ready     :doc "List beads ready to work"}
+  {"list"      {:command :list      :doc "Show projects from registry"}
+   "ready"     {:command :ready     :doc "List beads ready to work"}
    "orch-tick" {:command :orch-tick :doc "Orchestrator tick: compute spawn decisions (JSON)"}
    "help"      {:command :help      :doc "Show this help message"}})
 
@@ -46,6 +48,9 @@
                    (println)
                    (println (help-text))
                    1)
+      :list (let [json? (some #{"--json"} (:args (dispatch args)))]
+              (println (list-io/load-and-list {:json? json?}))
+              0)
       :ready (let [result (ready-io/gather-and-compute)]
                (println (ready/format-ready-output result))
                0)
