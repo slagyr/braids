@@ -7,7 +7,7 @@
 (def home (System/getProperty "user.home"))
 (def braids-home (or (System/getenv "BRAIDS_HOME") (str home "/Projects")))
 (def skill-symlink (str home "/.openclaw/skills/braids"))
-(def skill-source (str braids-home "/projects-skill/braids"))
+(def skill-source (str braids-home "/braids/braids"))
 ;; Use project-relative path for file checks (doesn't require OpenClaw installed)
 (def project-root (System/getProperty "user.dir"))
 (def skill-dir (str project-root "/braids"))
