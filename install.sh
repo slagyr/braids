@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="https://github.com/slagyr/project-skill.git"
+REPO="https://github.com/slagyr/braids.git"
 SKILL_DIR="$HOME/.openclaw/skills/braids"
 INSTALL_DIR="${BRAIDS_INSTALL_DIR:-$HOME/.openclaw/braids-skill}"
 

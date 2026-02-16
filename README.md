@@ -17,13 +17,13 @@ This installs `braids` on your PATH along with its dependencies (`bb` and `bd`).
 For non-Mac users or if you prefer a manual setup:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/slagyr/project-skill/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/slagyr/braids/main/install.sh)
 ```
 
 This clones the repo to `~/.openclaw/braids-skill` and symlinks the skill into OpenClaw. To install to a custom location, set `BRAIDS_INSTALL_DIR` first:
 
 ```bash
-BRAIDS_INSTALL_DIR=~/my/path bash <(curl -fsSL https://raw.githubusercontent.com/slagyr/project-skill/main/install.sh)
+BRAIDS_INSTALL_DIR=~/my/path bash <(curl -fsSL https://raw.githubusercontent.com/slagyr/braids/main/install.sh)
 ```
 
 **Prerequisites for manual install:** [Babashka](https://github.com/babashka/babashka) (`bb`) and [Beads](https://github.com/steveyegge/beads) (`bd`) must be installed separately.

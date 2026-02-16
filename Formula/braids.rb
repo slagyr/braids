@@ -1,7 +1,7 @@
 class Braids < Formula
   desc "Autonomous background project management for OpenClaw agents"
-  homepage "https://github.com/slagyr/project-skill"
-  url "https://github.com/slagyr/project-skill.git", tag: "v0.1.0"
+  homepage "https://github.com/slagyr/braids"
+  url "https://github.com/slagyr/braids.git", tag: "v0.1.0"
   license "MIT"
 
   depends_on "borkdude/brew/babashka"
