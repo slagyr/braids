@@ -11,6 +11,7 @@
 | cjs | Rename projects-home to braids-home | open |
 | 1um | Save braids-home in config file next to registry | open |
 | k0p | Add braids config command set | open |
+| ebl | Homebrew formula for braids | open |
 
 ## Notes
 
