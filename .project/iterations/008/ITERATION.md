@@ -1,6 +1,6 @@
 # Iteration 008
 
-Status: active
+Status: complete
 
 ## Stories
 - projects-skill-4ij: CLI scaffold: bb project structure, braids entry point, arg parsing, help
