@@ -7,7 +7,8 @@
 
 (def home (System/getProperty "user.home"))
 (def projects-home (or (System/getenv "PROJECTS_HOME") (str home "/Projects")))
-(def registry (str projects-home "/registry.md"))
+(def state-home (str home "/.openclaw/projects"))
+(def registry (str state-home "/registry.md"))
 
 (defn slurp-safe [path] (when (fs/exists? path) (slurp path)))
 
@@ -164,7 +165,7 @@
   (describe "Cross-Project Checks"
     (it "STATUS.md exists and is fresh (skipped if no registry)"
       (when (fs/exists? registry)
-        (let [status-file (str projects-home "/STATUS.md")]
+        (let [status-file (str state-home "/STATUS.md")]
           (should (fs/exists? status-file))
           (let [mtime (.toMillis (fs/last-modified-time status-file))
                 now (System/currentTimeMillis)
@@ -173,7 +174,7 @@
 
     (it "orchestrator state is valid (skipped if no registry)"
       (when (fs/exists? registry)
-        (let [state-file (str projects-home "/.orchestrator-state.json")]
+        (let [state-file (str state-home "/.orchestrator-state.json")]
           (should (fs/exists? state-file))
           (let [parsed (json/parse-string (slurp state-file))]
             (should parsed)

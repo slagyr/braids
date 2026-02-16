@@ -1,6 +1,7 @@
 (ns braids.ready-io-spec
   (:require [speclj.core :refer :all]
-            [braids.ready-io :as rio]))
+            [braids.ready-io :as rio]
+            [babashka.fs :as fs]))
 
 (describe "braids.ready-io"
 
@@ -23,4 +24,24 @@
 
     (it "handles project: prefix with just slug"
       (should= {"proj" 1}
-               (rio/count-workers ["project:proj"])))))
+               (rio/count-workers ["project:proj"]))))
+
+  (describe "resolve-state-home"
+
+    (it "returns ~/.openclaw/projects by default"
+      (should= (str (fs/expand-home "~/.openclaw/projects"))
+               (rio/resolve-state-home))))
+
+  (describe "load-registry uses state-home"
+
+    (it "loads registry from state-home not projects-home"
+      (let [state-home (str (fs/create-temp-dir {:prefix "state-home-test"}))
+            projects-home (str (fs/create-temp-dir {:prefix "projects-home-test"}))]
+        ;; Put registry in state-home (new location)
+        (spit (str state-home "/registry.edn")
+               "{:projects [{:slug \"proj\" :status :active :priority :normal :path \"/tmp/proj\"}]}")
+        ;; Put a DIFFERENT registry in projects-home (old location) to prove we don't read it
+        (spit (str projects-home "/registry.edn")
+               "{:projects [{:slug \"old\" :status :active :priority :normal :path \"/tmp/old\"}]}")
+        (let [result (rio/load-registry state-home)]
+          (should= "proj" (-> result :projects first :slug)))))))

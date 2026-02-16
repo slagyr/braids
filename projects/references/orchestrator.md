@@ -77,7 +77,7 @@ The spawn message is intentionally minimal. The worker reads `AGENTS.md` in the 
 
 ### 5. Generate Status Dashboard
 
-Generate `$PROJECTS_HOME/STATUS.md` following `references/status-dashboard.md`.
+Generate `~/.openclaw/projects/STATUS.md` following `references/status-dashboard.md`.
 
 ### 6. Done
 

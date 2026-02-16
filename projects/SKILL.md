@@ -17,14 +17,17 @@ For initial installation (symlink, `bd`, `PROJECTS_HOME`, orchestrator cron), fo
 
 **`PROJECTS_HOME`** defines where all projects live. Default: `~/Projects`
 
-Resolve `PROJECTS_HOME` at the start of every session. Check if a custom value is set in the registry file; otherwise use the default. All paths below that reference `PROJECTS_HOME` use this resolved value.
+Resolve `PROJECTS_HOME` at the start of every session (default: `~/Projects`). All project repos live under `PROJECTS_HOME`. Agent infrastructure files (registry, orchestrator state, STATUS dashboard) live in `~/.openclaw/projects/`.
 
 ## Directory Layout
 
 ```
-$PROJECTS_HOME/
+~/.openclaw/projects/
   registry.md                    # Master list of all projects
   STATUS.md                      # Auto-generated progress dashboard (see references/status-dashboard.md)
+  .orchestrator-state.json       # Orchestrator idle/backoff state
+
+$PROJECTS_HOME/
   <project-slug>/                # Each project is its own git repo
     AGENTS.md                    # Universal entry point for any agent landing in the repo
     .project/
@@ -39,7 +42,7 @@ $PROJECTS_HOME/
     .beads/                      # bd task tracking
 ```
 
-## Registry Format (`$PROJECTS_HOME/registry.md`)
+## Registry Format (`~/.openclaw/projects/registry.md`)
 
 ```markdown
 # Projects
@@ -314,7 +317,7 @@ Workers are spawned with label `project:<slug>:<bead-id>` so the orchestrator ca
 
 ### Orchestrator Frequency Scaling
 
-The orchestrator automatically reduces polling frequency when there's no work to do. It writes `$PROJECTS_HOME/.orchestrator-state.json` after each run, tracking idle state and reason. On subsequent runs, it checks this file and skips execution if the backoff interval hasn't elapsed:
+The orchestrator automatically reduces polling frequency when there's no work to do. It writes `~/.openclaw/projects/.orchestrator-state.json` after each run, tracking idle state and reason. On subsequent runs, it checks this file and skips execution if the backoff interval hasn't elapsed:
 
 - **No active iterations** → polls every 30 minutes (vs. default 5)
 - **No ready beads** → polls every 15 minutes

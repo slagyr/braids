@@ -8,7 +8,7 @@ This document defines the invariants that the orchestrator, worker, and file for
 
 ### 1.1 registry.md
 
-- **Location:** `$PROJECTS_HOME/registry.md`
+- **Location:** `~/.openclaw/projects/registry.md`
 - **Required columns:** Slug, Status, Priority, Path
 - **Valid statuses:** `active`, `paused`, `blocked` (never `complete`)
 - **Slug uniqueness:** No two rows share the same Slug
@@ -55,13 +55,13 @@ This document defines the invariants that the orchestrator, worker, and file for
 
 ### 1.5 STATUS.md
 
-- **Location:** `$PROJECTS_HOME/STATUS.md`
+- **Location:** `~/.openclaw/projects/STATUS.md`
 - **Auto-generated:** Overwritten every orchestrator run; never hand-edit
 - **Contains:** Timestamp, per-project summary with iteration status and bead counts
 
 ### 1.6 .orchestrator-state.json
 
-- **Location:** `$PROJECTS_HOME/.orchestrator-state.json`
+- **Location:** `~/.openclaw/projects/.orchestrator-state.json`
 - **Fields:** `idleSince` (ISO timestamp or null), `idleReason` (string or null), `lastRunAt` (ISO timestamp)
 - **Valid idleReasons:** `no-active-iterations`, `no-ready-beads`, `all-at-capacity`, or null
 
@@ -154,7 +154,7 @@ Workers with `ask-first` autonomy must confirm via Channel before executing. `fu
 `~` always resolves to the user's home directory, never the agent workspace. Project files are never created inside `~/.openclaw/workspace/`.
 
 ### 4.2 PROJECTS_HOME Resolution
-`PROJECTS_HOME` defaults to `~/Projects`. Checked once per session from registry or default.
+`PROJECTS_HOME` defaults to `~/Projects`. Checked once per session. Agent infrastructure files (registry.md, .orchestrator-state.json, STATUS.md) live in `~/.openclaw/projects/`, not in `PROJECTS_HOME`.
 
 ### 4.3 Single Source of Truth
 - What to work on → `bd ready` (not manual lists)

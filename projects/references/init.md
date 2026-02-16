@@ -32,12 +32,13 @@ bd --version
 
 If `bd` is not found, install it following the [beads documentation](https://github.com/nickthecook/bd). The projects skill requires `bd` for all task tracking.
 
-### 3. Create PROJECTS_HOME and Registry
+### 3. Create PROJECTS_HOME and State Directory
 
 ```bash
 mkdir -p ~/Projects
+mkdir -p ~/.openclaw/projects
 
-cat > ~/Projects/registry.md << 'EOF'
+cat > ~/.openclaw/projects/registry.md << 'EOF'
 # Projects
 
 | Slug | Status | Priority | Path |
@@ -45,7 +46,7 @@ cat > ~/Projects/registry.md << 'EOF'
 EOF
 ```
 
-If using a custom `PROJECTS_HOME`, replace `~/Projects` with the desired path.
+If using a custom `PROJECTS_HOME`, replace `~/Projects` with the desired path. The registry and orchestrator state always live in `~/.openclaw/projects/` regardless of `PROJECTS_HOME`.
 
 ### 4. Set Up Orchestrator Cron Job
 
@@ -74,7 +75,7 @@ After setup, confirm everything is in place:
 
 - [ ] `~/.openclaw/skills/projects/SKILL.md` exists (symlink works)
 - [ ] `bd --version` succeeds
-- [ ] `~/Projects/registry.md` exists with the header row
+- [ ] `~/.openclaw/projects/registry.md` exists with the header row
 - [ ] Orchestrator cron job is registered
 - [ ] (If created) first project appears in `registry.md`
 

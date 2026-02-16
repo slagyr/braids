@@ -33,9 +33,9 @@
 (defn gather-and-tick
   "Full IO pipeline for orch tick: load everything, compute spawn decisions."
   ([] (gather-and-tick {}))
-  ([{:keys [projects-home session-labels]
+  ([{:keys [projects-home state-home session-labels]
      :or {session-labels []}}]
-   (let [home (or projects-home (rio/resolve-projects-home))
+   (let [home (or state-home (rio/resolve-state-home))
          reg (rio/load-registry home)
          active-projects (filter #(= :active (:status %)) (:projects reg))
          configs (into {} (map (fn [{:keys [slug path]}]

@@ -6,7 +6,8 @@ A conversational guide for agents creating a new project. Follow these steps whe
 
 - The projects skill is installed (`~/.openclaw/skills/projects/SKILL.md` exists)
 - `bd` and `git` are available
-- `PROJECTS_HOME` is set up (default: `~/Projects`) with a `registry.md`
+- `PROJECTS_HOME` is set up (default: `~/Projects`)
+- `~/.openclaw/projects/registry.md` exists
 
 ## Steps
 
@@ -54,7 +55,7 @@ PROJECT_DIR="$PROJECTS_HOME/$SLUG"
 
 # Verify slug isn't taken
 test ! -d "$PROJECT_DIR" || echo "ERROR: directory already exists"
-grep -q "| $SLUG |" "$PROJECTS_HOME/registry.md" && echo "ERROR: slug in registry"
+grep -q "| $SLUG |" "$HOME/.openclaw/projects/registry.md" && echo "ERROR: slug in registry"
 
 # Create directory and init
 mkdir -p "$PROJECT_DIR/.project"
@@ -146,7 +147,7 @@ If the human wants to start work immediately, set the iteration status to `activ
 
 ### 9. Add to Registry
 
-Append to `$PROJECTS_HOME/registry.md`:
+Append to `~/.openclaw/projects/registry.md`:
 
 ```
 | <slug> | active | <priority> | <path> |
@@ -173,5 +174,5 @@ Ask if anything needs adjustment. Make changes, amend the commit if needed.
 ## Notes
 
 - The `Channel` field can be left blank if the human doesn't want notifications yet — the system degrades gracefully.
-- If `PROJECTS_HOME` is non-standard, resolve it from the registry file or ask the human.
+- If `PROJECTS_HOME` is non-standard, ask the human for the path.
 - Slug validation: must match `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` (lowercase, digits, hyphens, no leading/trailing hyphens).

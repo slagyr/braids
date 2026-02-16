@@ -11,7 +11,8 @@
 ;; Use project-relative path for file checks (doesn't require OpenClaw installed)
 (def project-root (System/getProperty "user.dir"))
 (def skill-dir (str project-root "/projects"))
-(def registry (str projects-home "/registry.md"))
+(def state-home (str home "/.openclaw/projects"))
+(def registry (str state-home "/registry.md"))
 
 (defn slurp-safe [path] (when (fs/exists? path) (slurp path)))
 (defn real-path [path] (try (str (fs/real-path path)) (catch Exception _ nil)))

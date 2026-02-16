@@ -11,10 +11,18 @@
 (def default-projects-home
   (str (fs/expand-home "~/Projects")))
 
+(def default-state-home
+  (str (fs/expand-home "~/.openclaw/projects")))
+
 (defn resolve-projects-home []
   ;; Check for registry.edn or registry.md to find PROJECTS_HOME
   ;; For now, use default
   default-projects-home)
+
+(defn resolve-state-home []
+  "Returns the directory for agent infrastructure files (registry, orchestrator state, STATUS).
+   Defaults to ~/.openclaw/projects/"
+  default-state-home)
 
 (defn- expand-path [path]
   (if (str/starts-with? path "~/")
@@ -85,9 +93,9 @@
 (defn gather-and-compute
   "Full IO pipeline: load registry, configs, beads, and compute ready list."
   ([] (gather-and-compute {}))
-  ([{:keys [projects-home session-labels]
+  ([{:keys [projects-home state-home session-labels]
      :or {session-labels []}}]
-   (let [home (or projects-home (resolve-projects-home))
+   (let [home (or state-home (resolve-state-home))
          reg (load-registry home)
          active-projects (filter #(= :active (:status %)) (:projects reg))
          configs (into {} (map (fn [{:keys [slug path]}]
