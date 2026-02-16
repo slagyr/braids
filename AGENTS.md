@@ -4,7 +4,7 @@ This project is managed by the **projects** skill. Read `.project/PROJECT.md` fo
 
 ## Development Process
 
-**Read `.project/TDD.md` before writing any code.** All development on this project follows strict Test-Driven Development (RED → GREEN → REFACTOR). No production code without a failing test.
+**This project follows strict Test-Driven Development.** Read the TDD skill (`~/.openclaw/skills/tdd/SKILL.md`) before writing any code. RED → GREEN → REFACTOR. No production code without a failing test.
 
 ## How to Work on This Project
 
