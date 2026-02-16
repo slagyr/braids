@@ -1,6 +1,6 @@
 # Iteration 010
 
-Status: active
+Status: complete
 
 ## Stories
 - projects-skill-b9p: braids init: first-time setup
