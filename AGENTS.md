@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This project is managed by the **braids** skill. Read `.braids/PROJECT.md` for goals, guardrails, and settings.
+This project is managed by the **braids** skill. Config: `.braids/config.edn`. Goals and guardrails are below.
 
 ## Development Process
 
@@ -13,10 +13,11 @@ This project is managed by the **braids** skill. Read `.braids/PROJECT.md` for g
   (or online: https://raw.githubusercontent.com/slagyr/braids/refs/heads/main/braids/references/worker.md)
 
 **If you're here on your own** (manual session, human asked you to help, etc.):
-1. Read `.braids/PROJECT.md` — understand the goal and guardrails
-2. Find the active iteration: look in `.braids/iterations/*/ITERATION.md` for `Status: active`
-3. Run `bd ready` to see available work
-4. Pick a bead, then follow the worker workflow: `~/.openclaw/skills/braids/references/worker.md`
+1. Read `.braids/config.edn` — understand the project settings
+2. Read this file (AGENTS.md) — for goals, guardrails, and conventions
+3. Find the active iteration: look in `.braids/iterations/*/ITERATION.md` for `Status: active`
+4. Run `bd ready` to see available work
+5. Pick a bead, then follow the worker workflow: `~/.openclaw/skills/braids/references/worker.md`
    (or online: https://raw.githubusercontent.com/slagyr/braids/refs/heads/main/braids/references/worker.md)
 
 ## Quick Reference
@@ -40,3 +41,16 @@ git pull --rebase
 bd sync
 git push
 ```
+
+## Goal
+
+Build and refine the "braids" OpenClaw skill — an autonomous project management system that enables OpenClaw agents to work on multiple long-running projects in the background with iterative delivery, parallel sub-agent execution, and structured check-ins.
+
+## Guardrails
+
+- Test workflow changes by using this project as the guinea pig
+- Commit frequently with meaningful messages
+- Ask before making changes that affect other skills or OpenClaw config
+- **Test-first development:** Write or update tests BEFORE implementing a feature or fix. Every bead that adds or changes behavior must include a corresponding test. Tests are written in **speclj on Babashka** — no bash test scripts. Run the test suite before closing a bead — all specs must pass.
+- **No untested changes:** If you can't write a test for it, document why in the deliverable. Structural tests, simulation tests, and contract checks are all valid test types.
+- **Channel agent — beads only:** The channel/main session agent must NOT edit project files (SKILL.md, worker.md, orchestrator.md, config.edn, CONTRACTS.md, etc.) directly. It should only create beads, plan iterations, activate iterations, and review deliverables. All file changes go through beads assigned to workers.

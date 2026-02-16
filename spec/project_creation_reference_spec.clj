@@ -15,7 +15,7 @@
   (it "has all required sections"
     (let [content (slurp ref-file)]
       (doseq [section ["Gather Information" "Suggest Defaults" "Discord Channel"
-                        "Scaffold" "Generate PROJECT.md" "AGENTS.md"
+                        "Scaffold" "Generate config.edn" "AGENTS.md"
                         "Iteration 001" "Seed Stories" "Registry" "Review with the Human"]]
         (should-contain section content))))
 
@@ -30,10 +30,10 @@
       (should-contain "slug" (slurp ref-file)))
     (it "no TODO placeholders"
       (should-contain "not a placeholder" (slurp ref-file)))
-    (it "references PROJECT.md format"
-      (should-contain "Status:" (slurp ref-file)))
-    (it "references Notifications table"
-      (should-contain "Notifications" (slurp ref-file))))
+    (it "references config.edn format"
+      (should-contain ":status" (slurp ref-file)))
+    (it "references notifications config"
+      (should-contain "notifications" (slurp ref-file))))
 
   (context "Old script removed"
     (it "projects-init script removed"

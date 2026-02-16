@@ -28,7 +28,7 @@
 
   (context "File Format Subsections"
     (it "documents all file formats"
-      (doseq [fmt ["registry.edn" "PROJECT.md" "ITERATION.md" "STATUS.md" ".orchestrator-state.json"]]
+      (doseq [fmt ["registry.edn" "config.edn" "ITERATION.md" "STATUS.md" ".orchestrator-state.json"]]
         (should-contain fmt content)))
     (it "does not document RETRO.md (removed feature)"
       (should-not (re-find #"### \d+\.\d+ RETRO\.md" content)))
@@ -36,14 +36,14 @@
       (should-contain "Deliverable" content)))
 
   (context "Key Defaults"
-    (it "default MaxWorkers=1"
-      (should (re-find #"MaxWorkers.*1" content)))
-    (it "default WorkerTimeout=3600"
-      (should (re-find #"WorkerTimeout.*3600" content)))
-    (it "default Autonomy=full"
-      (should (re-find #"Autonomy.*full" content)))
-    (it "default Priority=normal"
-      (should (re-find #"Priority.*normal" content))))
+    (it "default max-workers=1"
+      (should (re-find #"max-workers.*1" content)))
+    (it "default worker-timeout=3600"
+      (should (re-find #"worker-timeout.*3600" content)))
+    (it "default autonomy=full"
+      (should (re-find #"(?i)autonomy.*full" content)))
+    (it "default priority=normal"
+      (should (re-find #"(?i)priority.*normal" content))))
 
   (context "Orchestrator Invariants"
     (it "no direct work invariant"

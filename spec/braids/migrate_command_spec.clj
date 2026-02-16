@@ -67,7 +67,7 @@
                                        :file-exists? (fn [p] (some? (get fs-state p)))})]
       (should-not-contain :write-registry-edn (map :type actions))))
 
-  (it "plans project.edn migration for projects in registry"
+  (it "plans config.edn migration from PROJECT.md"
     (let [state-home "/tmp/test-state"
           registry-md (str "# Projects\n\n"
                            "| Slug | Status | Priority | Path |\n"
@@ -80,25 +80,37 @@
           fs-state {"/tmp/test-state/registry.md" registry-md
                     "/tmp/test-state/registry.edn" nil
                     "/projects/foo/.braids/PROJECT.md" project-md
+                    "/projects/foo/.braids/config.edn" nil
                     "/projects/foo/.braids/project.edn" nil}
           actions (mig/plan-migration {:state-home state-home
                                        :read-file (fn [p] (get fs-state p))
                                        :file-exists? (fn [p] (some? (get fs-state p)))})]
-      (should-contain {:type :write-project-edn :path "/projects/foo/.braids/project.edn"}
+      (should-contain {:type :write-config-edn :path "/projects/foo/.braids/config.edn"}
                       (map #(select-keys % [:type :path]) actions))))
 
-  (it "skips project.edn when it already exists"
+  (it "plans config.edn migration from legacy project.edn"
     (let [state-home "/tmp/test-state"
-          fs-state {"/tmp/test-state/registry.edn" "{:projects [{:slug \"foo\" :status :active :priority :normal :path \"/projects/foo\"}]}"
-                    "/projects/foo/.braids/project.edn" "{:name \"Foo\"}"}
+          fs-state {"/tmp/test-state/registry.edn" (pr-str {:projects [{:slug "foo" :status :active :priority :normal :path "/projects/foo"}]})
+                    "/projects/foo/.braids/config.edn" nil
+                    "/projects/foo/.braids/project.edn" (pr-str {:name "Foo" :status :active :priority :normal :autonomy :full})}
           actions (mig/plan-migration {:state-home state-home
                                        :read-file (fn [p] (get fs-state p))
                                        :file-exists? (fn [p] (some? (get fs-state p)))})]
-      (should-not-contain :write-project-edn (map :type actions))))
+      (should-contain {:type :write-config-edn :path "/projects/foo/.braids/config.edn"}
+                      (map #(select-keys % [:type :path]) actions))))
+
+  (it "skips config.edn when it already exists"
+    (let [state-home "/tmp/test-state"
+          fs-state {"/tmp/test-state/registry.edn" (pr-str {:projects [{:slug "foo" :status :active :priority :normal :path "/projects/foo"}]})
+                    "/projects/foo/.braids/config.edn" (pr-str {:name "Foo"})}
+          actions (mig/plan-migration {:state-home state-home
+                                       :read-file (fn [p] (get fs-state p))
+                                       :file-exists? (fn [p] (some? (get fs-state p)))})]
+      (should-not-contain :write-config-edn (map :type actions))))
 
   (it "formats migration report"
     (let [actions [{:type :write-registry-edn :path "/state/registry.edn"}
-                   {:type :write-project-edn :path "/proj/foo/.braids/project.edn" :slug "foo"}]]
+                   {:type :write-config-edn :path "/proj/foo/.braids/config.edn" :slug "foo"}]]
       (should-contain "registry.edn" (mig/format-migration-report actions))
       (should-contain "foo" (mig/format-migration-report actions))))
 

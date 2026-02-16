@@ -54,11 +54,11 @@
     (fs/directory? (str resolved "/.project/iterations")) (str resolved "/.project/iterations")
     :else (str resolved "/iterations")))
 
-(defn resolve-project-md [resolved]
+(defn resolve-config-edn [resolved]
   (cond
-    (fs/exists? (str resolved "/.braids/PROJECT.md")) (str resolved "/.braids/PROJECT.md")
-    (fs/exists? (str resolved "/.project/PROJECT.md")) (str resolved "/.project/PROJECT.md")
-    :else (str resolved "/PROJECT.md")))
+    (fs/exists? (str resolved "/.braids/config.edn")) (str resolved "/.braids/config.edn")
+    (fs/exists? (str resolved "/.braids/config.edn")) (str resolved "/.braids/config.edn")
+    :else nil))
 
 ;; ── Integration tests per project ──
 
@@ -69,7 +69,7 @@
       (let [resolved (str/replace (or path "") "~" home)]
         (when (and slug
                    (fs/directory? resolved)
-                   (fs/exists? (resolve-project-md resolved)))
+                   (fs/exists? (resolve-config-edn resolved)))
 
           (describe (str "Integration: " slug)
 

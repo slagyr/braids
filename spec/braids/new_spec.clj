@@ -41,7 +41,7 @@
       (should-not= [] (new/validate-new-params
                         {:slug "my-project" :goal "Build something"})))
 
-    (it "requires goal"
+    (it "requires goal (stored in AGENTS.md, not config.edn)"
       (should-not= [] (new/validate-new-params
                         {:slug "my-project" :name "My Project"})))
 
@@ -53,7 +53,7 @@
 
     (it "builds config with defaults"
       (let [config (new/build-project-config
-                     {:slug "my-project" :name "My Project" :goal "Build something"})]
+                     {:slug "my-project" :name "My Project"})]
         (should= "My Project" (:name config))
         (should= :active (:status config))
         (should= :normal (:priority config))
@@ -62,12 +62,13 @@
         (should= 1 (:max-workers config))
         (should= 3600 (:worker-timeout config))
         (should= nil (:channel config))
-        (should= "Build something" (:goal config))
+        (should-not-contain :goal config)
+        (should-not-contain :guardrails config)
         (should (every? true? (vals (:notifications config))))))
 
     (it "allows overriding defaults"
       (let [config (new/build-project-config
-                     {:slug "my-project" :name "My Project" :goal "Do stuff"
+                     {:slug "my-project" :name "My Project"
                       :priority :high :autonomy :ask-first :channel "12345"
                       :max-workers 3})]
         (should= :high (:priority config))
@@ -75,10 +76,11 @@
         (should= "12345" (:channel config))
         (should= 3 (:max-workers config))))
 
-    (it "includes guardrails when provided"
+    (it "does not include goal or guardrails in config (those go in AGENTS.md)"
       (let [config (new/build-project-config
-                     {:slug "x" :name "X" :goal "G" :guardrails ["No breaking changes"]})]
-        (should= ["No breaking changes"] (:guardrails config)))))
+                     {:slug "x" :name "X"})]
+        (should-not-contain :goal config)
+        (should-not-contain :guardrails config))))
 
   (describe "build-registry-entry"
 
@@ -106,7 +108,8 @@
     (it "generates AGENTS.md content"
       (let [content (new/build-agents-md)]
         (should-contain "braids" content)
-        (should-contain "PROJECT.md" content))))
+        (should-contain "config.edn" content)
+        (should-not-contain "PROJECT.md" content))))
 
   (describe "add-to-registry"
 

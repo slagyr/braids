@@ -14,10 +14,24 @@
   (fs/delete-tree test-project)
   (fs/create-dirs (str test-project "/.braids/iterations/001"))
 
-  (spit (str test-project "/.braids/PROJECT.md")
-    "# Test Simulation Project\n\n- **Status:** active\n- **Priority:** high\n- **Autonomy:** full\n- **Checkin:** daily\n- **Channel:** test-channel-123\n- **MaxWorkers:** 2\n- **WorkerTimeout:** 1800\n\n## Notifications\n\n| Event | Notify |\n|-------|--------|\n| iteration-start | on |\n| bead-start | on |\n| bead-complete | on |\n| iteration-complete | on |\n| no-ready-beads | on |\n| question | on |\n| blocker | on |\n\n## Goal\n\nTest project for simulation tests.\n\n## Guardrails\n\n- This is a test project\n")
+  (spit (str test-project "/.braids/config.edn")
+    (pr-str {:name "Test Simulation Project"
+             :status :active
+             :priority :high
+             :autonomy :full
+             :checkin :daily
+             :channel "test-channel-123"
+             :max-workers 2
+             :worker-timeout 1800
+             :notifications {:iteration-start true
+                             :bead-start true
+                             :bead-complete true
+                             :iteration-complete true
+                             :no-ready-beads true
+                             :question true
+                             :blocker true}}))
 
-  (spit (str test-project "/AGENTS.md") "# Test Project AGENTS.md\nRead worker.md for instructions.\n")
+  (spit (str test-project "/AGENTS.md") "# Test Project AGENTS.md\nRead worker.md for instructions.\n\n## Goal\n\nTest project for simulation tests.\n\n## Guardrails\n\n- This is a test project\n")
 
   (spit (str test-project "/.braids/iterations/001/ITERATION.md")
     "# Iteration 001\n\n- **Status:** active\n\n## Stories\n- test-sim-aaa: First test bead\n- test-sim-bbb: Second test bead (depends on aaa)\n- test-sim-ccc: Third test bead (independent)\n")
@@ -25,26 +39,36 @@
   (spit (str test-tmp "/registry.edn")
     (pr-str {:projects [{:slug "test-sim-project" :status :active :priority :high :path test-project}]})))
 
-;; ── Scenario 1: PROJECT.md Defaults ──
+;; ── Scenario 1: config.edn Defaults ──
 
-(describe "Scenario 1: PROJECT.md Field Defaults"
+(describe "Scenario 1: config.edn Field Defaults"
   (before-all
     (setup-test-project!)
-    (spit (str test-project "/.braids/PROJECT.md")
-      "# Minimal Project\n\n- **Status:** active\n- **Priority:** normal\n- **Autonomy:** full\n\n## Goal\nMinimal test.\n\n## Guardrails\n- None\n"))
+    (spit (str test-project "/.braids/config.edn")
+      (pr-str {:name "Minimal Project"
+               :status :active
+               :priority :normal
+               :autonomy :full})))
 
-  (it "Status field present"
-    (should-contain "Status:" (slurp (str test-project "/.braids/PROJECT.md"))))
+  (it "config.edn is valid EDN"
+    (let [parsed (clojure.edn/read-string (slurp (str test-project "/.braids/config.edn")))]
+      (should (map? parsed))
+      (should= :active (:status parsed))))
   (it "MaxWorkers missing (default 1 applies)"
-    (should-not (str/includes? (slurp (str test-project "/.braids/PROJECT.md")) "MaxWorkers")))
-  (it "WorkerTimeout missing (default 1800 applies)"
-    (should-not (str/includes? (slurp (str test-project "/.braids/PROJECT.md")) "WorkerTimeout")))
+    (let [parsed (clojure.edn/read-string (slurp (str test-project "/.braids/config.edn")))]
+      (should-not (contains? parsed :max-workers))))
+  (it "WorkerTimeout missing (default 3600 applies)"
+    (let [parsed (clojure.edn/read-string (slurp (str test-project "/.braids/config.edn")))]
+      (should-not (contains? parsed :worker-timeout))))
   (it "Channel missing (default: skip notifications)"
-    (should-not (str/includes? (slurp (str test-project "/.braids/PROJECT.md")) "Channel:")))
+    (let [parsed (clojure.edn/read-string (slurp (str test-project "/.braids/config.edn")))]
+      (should-not (contains? parsed :channel))))
   (it "Checkin missing (default: on-demand)"
-    (should-not (str/includes? (slurp (str test-project "/.braids/PROJECT.md")) "Checkin:")))
-  (it "Notifications table missing (default: all on)"
-    (should-not (str/includes? (slurp (str test-project "/.braids/PROJECT.md")) "Notifications"))))
+    (let [parsed (clojure.edn/read-string (slurp (str test-project "/.braids/config.edn")))]
+      (should-not (contains? parsed :checkin))))
+  (it "Notifications missing (default: all on)"
+    (let [parsed (clojure.edn/read-string (slurp (str test-project "/.braids/config.edn")))]
+      (should-not (contains? parsed :notifications)))))
 
 ;; ── Scenario 2: Iteration Lifecycle ──
 
@@ -129,8 +153,8 @@
 (describe "Scenario 5: Worker Context Loading"
   (before-all (setup-test-project!))
 
-  (it "PROJECT.md exists (context step 1)"
-    (should (fs/exists? (str test-project "/.braids/PROJECT.md"))))
+  (it "config.edn exists (context step 1)"
+    (should (fs/exists? (str test-project "/.braids/config.edn"))))
   (it "Project AGENTS.md exists (context step 3)"
     (should (fs/exists? (str test-project "/AGENTS.md"))))
   (it "ITERATION.md exists (context step 4)"

@@ -64,50 +64,42 @@ git init -q
 bd init -q
 ```
 
-### 5. Generate PROJECT.md with Real Content
+### 5. Generate config.edn with Real Content
 
-Write `.braids/PROJECT.md` using the information gathered — **not** a template with TODOs. Example:
+Write `.braids/config.edn` using the information gathered — **not** a template with TODOs. Example:
 
-```markdown
-# <Project Name>
-
-- **Status:** active
-- **Priority:** <from step 2>
-- **Autonomy:** <from step 2>
-- **Checkin:** <from step 2>
-- **Channel:** <channel id from step 3, or blank>
-- **MaxWorkers:** <from step 2>
-
-## Notifications
-
-| Event | Notify |
-|-------|--------|
-| iteration-start | on |
-| bead-start | on |
-| bead-complete | on |
-| iteration-complete | on |
-| no-ready-beads | on |
-| question | on |
-| blocker | on |
-
-## Goal
-
-<Real goal text from the human — not a placeholder>
-
-## Guardrails
-
-<Real guardrails from the human — not a placeholder>
+```clojure
+{:name "<Project Name>"
+ :status :active
+ :priority :<from step 2>
+ :autonomy :<from step 2>
+ :checkin :<from step 2>
+ :channel "<channel id from step 3>"
+ :max-workers <from step 2>
+ :worker-timeout 3600
+ :notifications {:iteration-start true
+                 :bead-start true
+                 :bead-complete true
+                 :iteration-complete true
+                 :no-ready-beads true
+                 :question true
+                 :blocker true}
+ :notification-mentions {:iteration-complete ["<@user-id>"]
+                         :question ["<@user-id>"]
+                         :blocker ["<@user-id>"]}}
 ```
 
-If the human wants mentions on critical events (iteration-complete, question, blocker), add `(mention <@user-id>)` to those rows.
+Mentions support multiple values per event (vector of strings). Omit `:notification-mentions` if no mentions are needed.
 
 ### 6. Set Up AGENTS.md
 
-Copy the skill template:
+Write the project's `AGENTS.md` with goal, guardrails, and the standard worker entry point:
 
 ```bash
 cp ~/.openclaw/skills/braids/references/agents-template.md "$PROJECT_DIR/AGENTS.md"
 ```
+
+Then add the **Goal** and **Guardrails** sections from what the human provided. These are prose — they belong in AGENTS.md, not config.edn.
 
 If the template doesn't exist, write the standard AGENTS.md inline (see `references/agents-template.md` for the canonical version).
 
@@ -164,7 +156,7 @@ git commit -m "Initialize project: <slug>"
 ### 11. Review with the Human
 
 Before pushing or declaring done, show the human:
-- The `.braids/PROJECT.md` content
+- The `.braids/config.edn` content
 - The channel (if created)
 - The registry entry
 - Any seeded stories

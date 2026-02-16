@@ -11,21 +11,21 @@ User requests migration via the project's Channel (e.g., "update to latest skill
 ### 1. Read Current Skill Format
 
 Read `~/.openclaw/skills/braids/SKILL.md` and extract the canonical formats for:
-- `.project/PROJECT.md` (fields, structure, notifications table)
+- `.project/config.edn` (fields, structure, notifications table)
 - `ITERATION.md` (fields, structure)
 - Directory layout conventions
 
 ### 2. Read Project Files
 
 Read the project's existing:
-- `.project/PROJECT.md`
+- `.project/config.edn`
 - Active `ITERATION.md` (current iteration)
 - Any completed iteration files (for reference, but these are immutable)
 
 ### 3. Diff and Identify Gaps
 
 Compare the project's files against the canonical format. Common migrations:
-- Missing fields in `.project/PROJECT.md` (e.g., new settings added to the skill)
+- Missing fields in `.project/config.edn` (e.g., new settings added to the skill)
 - Changed field names or structure
 - Missing Notifications table
 - ITERATION.md format changes
@@ -57,22 +57,22 @@ For each gap found:
 
 ### .project/ directory migration (iteration 006)
 
-`PROJECT.md` and `iterations/` moved into `.project/` to reduce root clutter. AGENTS.md stays at root.
+`config.edn` and `iterations/` moved into `.project/` to reduce root clutter. AGENTS.md stays at root.
 
 **Migration steps for existing projects:**
 
 ```bash
 cd <project-root>
 mkdir -p .project
-git mv PROJECT.md .project/PROJECT.md
+git mv config.edn .project/config.edn
 git mv iterations .project/iterations
 git add -A && git commit -m "Migrate to .project/ directory layout"
 ```
 
 **Also update:**
-- Project's `AGENTS.md` — change references from `PROJECT.md` to `.project/PROJECT.md` and `iterations/` to `.project/iterations/`
+- Project's `AGENTS.md` — change references from `config.edn` to `.project/config.edn` and `iterations/` to `.project/iterations/`
 
-**Tolerance:** Workers check `.project/PROJECT.md` first. If not found, they should fall back to `PROJECT.md` at root for backwards compatibility during the migration period.
+**Tolerance:** Workers check `.project/config.edn` first. If not found, they should fall back to `config.edn` at root for backwards compatibility during the migration period.
 
 ## Example Channel Message
 
@@ -80,8 +80,8 @@ git add -A && git commit -m "Migrate to .project/ directory layout"
 📋 **Skill Migration Report** for <project-name>
 
 **Changes applied:**
-- Added `MaxWorkers: 1` to `.project/PROJECT.md` (new field, default value)
-- Added Notifications table to `.project/PROJECT.md` (all events set to `on`)
+- Added `MaxWorkers: 1` to `.project/config.edn` (new field, default value)
+- Added Notifications table to `.project/config.edn` (all events set to `on`)
 - Updated ITERATION.md to include `## Guardrails` section (empty)
 
 **No changes needed:**

@@ -6,7 +6,7 @@
 
   (describe "parse-project-config"
 
-    (it "parses a valid project.edn"
+    (it "parses a valid config.edn"
       (let [edn-str (pr-str {:name "My Project"
                               :status :active
                               :priority :normal
@@ -43,7 +43,40 @@
       (let [result (pc/parse-project-config (pr-str {:name "T" :status :active :priority :normal :autonomy :full}))]
         (should= true (get-in result [:notifications :iteration-start]))
         (should= true (get-in result [:notifications :bead-complete]))
-        (should= true (get-in result [:notifications :blocker])))))
+        (should= true (get-in result [:notifications :blocker]))))
+
+    (it "does not include goal or guardrails (those belong in AGENTS.md)"
+      (let [edn-str (pr-str {:name "Test" :status :active :priority :normal :autonomy :full})
+            result (pc/parse-project-config edn-str)]
+        (should-not-contain :goal result)
+        (should-not-contain :guardrails result))))
+
+  (describe "notification-mentions"
+
+    (it "supports multiple mentions per event as vectors"
+      (let [edn-str (pr-str {:name "Test"
+                              :status :active
+                              :priority :normal
+                              :autonomy :full
+                              :notification-mentions {:iteration-complete ["<@123>" "<@456>"]
+                                                      :blocker ["<@789>"]}})
+            result (pc/parse-project-config edn-str)]
+        (should= ["<@123>" "<@456>"] (get-in result [:notification-mentions :iteration-complete]))
+        (should= ["<@789>"] (get-in result [:notification-mentions :blocker]))))
+
+    (it "normalizes single mention string to vector"
+      (let [edn-str (pr-str {:name "Test"
+                              :status :active
+                              :priority :normal
+                              :autonomy :full
+                              :notification-mentions {:blocker "<@123>"}})
+            result (pc/parse-project-config edn-str)]
+        (should= ["<@123>"] (get-in result [:notification-mentions :blocker]))))
+
+    (it "preserves empty notification-mentions when not specified"
+      (let [edn-str (pr-str {:name "Test" :status :active :priority :normal :autonomy :full})
+            result (pc/parse-project-config edn-str)]
+        (should= nil (:notification-mentions result)))))
 
   (describe "validate-project-config"
 

@@ -121,27 +121,42 @@
                      parsed)
 
                    :else {:projects []})]
-    ;; Plan project.edn migrations
+    ;; Plan config.edn migrations
     (doseq [{:keys [slug path]} (:projects registry)]
-      (let [edn-path (str path "/.braids/project.edn")
+      (let [config-edn-path (str path "/.braids/config.edn")
+            legacy-edn-path (str path "/.braids/project.edn")
             md-path (str path "/.braids/PROJECT.md")
-            legacy-edn-path (str path "/.project/project.edn")
+            legacy-project-edn (str path "/.project/project.edn")
             legacy-md-path (str path "/.project/PROJECT.md")
             root-md-path (str path "/PROJECT.md")]
-        (when-not (or (file-exists? edn-path) (file-exists? legacy-edn-path))
-          (let [md-source (cond
-                            (file-exists? md-path) md-path
-                            (file-exists? legacy-md-path) legacy-md-path
-                            (file-exists? root-md-path) root-md-path
-                            :else nil)]
-            (when md-source
-              (let [md (read-file md-source)
-                    parsed (parse-project-md md)
-                    edn-str (pc/project-config->edn-string parsed)]
-                (swap! actions conj {:type :write-project-edn
-                                     :path edn-path
-                                     :slug slug
-                                     :content edn-str})))))))
+        (when-not (file-exists? config-edn-path)
+          (cond
+            ;; Migrate from legacy project.edn → config.edn
+            (file-exists? legacy-edn-path)
+            (let [content (read-file legacy-edn-path)]
+              (swap! actions conj {:type :write-config-edn
+                                   :path config-edn-path
+                                   :slug slug
+                                   :content content}))
+
+            ;; Migrate from markdown
+            :else
+            (let [md-source (cond
+                              (file-exists? md-path) md-path
+                              (file-exists? legacy-md-path) legacy-md-path
+                              (file-exists? legacy-project-edn) legacy-project-edn
+                              (file-exists? root-md-path) root-md-path
+                              :else nil)]
+              (when md-source
+                (let [content (read-file md-source)
+                      parsed (if (or (= md-source legacy-project-edn))
+                               (pc/parse-project-config content)
+                               (parse-project-md content))
+                      edn-str (pc/project-config->edn-string parsed)]
+                  (swap! actions conj {:type :write-config-edn
+                                       :path config-edn-path
+                                       :slug slug
+                                       :content edn-str}))))))))
     @actions))
 
 (defn format-migration-report
@@ -154,6 +169,6 @@
            (for [{:keys [type path slug]} actions]
              (case type
                :write-registry-edn (str "  ✓ Write registry.edn → " path)
-               :write-project-edn (str "  ✓ Write project.edn for " slug " → " path)
+               :write-config-edn (str "  ✓ Write config.edn for " slug " → " path)
                (str "  ? Unknown action: " type))))
          "\n")))

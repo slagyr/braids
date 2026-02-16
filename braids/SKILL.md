@@ -23,7 +23,7 @@ Resolve `BRAIDS_HOME` at the start of every session (default: `~/Projects`). All
 
 ```
 ~/.openclaw/braids/
-  registry.md                    # Master list of all projects
+  registry.edn                   # Master list of all projects
   STATUS.md                      # Auto-generated progress dashboard (see references/status-dashboard.md)
   .orchestrator-state.json       # Orchestrator idle/backoff state
 
@@ -31,7 +31,8 @@ $BRAIDS_HOME/
   <project-slug>/                # Each project is its own git repo
     AGENTS.md                    # Universal entry point for any agent landing in the repo
     .braids/
-      PROJECT.md                 # Goals, guardrails, autonomy
+      config.edn                 # Structured project config (EDN)
+    AGENTS.md                    # Goal, guardrails, conventions (prose)
       iterations/
         001/
           ITERATION.md           # Status, stories, iteration guardrails
@@ -42,51 +43,45 @@ $BRAIDS_HOME/
     .beads/                      # bd task tracking
 ```
 
-## Registry Format (`~/.openclaw/braids/registry.md`)
+## Registry Format (`~/.openclaw/braids/registry.edn`)
 
-```markdown
-# Projects
-
-| Slug | Status | Priority | Path |
-|------|--------|----------|------|
-| my-project | active | normal | $BRAIDS_HOME/my-project |
+```clojure
+{:projects [{:slug "my-project"
+             :status :active
+             :priority :normal
+             :path "$BRAIDS_HOME/my-project"}]}
 ```
 
-Statuses: `active`, `paused`, `blocked`. No "complete" — pause permanently instead.
+Statuses: `:active`, `:paused`, `:blocked`. No `:complete` — pause permanently instead.
 
-## PROJECT.md Format
+## config.edn Format
 
-**Location:** `.braids/PROJECT.md`
+**Location:** `.braids/config.edn`
 
-```markdown
-# <Project Name>
+Structured config only — no prose. Goal, guardrails, and conventions live in the project's `AGENTS.md`.
 
-- **Status:** active | paused | blocked
-- **Priority:** high | normal | low
-- **Autonomy:** full | ask-first | research-only
-- **Checkin:** daily | weekly | on-demand
-- **Channel:** <discord channel id or name for check-ins>
-- **MaxWorkers:** <number, default 1>
-- **WorkerTimeout:** <seconds, default 3600>
-
-## Goal
-<High-level description of what this project aims to achieve>
-
-## Notifications
-
-| Event | Notify |
-|-------|--------|
-| iteration-start | on |
-| bead-start | on |
-| bead-complete | on |
-| iteration-complete | on (mention <@user-id>) |
-| no-ready-beads | on |
-| question | on (mention <@user-id>) |
-| blocker | on (mention <@user-id>) |
-
-## Guardrails
-<Project-specific constraints and boundaries>
+```clojure
+{:name "My Project"
+ :status :active
+ :priority :normal
+ :autonomy :full
+ :checkin :on-demand
+ :channel "discord-channel-id"
+ :max-workers 1
+ :worker-timeout 3600
+ :notifications {:iteration-start true
+                 :bead-start true
+                 :bead-complete true
+                 :iteration-complete true
+                 :no-ready-beads true
+                 :question true
+                 :blocker true}
+ :notification-mentions {:iteration-complete ["<@user-id>"]
+                         :question ["<@user-id>"]
+                         :blocker ["<@user-id>"]}}
 ```
+
+Mentions support multiple values per event (vector of strings).
 
 No "current focus" here — beads (`bd ready`) determines what to work on.
 
@@ -98,7 +93,7 @@ See the project's own `AGENTS.md` for the canonical version. The template lives 
 
 ## Notifications
 
-Workers send notifications to the project's Channel based on the Notifications table in `.braids/PROJECT.md`. Each event type can be toggled `on` or `off` per project.
+Workers send notifications to the project's Channel based on the Notifications table in `.braids/config.edn`. Each event type can be toggled `on` or `off` per project.
 
 | Event | Description |
 |-------|-------------|
@@ -110,7 +105,7 @@ Workers send notifications to the project's Channel based on the Notifications t
 | question | A question arises needing customer input |
 | blocker | A blocker prevents progress |
 
-All events default to `on` if the table is missing from `.braids/PROJECT.md`.
+All events default to `on` if the table is missing from `.braids/config.edn`.
 
 ### Mentions
 
@@ -174,18 +169,18 @@ Each story produces `.braids/iterations/<N>/<id-suffix>-<descriptive-name>.md` w
 
 ### Creating a Project
 
-Follow [`references/project-creation.md`](references/project-creation.md) — an interactive guide the agent walks through with the human. It covers gathering project info, scaffolding the directory, generating real PROJECT.md content (not TODO templates), creating a Discord channel, seeding stories, and reviewing with the human before committing.
+Follow [`references/project-creation.md`](references/project-creation.md) — an interactive guide the agent walks through with the human. It covers gathering project info, scaffolding the directory, generating real config.edn content (not TODO templates), creating a Discord channel, seeding stories, and reviewing with the human before committing.
 
 ### Channel for Check-ins
 
-Each project needs a channel for notifications and check-ins. Set the `Channel` field in PROJECT.md to a channel id or name.
+Each project needs a channel for notifications and check-ins. Set the `Channel` field in config.edn to a channel id or name.
 
 When creating a new channel (e.g., on Discord):
 - Use the `message` tool with `action: channel-create`
 - Choose any descriptive name (e.g., `project-my-app`, `my-app-updates`, etc.)
 - Optionally place it under a category
-- Set the channel topic to the project goal from PROJECT.md
-- Record the channel id in PROJECT.md's `Channel` field
+- Set the channel topic to the project goal from AGENTS.md
+- Record the channel id in config.edn's `:channel` field
 
 This channel is for **planning and notifications only** — all actual work happens asynchronously via beads and the cron worker. The channel receives:
 - Iteration completion notifications
@@ -200,13 +195,13 @@ The channel/main session agent must **not** modify project files directly. Its r
 - **Reviewing deliverables**
 - **Answering questions** and unblocking workers
 
-All file changes — SKILL.md, worker.md, orchestrator.md, PROJECT.md, CONTRACTS.md, reference docs, etc. — must go through beads assigned to workers. This ensures every change is tracked, tested, and committed through the standard bead lifecycle. The channel agent should never `Edit` or `Write` project files itself; instead, it creates a bead describing the desired change and lets a worker execute it.
+All file changes — SKILL.md, worker.md, orchestrator.md, config.edn, CONTRACTS.md, reference docs, etc. — must go through beads assigned to workers. This ensures every change is tracked, tested, and committed through the standard bead lifecycle. The channel agent should never `Edit` or `Write` project files itself; instead, it creates a bead describing the desired change and lets a worker execute it.
 
 ### Working a Project (Background Sessions)
 
 1. Read registry, find active projects
 2. For each active project with an active iteration:
-   - Read `.braids/PROJECT.md` — note the `MaxWorkers` setting (default 1)
+   - Read `.braids/config.edn` — note the `MaxWorkers` setting (default 1)
    - Check running sessions (via `sessions_list`) for workers with label prefix `project:<slug>`
    - **If running workers >= MaxWorkers, skip this project**
    - Read ITERATION.md for the ordered story list
@@ -273,7 +268,7 @@ The projects system supports parallel worker execution with configurable concurr
 
 ### MaxWorkers
 
-Each project's `.braids/PROJECT.md` includes a `MaxWorkers` field (default: 1) that controls how many workers can work on the project simultaneously. This prevents resource contention and keeps work serialized when needed.
+Each project's `.braids/config.edn` includes a `MaxWorkers` field (default: 1) that controls how many workers can work on the project simultaneously. This prevents resource contention and keeps work serialized when needed.
 
 ### Session Labeling
 
@@ -283,7 +278,7 @@ Sub-agents spawned for project work use the label convention `project:<slug>` (e
 
 When the cron worker fires, it follows this sequence for each active project:
 
-1. Read `.braids/PROJECT.md` to get `MaxWorkers` (default 1)
+1. Read `.braids/config.edn` to get `MaxWorkers` (default 1)
 2. Call `sessions_list` and collect sessions whose label starts with `project:<slug>`
 3. **Detect and clean up zombie sessions** (see below) — exclude them from the count
 4. If `healthy running workers >= MaxWorkers`, skip the project entirely
@@ -338,13 +333,13 @@ Workers handle errors via a structured escalation path (see `references/worker.m
 
 ## Format Compatibility
 
-When the skill format evolves, existing projects may have stale `.braids/PROJECT.md` or ITERATION.md files. The system handles this gracefully at two levels:
+When the skill format evolves, existing projects may have stale `.braids/config.edn` or ITERATION.md files. The system handles this gracefully at two levels:
 
 ### Worker Tolerance (Automatic)
 
-Workers and orchestrators **must be tolerant of older formats**. When reading `.braids/PROJECT.md` or ITERATION.md:
+Workers and orchestrators **must be tolerant of older formats**. When reading `.braids/config.edn` or ITERATION.md:
 
-- **Directory migration fallback:** If `.braids/PROJECT.md` doesn't exist, check for `PROJECT.md` at root. Similarly, if `.braids/iterations/` doesn't exist, check `iterations/` at root. This provides backwards compatibility during migration.
+- **Legacy fallback:** If `.braids/config.edn` doesn't exist, check for `.braids/project.edn` (legacy name). No markdown config fallback. If `.braids/iterations/` doesn't exist, check `iterations/` at root. This provides backwards compatibility during migration.
 
 - **Missing fields → use defaults.** If a field doesn't exist, use its default value silently. Key defaults:
   - `MaxWorkers` → `1`
@@ -358,7 +353,7 @@ Workers and orchestrators **must be tolerant of older formats**. When reading `.
 - **Unknown fields → ignore.** Projects may have custom fields. Don't error on them.
 - **Old field names → treat as missing.** If a field was renamed, treat the old name as absent and apply the default. Don't try to map old names automatically.
 
-This means workers never crash or block due to a missing field in PROJECT.md or ITERATION.md. They degrade gracefully.
+This means workers never crash or block due to a missing field in config.edn or ITERATION.md. They degrade gracefully.
 
 ### Skill Migration (User-Triggered)
 
@@ -376,7 +371,7 @@ Breaking changes should be rare. Prefer additive, backwards-compatible changes w
 
 ## Skill Migration
 
-When the skill format evolves (e.g., PROJECT.md fields change, ITERATION.md structure updates), existing projects need migration. This is **user-triggered, not automatic**.
+When the skill format evolves (e.g., config.edn fields change, ITERATION.md structure updates), existing projects need migration. This is **user-triggered, not automatic**.
 
 ### How It Works
 

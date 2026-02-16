@@ -90,25 +90,25 @@
           (when slug
             ;; Project structure
             (should (fs/directory? resolved))
-            (let [project-md-path (cond
-                                    (fs/exists? (str resolved "/.braids/PROJECT.md")) (str resolved "/.braids/PROJECT.md")
-                                    (fs/exists? (str resolved "/.project/PROJECT.md")) (str resolved "/.project/PROJECT.md")
-                                    :else (str resolved "/PROJECT.md"))
+            (let [config-path (cond
+                                (fs/exists? (str resolved "/.braids/config.edn")) (str resolved "/.braids/config.edn")
+                                (fs/exists? (str resolved "/.braids/config.edn")) (str resolved "/.braids/config.edn")
+                                :else (str resolved "/.braids/config.edn"))
                   iterations-dir (cond
                                    (fs/directory? (str resolved "/.braids/iterations")) (str resolved "/.braids/iterations")
                                    (fs/directory? (str resolved "/.project/iterations")) (str resolved "/.project/iterations")
                                    :else (str resolved "/iterations"))]
-              (should (fs/exists? project-md-path))
+              (should (fs/exists? config-path))
               (should (fs/exists? (str resolved "/AGENTS.md")))
               (should (fs/directory? (str resolved "/.beads")))
               (should (fs/directory? iterations-dir))
               (should (fs/directory? (str resolved "/.git")))
 
-              ;; PROJECT.md fields
-              (let [pmd (slurp-safe project-md-path)]
-                (should (re-find #"(?im)(^\- \*\*Status:\*\*|^Status:)" pmd))
-                (should-contain "## Goal" pmd)
-                (should-contain "## Guardrails" pmd))
+              ;; config.edn validation
+              (let [cfg (clojure.edn/read-string (slurp config-path))]
+                (should (map? cfg))
+                (should (:name cfg))
+                (should (:status cfg)))
 
               ;; Registry status/priority validation
               (should (contains? #{:active :paused :blocked} status))
@@ -151,16 +151,16 @@
       (doseq [{:keys [slug status path]} (:projects reg)]
         (let [resolved (resolve-path path)]
           (when (and slug (= status :active))
-            (let [pmd-path (cond
-                             (fs/exists? (str resolved "/.braids/PROJECT.md")) (str resolved "/.braids/PROJECT.md")
-                             (fs/exists? (str resolved "/.project/PROJECT.md")) (str resolved "/.project/PROJECT.md")
-                             :else (str resolved "/PROJECT.md"))]
-              (when (fs/exists? pmd-path)
-                (let [pmd (slurp pmd-path)]
-                  ;; MaxWorkers
-                  (let [mw (some-> (re-find #"MaxWorkers.*?(\d+)" pmd) second)]
-                    (when mw (should (pos? (parse-long mw)))))
-                  ;; iteration-complete mention
-                  (let [ic-line (some->> (str/split-lines pmd) (filter #(str/includes? % "iteration-complete")) first)]
-                    (when (and ic-line (re-find #"(?i)on" ic-line))
-                      (should (re-find #"mention.*<@\d+>" ic-line)))))))))))))
+            (let [config-path (cond
+                                (fs/exists? (str resolved "/.braids/config.edn")) (str resolved "/.braids/config.edn")
+                                (fs/exists? (str resolved "/.braids/config.edn")) (str resolved "/.braids/config.edn")
+                                :else nil)]
+              (when config-path
+                (let [cfg (clojure.edn/read-string (slurp config-path))]
+                  ;; max-workers
+                  (when (:max-workers cfg)
+                    (should (pos? (:max-workers cfg))))
+                  ;; notification-mentions validation
+                  (when-let [mentions (:notification-mentions cfg)]
+                    (when (:iteration-complete mentions)
+                      (should (sequential? (:iteration-complete mentions))))))))))))))

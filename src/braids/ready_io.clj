@@ -3,7 +3,6 @@
             [babashka.process :as proc]
             [cheshire.core :as json]
             [clojure.string :as str]
-            [braids.migration :as migration]
             [braids.project-config :as pc]
             [braids.config-io :as config-io]
             [braids.ready :as ready]
@@ -37,29 +36,17 @@
       {:projects []})))
 
 (defn load-project-config
-  "Load project config. Tries .braids/project.edn first, falls back to .braids/PROJECT.md, .project/project.edn, .project/PROJECT.md, then PROJECT.md."
+  "Load project config from .braids/config.edn (preferred) or .braids/project.edn (legacy). No markdown fallback."
   [project-path]
   (let [path (expand-path project-path)
-        braids-edn (str path "/.braids/project.edn")
-        braids-md (str path "/.braids/PROJECT.md")
-        project-edn (str path "/.project/project.edn")
-        project-md (str path "/.project/PROJECT.md")
-        root-md-path (str path "/PROJECT.md")]
+        config-edn (str path "/.braids/config.edn")
+        legacy-edn (str path "/.braids/project.edn")]
     (cond
-      (fs/exists? braids-edn)
-      (pc/parse-project-config (slurp braids-edn))
+      (fs/exists? config-edn)
+      (pc/parse-project-config (slurp config-edn))
 
-      (fs/exists? braids-md)
-      (migration/parse-project-md (slurp braids-md))
-
-      (fs/exists? project-edn)
-      (pc/parse-project-config (slurp project-edn))
-
-      (fs/exists? project-md)
-      (migration/parse-project-md (slurp project-md))
-
-      (fs/exists? root-md-path)
-      (migration/parse-project-md (slurp root-md-path))
+      (fs/exists? legacy-edn)
+      (pc/parse-project-config (slurp legacy-edn))
 
       :else
       pc/defaults)))

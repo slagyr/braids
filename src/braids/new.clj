@@ -20,20 +20,17 @@
     (when-not name ["Name is required"])
     (when-not goal ["Goal is required"])))
 
-(defn build-project-config [{:keys [name goal priority autonomy checkin channel
-                                     max-workers worker-timeout guardrails]}]
-  (merge
-    {:name name
-     :status :active
-     :priority (or priority :normal)
-     :autonomy (or autonomy :full)
-     :checkin (or checkin :on-demand)
-     :channel channel
-     :max-workers (or max-workers 1)
-     :worker-timeout (or worker-timeout 3600)
-     :goal goal
-     :notifications pc/default-notifications}
-    (when guardrails {:guardrails guardrails})))
+(defn build-project-config [{:keys [name priority autonomy checkin channel
+                                     max-workers worker-timeout]}]
+  {:name name
+   :status :active
+   :priority (or priority :normal)
+   :autonomy (or autonomy :full)
+   :checkin (or checkin :on-demand)
+   :channel channel
+   :max-workers (or max-workers 1)
+   :worker-timeout (or worker-timeout 3600)
+   :notifications pc/default-notifications})
 
 (defn build-registry-entry [{:keys [slug priority]} path]
   {:slug slug
@@ -46,44 +43,44 @@
    :status :planning
    :stories []})
 
-(defn build-agents-md []
-  "# AGENTS.md
-
-This project is managed by the **braids** skill. Read `.braids/PROJECT.md` for goals, guardrails, and settings.
-
-## How to Work on This Project
-
-**If you were spawned by the orchestrator** (your task message includes `Project:` and `Bead:` fields):
-→ Follow `~/.openclaw/skills/braids/references/worker.md`
-
-**If you're here on your own** (manual session, human asked you to help, etc.):
-1. Read `.braids/PROJECT.md` — understand the goal and guardrails
-2. Find the active iteration: look in `.braids/iterations/*/ITERATION.md` for `Status: active`
-3. Run `bd ready` to see available work
-4. Pick a bead, then follow the worker workflow: `~/.openclaw/skills/braids/references/worker.md`
-
-## Quick Reference
-
-```bash
-bd ready              # List unblocked tasks
-bd show <id>          # View task details
-bd update <id> --claim  # Claim a task
-bd update <id> -s closed  # Close completed task
-bd list               # List all tasks
-bd dep list <id>      # List dependencies
-```
-
-## Session Completion
-
-Work is NOT complete until `git push` succeeds.
-
-```bash
-git add -A && git commit -m \"<summary> (<bead-id>)\"
-git pull --rebase
-bd sync
-git push
-```
-")
+(defn build-agents-md
+  ([] (build-agents-md {}))
+  ([{:keys [goal guardrails]}]
+   (str "# AGENTS.md\n\n"
+        "This project is managed by the **braids** skill. Config: `.braids/config.edn`. Goals and guardrails live in this file.\n\n"
+        "## Goal\n\n"
+        (or goal "TODO: Describe the project goal.") "\n\n"
+        "## Guardrails\n\n"
+        (if (seq guardrails)
+          (str/join "\n" (map #(str "- " %) guardrails))
+          "- None yet")
+        "\n\n"
+        "## How to Work on This Project\n\n"
+        "**If you were spawned by the orchestrator** (your task message includes `Project:` and `Bead:` fields):\n"
+        "→ Follow `~/.openclaw/skills/braids/references/worker.md`\n\n"
+        "**If you're here on your own** (manual session, human asked you to help, etc.):\n"
+        "1. Read `.braids/config.edn` — understand the project settings\n"
+        "2. Read this file (AGENTS.md) — for goals, guardrails, and conventions\n"
+        "3. Find the active iteration: look in `.braids/iterations/*/ITERATION.md` for `Status: active`\n"
+        "4. Run `bd ready` to see available work\n"
+        "5. Pick a bead, then follow the worker workflow: `~/.openclaw/skills/braids/references/worker.md`\n\n"
+        "## Quick Reference\n\n"
+        "```bash\n"
+        "bd ready              # List unblocked tasks\n"
+        "bd show <id>          # View task details\n"
+        "bd update <id> --claim  # Claim a task\n"
+        "bd update <id> -s closed  # Close completed task\n"
+        "bd list               # List all tasks\n"
+        "bd dep list <id>      # List dependencies\n"
+        "```\n\n"
+        "## Session Completion\n\n"
+        "Work is NOT complete until `git push` succeeds.\n\n"
+        "```bash\n"
+        "git add -A && git commit -m \"<summary> (<bead-id>)\"\n"
+        "git pull --rebase\n"
+        "bd sync\n"
+        "git push\n"
+        "```\n")))
 
 (defn add-to-registry [registry entry]
   (let [existing-slugs (set (map :slug (:projects registry)))]

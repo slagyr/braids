@@ -52,12 +52,13 @@
                {:exit 1 :message (str "Error: project '" slug "' already exists in registry")}
                (let [config (new/build-project-config params)
                      entry (new/build-registry-entry params project-dir)
-                     agents-md (new/build-agents-md)
+                     agents-md (new/build-agents-md {:goal (:goal params)
+                                                             :guardrails (:guardrails params)})
                      new-registry (new/add-to-registry registry entry)]
                  ;; Create directories
                  (fs/create-dirs (str project-dir "/.braids/iterations/001"))
-                 ;; Write project.edn
-                 (spit (str project-dir "/.braids/project.edn") (pr-str config))
+                 ;; Write config.edn
+                 (spit (str project-dir "/.braids/config.edn") (pr-str config))
                  ;; Write ITERATION.md
                  (spit (str project-dir "/.braids/iterations/001/ITERATION.md")
                        "# Iteration 001\n\nStatus: planning\n\n## Stories\n\n## Guardrails\n\n## Notes\n")
@@ -75,6 +76,6 @@
                  {:exit 0
                   :message (str "✓ Created project: " slug "\n"
                                 "  Path: " project-dir "\n"
-                                "  Config: .braids/project.edn\n"
+                                "  Config: .braids/config.edn\n"
                                 "  Iteration: 001 (planning)\n"
                                 "  Registry: updated")})))))))))

@@ -57,14 +57,14 @@
                                     {:registry-file @reg-file})
             project-dir (str @tmp-dir "/test-new-proj")]
         (should= 0 (:exit result))
-        (should (fs/exists? (str project-dir "/.braids/project.edn")))
+        (should (fs/exists? (str project-dir "/.braids/config.edn")))
         (should (fs/exists? (str project-dir "/.braids/iterations/001/ITERATION.md")))
         (should (fs/exists? (str project-dir "/AGENTS.md")))
         (should (fs/exists? (str project-dir "/.git")))
-        ;; Verify project.edn content
-        (let [config (edn/read-string (slurp (str project-dir "/.braids/project.edn")))]
+        ;; Verify config.edn content
+        (let [config (edn/read-string (slurp (str project-dir "/.braids/config.edn")))]
           (should= "Test New" (:name config))
-          (should= "Test goal" (:goal config))
+          (should-not-contain :goal config)
           (should= :active (:status config))
           (should= :full (:autonomy config)))
         ;; Verify registry was updated

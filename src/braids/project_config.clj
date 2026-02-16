@@ -22,10 +22,21 @@
    :channel nil
    :notifications default-notifications})
 
+(defn- normalize-mentions
+  "Normalize notification-mentions values: strings become single-element vectors."
+  [mentions]
+  (when mentions
+    (into {}
+      (map (fn [[k v]]
+             [k (if (string? v) [v] v)])
+           mentions))))
+
 (defn parse-project-config [edn-str]
-  (let [raw (edn/read-string edn-str)]
-    (merge defaults raw
-           {:notifications (merge default-notifications (:notifications raw))})))
+  (let [raw (edn/read-string edn-str)
+        mentions (normalize-mentions (:notification-mentions raw))]
+    (-> (merge defaults (dissoc raw :goal :guardrails :notification-mentions))
+        (assoc :notifications (merge default-notifications (:notifications raw)))
+        (cond-> mentions (assoc :notification-mentions mentions)))))
 
 (defn validate-project-config [{:keys [name status priority autonomy max-workers worker-timeout]}]
   (let [errors (atom [])]
