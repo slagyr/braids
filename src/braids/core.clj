@@ -1,5 +1,7 @@
 (ns braids.core
   (:require [clojure.string :as str]
+            [clojure.set :as set]
+            [cheshire.core :as json]
             [braids.ready :as ready]
             [braids.ready-io :as ready-io]
             [braids.orch :as orch]
@@ -14,6 +16,7 @@
    "status"    {:command :status    :doc "Show dashboard across all projects"}
    "ready"     {:command :ready     :doc "List beads ready to work"}
    "orch-tick" {:command :orch-tick :doc "Orchestrator tick: compute spawn decisions (JSON)"}
+   "spawn-msg" {:command :spawn-msg :doc "Emit spawn message for a bead (from orch-tick output)"}
    "help"      {:command :help      :doc "Show this help message"}})
 
 (defn help-text []
@@ -73,5 +76,20 @@
       :orch-tick (let [result (orch-io/gather-and-tick)]
                    (println (orch/format-tick-json result))
                    0)
+      :spawn-msg (let [args (:args (dispatch args))
+                       json? (some #{"--json"} args)
+                       input (first (remove #(str/starts-with? % "-") args))
+                       spawn (when input
+                               (json/parse-string input true))]
+                   (if spawn
+                     (let [spawn (-> spawn
+                                     (set/rename-keys {:worker_timeout :worker-timeout}))]
+                       (if json?
+                         (println (orch/format-spawn-msg-json spawn))
+                         (println (orch/spawn-msg spawn)))
+                       0)
+                     (do (println "Usage: braids spawn-msg '<spawn-json>' [--json]")
+                         (println "  Pass a spawn entry JSON (from orch-tick output) as argument.")
+                         1)))
       ;; Default for unimplemented commands
       (do (println (str "Command '" (name command) "' not yet implemented.")) 0))))

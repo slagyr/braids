@@ -79,6 +79,23 @@
           :else
           {:action "idle" :reason "no-ready-beads"})))))
 
+(defn spawn-msg
+  "Generate the spawn message string from a spawn entry (as returned by tick).
+   Format: Project/Bead/Iteration/Channel, one per line."
+  [{:keys [path bead iteration channel]}]
+  (str "Project: " path "\n"
+       "Bead: " bead "\n"
+       "Iteration: " iteration "\n"
+       "Channel: " channel))
+
+(defn format-spawn-msg-json
+  "Format spawn message as JSON with message, label, and worker_timeout fields."
+  [{:keys [label worker-timeout] :as spawn}]
+  (json/generate-string
+   {:message (spawn-msg spawn)
+    :label label
+    :worker_timeout worker-timeout}))
+
 (defn format-tick-json
   "Format tick result as JSON string."
   [result]
