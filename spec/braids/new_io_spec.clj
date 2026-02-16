@@ -41,19 +41,19 @@
       (fs/delete-tree @tmp-dir))
 
     (it "rejects missing required params"
-      (let [result (new-io/run-new ["--projects-home" @tmp-dir] {:registry-file @reg-file})]
+      (let [result (new-io/run-new ["--braids-home" @tmp-dir] {:registry-file @reg-file})]
         (should= 1 (:exit result))
         (should-contain "Errors" (:message result))))
 
     (it "rejects missing name"
-      (let [result (new-io/run-new ["test-proj" "--goal" "G" "--projects-home" @tmp-dir]
+      (let [result (new-io/run-new ["test-proj" "--goal" "G" "--braids-home" @tmp-dir]
                                     {:registry-file @reg-file})]
         (should= 1 (:exit result))
         (should-contain "Name is required" (:message result))))
 
     (it "creates a project successfully"
       (let [result (new-io/run-new ["test-new-proj" "--name" "Test New" "--goal" "Test goal"
-                                     "--projects-home" @tmp-dir]
+                                     "--braids-home" @tmp-dir]
                                     {:registry-file @reg-file})
             project-dir (str @tmp-dir "/test-new-proj")]
         (should= 0 (:exit result))
@@ -75,14 +75,14 @@
     (it "rejects duplicate directory"
       (fs/create-dirs (str @tmp-dir "/existing-proj"))
       (let [result (new-io/run-new ["existing-proj" "--name" "E" "--goal" "G"
-                                     "--projects-home" @tmp-dir]
+                                     "--braids-home" @tmp-dir]
                                     {:registry-file @reg-file})]
         (should= 1 (:exit result))
         (should-contain "already exists" (:message result))))
 
     (it "rejects duplicate slug in registry"
       (let [result (new-io/run-new ["test-new-proj" "--name" "Dup" "--goal" "G"
-                                     "--projects-home" (str @tmp-dir "/other")]
+                                     "--braids-home" (str @tmp-dir "/other")]
                                     {:registry-file @reg-file})]
         (should= 1 (:exit result))
         (should-contain "already exists in registry" (:message result))))))

@@ -33,40 +33,40 @@
   (describe "plan-init"
     (it "plans all actions for fresh install"
       (let [plan (init/plan-init {:braids-dir "/home/user/.openclaw/braids"
-                                   :projects-home "/home/user/Projects"
+                                   :braids-home "/home/user/Projects"
                                    :registry-path "/home/user/.openclaw/braids/registry.edn"
                                    :braids-dir-exists? false
-                                   :projects-home-exists? false})]
-        (should= [:create-braids-dir :create-projects-home :create-registry]
+                                   :braids-home-exists? false})]
+        (should= [:create-braids-dir :create-braids-home :create-registry]
                  (map :action plan))))
 
     (it "skips existing directories"
       (let [plan (init/plan-init {:braids-dir "/home/user/.openclaw/braids"
-                                   :projects-home "/home/user/Projects"
+                                   :braids-home "/home/user/Projects"
                                    :registry-path "/home/user/.openclaw/braids/registry.edn"
                                    :braids-dir-exists? true
-                                   :projects-home-exists? true})]
+                                   :braids-home-exists? true})]
         (should= [:create-registry]
                  (map :action plan))))
 
     (it "includes all necessary paths in plan"
       (let [plan (init/plan-init {:braids-dir "/tmp/braids"
-                                   :projects-home "/tmp/projects"
+                                   :braids-home "/tmp/projects"
                                    :registry-path "/tmp/braids/registry.edn"
                                    :braids-dir-exists? false
-                                   :projects-home-exists? false})
+                                   :braids-home-exists? false})
             actions (into {} (map (juxt :action identity) plan))]
         (should= "/tmp/braids" (:path (:create-braids-dir actions)))
-        (should= "/tmp/projects" (:path (:create-projects-home actions)))
+        (should= "/tmp/projects" (:path (:create-braids-home actions)))
         (should= "/tmp/braids/registry.edn" (:path (:create-registry actions))))))
 
   (describe "format-result"
     (it "formats success message"
       (let [msg (init/format-result {:success? true
                                       :braids-dir "/home/user/.openclaw/braids"
-                                      :projects-home "/home/user/Projects"
+                                      :braids-home "/home/user/Projects"
                                       :registry-path "/home/user/.openclaw/braids/registry.edn"
-                                      :actions-taken [:create-braids-dir :create-projects-home :create-registry]})]
+                                      :actions-taken [:create-braids-dir :create-braids-home :create-registry]})]
         (should-contain "✓ braids initialized" msg)
         (should-contain "/home/user/.openclaw/braids" msg)
         (should-contain "/home/user/Projects" msg)))

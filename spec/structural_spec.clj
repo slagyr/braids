@@ -5,9 +5,9 @@
             [clojure.string :as str]))
 
 (def home (System/getProperty "user.home"))
-(def projects-home (or (System/getenv "PROJECTS_HOME") (str home "/Projects")))
+(def braids-home (or (System/getenv "BRAIDS_HOME") (str home "/Projects")))
 (def skill-symlink (str home "/.openclaw/skills/braids"))
-(def skill-source (str projects-home "/projects-skill/braids"))
+(def skill-source (str braids-home "/projects-skill/braids"))
 ;; Use project-relative path for file checks (doesn't require OpenClaw installed)
 (def project-root (System/getProperty "user.dir"))
 (def skill-dir (str project-root "/braids"))
@@ -21,7 +21,7 @@
 
 (describe "Legacy tests/ directory"
   (it "tests/ directory does not exist (replaced by spec/ with speclj)"
-    (should-not (fs/exists? (str projects-home "/projects-skill/tests")))))
+    (should-not (fs/exists? (str braids-home "/projects-skill/tests")))))
 
 ;; ── Skill Symlink ──
 

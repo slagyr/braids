@@ -33,7 +33,7 @@
 (defn gather-and-tick
   "Full IO pipeline for orch tick: load everything, compute spawn decisions."
   ([] (gather-and-tick {}))
-  ([{:keys [projects-home state-home session-labels]
+  ([{:keys [braids-home state-home session-labels]
      :or {session-labels []}}]
    (let [home (or state-home (rio/resolve-state-home))
          reg (rio/load-registry home)

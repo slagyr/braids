@@ -8,16 +8,16 @@
             [braids.ready :as ready]
             [braids.registry :as registry]))
 
-(def default-projects-home
+(def default-braids-home
   (str (fs/expand-home "~/Projects")))
 
 (def default-state-home
   (str (fs/expand-home "~/.openclaw/braids")))
 
-(defn resolve-projects-home []
-  ;; Check for registry.edn or registry.md to find PROJECTS_HOME
+(defn resolve-braids-home []
+  ;; Check for registry.edn or registry.md to find BRAIDS_HOME
   ;; For now, use default
-  default-projects-home)
+  default-braids-home)
 
 (defn resolve-state-home []
   "Returns the directory for agent infrastructure files (registry, orchestrator state, STATUS).
@@ -30,10 +30,10 @@
     path))
 
 (defn load-registry
-  "Load registry from PROJECTS_HOME. Tries registry.edn first, falls back to registry.md."
-  [projects-home]
-  (let [edn-path (str projects-home "/registry.edn")
-        md-path (str projects-home "/registry.md")]
+  "Load registry from BRAIDS_HOME. Tries registry.edn first, falls back to registry.md."
+  [braids-home]
+  (let [edn-path (str braids-home "/registry.edn")
+        md-path (str braids-home "/registry.md")]
     (cond
       (fs/exists? edn-path)
       (registry/parse-registry (slurp edn-path))
@@ -93,7 +93,7 @@
 (defn gather-and-compute
   "Full IO pipeline: load registry, configs, beads, and compute ready list."
   ([] (gather-and-compute {}))
-  ([{:keys [projects-home state-home session-labels]
+  ([{:keys [braids-home state-home session-labels]
      :or {session-labels []}}]
    (let [home (or state-home (resolve-state-home))
          reg (load-registry home)

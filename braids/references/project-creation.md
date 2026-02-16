@@ -6,7 +6,7 @@ A conversational guide for agents creating a new project. Follow these steps whe
 
 - The braids skill is installed (`~/.openclaw/skills/braids/SKILL.md` exists)
 - `bd` and `git` are available
-- `PROJECTS_HOME` is set up (default: `~/Projects`)
+- `BRAIDS_HOME` is set up (default: `~/Projects`)
 - `~/.openclaw/braids/registry.md` exists
 
 ## Steps
@@ -50,8 +50,8 @@ Run these commands in sequence:
 
 ```bash
 SLUG="<slug>"
-PROJECTS_HOME="${PROJECTS_HOME:-$HOME/Projects}"
-PROJECT_DIR="$PROJECTS_HOME/$SLUG"
+BRAIDS_HOME="${BRAIDS_HOME:-$HOME/Projects}"
+PROJECT_DIR="$BRAIDS_HOME/$SLUG"
 
 # Verify slug isn't taken
 test ! -d "$PROJECT_DIR" || echo "ERROR: directory already exists"
@@ -174,5 +174,5 @@ Ask if anything needs adjustment. Make changes, amend the commit if needed.
 ## Notes
 
 - The `Channel` field can be left blank if the human doesn't want notifications yet — the system degrades gracefully.
-- If `PROJECTS_HOME` is non-standard, ask the human for the path.
+- If `BRAIDS_HOME` is non-standard, ask the human for the path.
 - Slug validation: must match `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` (lowercase, digits, hyphens, no leading/trailing hyphens).

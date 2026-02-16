@@ -34,14 +34,14 @@
 
   (describe "load-registry uses state-home"
 
-    (it "loads registry from state-home not projects-home"
+    (it "loads registry from state-home not braids-home"
       (let [state-home (str (fs/create-temp-dir {:prefix "state-home-test"}))
-            projects-home (str (fs/create-temp-dir {:prefix "projects-home-test"}))]
+            braids-home (str (fs/create-temp-dir {:prefix "braids-home-test"}))]
         ;; Put registry in state-home (new location)
         (spit (str state-home "/registry.edn")
                "{:projects [{:slug \"proj\" :status :active :priority :normal :path \"/tmp/proj\"}]}")
-        ;; Put a DIFFERENT registry in projects-home (old location) to prove we don't read it
-        (spit (str projects-home "/registry.edn")
+        ;; Put a DIFFERENT registry in braids-home (old location) to prove we don't read it
+        (spit (str braids-home "/registry.edn")
                "{:projects [{:slug \"old\" :status :active :priority :normal :path \"/tmp/old\"}]}")
         (let [result (rio/load-registry state-home)]
           (should= "proj" (-> result :projects first :slug)))))))

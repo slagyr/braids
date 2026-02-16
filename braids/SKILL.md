@@ -9,15 +9,15 @@ Manage long-running autonomous projects with iterative delivery cycles.
 
 ## First-Time Setup
 
-For initial installation (symlink, `bd`, `PROJECTS_HOME`, orchestrator cron), follow [`references/init.md`](references/init.md).
+For initial installation (symlink, `bd`, `BRAIDS_HOME`, orchestrator cron), follow [`references/init.md`](references/init.md).
 
 ## Path Convention
 
 **`~` always means the user's home directory** (e.g., `/Users/micah` or `/home/micah`), NOT the agent workspace directory. Never create project files inside `~/.openclaw/workspace/`.
 
-**`PROJECTS_HOME`** defines where all projects live. Default: `~/Projects`
+**`BRAIDS_HOME`** defines where all projects live. Default: `~/Projects`
 
-Resolve `PROJECTS_HOME` at the start of every session (default: `~/Projects`). All project repos live under `PROJECTS_HOME`. Agent infrastructure files (registry, orchestrator state, STATUS dashboard) live in `~/.openclaw/braids/`.
+Resolve `BRAIDS_HOME` at the start of every session (default: `~/Projects`). All project repos live under `BRAIDS_HOME`. Agent infrastructure files (registry, orchestrator state, STATUS dashboard) live in `~/.openclaw/braids/`.
 
 ## Directory Layout
 
@@ -27,7 +27,7 @@ Resolve `PROJECTS_HOME` at the start of every session (default: `~/Projects`). A
   STATUS.md                      # Auto-generated progress dashboard (see references/status-dashboard.md)
   .orchestrator-state.json       # Orchestrator idle/backoff state
 
-$PROJECTS_HOME/
+$BRAIDS_HOME/
   <project-slug>/                # Each project is its own git repo
     AGENTS.md                    # Universal entry point for any agent landing in the repo
     .project/
@@ -49,7 +49,7 @@ $PROJECTS_HOME/
 
 | Slug | Status | Priority | Path |
 |------|--------|----------|------|
-| my-project | active | normal | $PROJECTS_HOME/my-project |
+| my-project | active | normal | $BRAIDS_HOME/my-project |
 ```
 
 Statuses: `active`, `paused`, `blocked`. No "complete" — pause permanently instead.

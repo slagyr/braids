@@ -153,8 +153,8 @@ Workers with `ask-first` autonomy must confirm via Channel before executing. `fu
 ### 4.1 Path Convention
 `~` always resolves to the user's home directory, never the agent workspace. Project files are never created inside `~/.openclaw/workspace/`.
 
-### 4.2 PROJECTS_HOME Resolution
-`PROJECTS_HOME` defaults to `~/Projects`. Checked once per session. Agent infrastructure files (registry.md, .orchestrator-state.json, STATUS.md) live in `~/.openclaw/braids/`, not in `PROJECTS_HOME`.
+### 4.2 BRAIDS_HOME Resolution
+`BRAIDS_HOME` defaults to `~/Projects`. Checked once per session. Agent infrastructure files (registry.md, .orchestrator-state.json, STATUS.md) live in `~/.openclaw/braids/`, not in `BRAIDS_HOME`.
 
 ### 4.3 Single Source of Truth
 - What to work on → `bd ready` (not manual lists)

@@ -13,7 +13,7 @@
 
   (it "contains all required sections"
     (let [content (slurp init-ref)]
-      (doseq [section ["Install the Skill" "Verify beads" "Create PROJECTS_HOME"
+      (doseq [section ["Install the Skill" "Verify beads" "Create BRAIDS_HOME"
                         "Orchestrator Cron" "Verification"]]
         (should-contain section content))))
 

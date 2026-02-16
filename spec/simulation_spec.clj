@@ -245,8 +245,8 @@
 (describe "Scenario 15: Path Conventions"
   (it "~ resolves to user home"
     (should-contain "always resolves to the user's home directory" contracts))
-  (it "PROJECTS_HOME default ~/Projects"
-    (should (re-find #"PROJECTS_HOME.*defaults to.*~/Projects" contracts)))
+  (it "BRAIDS_HOME default ~/Projects"
+    (should (re-find #"BRAIDS_HOME.*defaults to.*~/Projects" contracts)))
   (it "project files not in workspace"
     (should-contain "never created inside" contracts)))
 

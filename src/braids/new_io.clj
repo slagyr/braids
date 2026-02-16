@@ -5,7 +5,7 @@
             [braids.new :as new]
             [braids.registry :as registry]))
 
-(def projects-home (or (System/getenv "PROJECTS_HOME")
+(def braids-home (or (System/getenv "BRAIDS_HOME")
                        (str (System/getProperty "user.home") "/Projects")))
 
 (def registry-path (str (System/getProperty "user.home") "/.openclaw/braids/registry.edn"))
@@ -27,7 +27,7 @@
             "--max-workers"    (recur (vec rest-args) (assoc result :max-workers (parse-long val)))
             "--worker-timeout" (recur (vec rest-args) (assoc result :worker-timeout (parse-long val)))
             "--guardrails"     (recur (vec rest-args) (update result :guardrails (fnil conj []) val))
-            "--projects-home"  (recur (vec rest-args) (assoc result :projects-home val))
+            "--braids-home"  (recur (vec rest-args) (assoc result :braids-home val))
             ;; skip unknown flags
             (recur (vec (rest remaining)) result)))))))
 
@@ -35,7 +35,7 @@
   ([args] (run-new args {}))
   ([args {:keys [registry-file]}]
    (let [params (parse-new-args args)
-         home (or (:projects-home params) projects-home)
+         home (or (:braids-home params) braids-home)
          slug (:slug params)
          reg-path (or registry-file registry-path)
          errors (new/validate-new-params params)]

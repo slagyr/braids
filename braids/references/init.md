@@ -32,7 +32,7 @@ bd --version
 
 If `bd` is not found, install it following the [beads documentation](https://github.com/nickthecook/bd). The braids skill requires `bd` for all task tracking.
 
-### 3. Create PROJECTS_HOME and State Directory
+### 3. Create BRAIDS_HOME and State Directory
 
 ```bash
 mkdir -p ~/Projects
@@ -46,7 +46,7 @@ cat > ~/.openclaw/braids/registry.md << 'EOF'
 EOF
 ```
 
-If using a custom `PROJECTS_HOME`, replace `~/Projects` with the desired path. The registry and orchestrator state always live in `~/.openclaw/braids/` regardless of `PROJECTS_HOME`.
+If using a custom `BRAIDS_HOME`, replace `~/Projects` with the desired path. The registry and orchestrator state always live in `~/.openclaw/braids/` regardless of `BRAIDS_HOME`.
 
 ### 4. Set Up Orchestrator Cron Job
 
