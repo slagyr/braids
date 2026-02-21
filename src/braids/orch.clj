@@ -36,7 +36,7 @@
   [registry configs iterations beads workers _notifications]
   (let [eligible (eligible-projects registry configs iterations)]
     (if (empty? eligible)
-      {:action "idle" :reason "no-active-iterations"}
+      {:action "idle" :reason "no-active-iterations" :disable-cron true}
       ;; Build spawn list: for each eligible project with capacity and beads
       (let [spawns (vec
                     (mapcat
@@ -74,10 +74,10 @@
 
           ;; Check: are all eligible projects at capacity with beads?
           any-at-capacity
-          {:action "idle" :reason "all-at-capacity"}
+          {:action "idle" :reason "all-at-capacity" :disable-cron true}
 
           :else
-          {:action "idle" :reason "no-ready-beads"})))))
+          {:action "idle" :reason "no-ready-beads" :disable-cron true})))))
 
 (defn spawn-msg
   "Generate the spawn message string from a spawn entry (as returned by tick).

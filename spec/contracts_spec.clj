@@ -28,7 +28,7 @@
 
   (context "File Format Subsections"
     (it "documents all file formats"
-      (doseq [fmt ["registry.edn" "config.edn" "iteration.edn" "STATUS.md" ".orchestrator-state.json"]]
+      (doseq [fmt ["registry.edn" "config.edn" "iteration.edn" "STATUS.md"]]
         (should-contain fmt content)))
     (it "does not document RETRO.md (removed feature)"
       (should-not (re-find #"### \d+\.\d+ RETRO\.md" content)))
@@ -54,8 +54,8 @@
       (should (re-find #"(?i)zombie" content)))
     (it "session label convention"
       (should-contain "project:<slug>:<bead-id>" content))
-    (it "frequency scaling backoff values"
-      (should (re-find #"30\s*min" content))))
+    (it "self-disable on idle documented"
+      (should (re-find #"(?i)self-disable|disable.cron" content))))
 
   (context "Worker Invariants"
     (it "claim before work"

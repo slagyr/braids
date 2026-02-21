@@ -25,7 +25,6 @@ Resolve `BRAIDS_HOME` at the start of every session (default: `~/Projects`). All
 ~/.openclaw/braids/
   registry.edn                   # Master list of all projects
   STATUS.md                      # Auto-generated progress dashboard (see references/status-dashboard.md)
-  .orchestrator-state.json       # Orchestrator idle/backoff state
 
 $BRAIDS_HOME/
   <project-slug>/                # Each project is its own git repo
@@ -309,16 +308,13 @@ The system uses a two-tier architecture:
 
 Workers are spawned with label `project:<slug>:<bead-id>` so the orchestrator can count active workers per project. The `MaxWorkers` cap applies to spawned workers — the orchestrator doesn't count toward it.
 
-### Orchestrator Frequency Scaling
+### Orchestrator Self-Disable
 
-The orchestrator automatically reduces polling frequency when there's no work to do. It writes `~/.openclaw/braids/.orchestrator-state.json` after each run, tracking idle state and reason. On subsequent runs, it checks this file and skips execution if the backoff interval hasn't elapsed:
+When the orchestrator finds no work (any idle reason), it **disables its own cron job** and stops running entirely. This ensures zero token usage during idle periods.
 
-- **No active iterations** → polls every 30 minutes (vs. default 5)
-- **No ready beads** → polls every 15 minutes
-- **All projects at capacity** → polls every 10 minutes
-- **Work available** → clears idle state, resumes normal 5-minute polling
+The `orch-tick` CLI output includes `"disable_cron": true` in idle results. When the orchestrator sees this, it deletes its cron job via `openclaw cron delete`.
 
-This saves significant token usage when projects are paused or between iterations.
+**Re-activation:** When starting a new iteration or unblocking work, manually re-create the orchestrator cron job (see § Cron Integration above). The channel agent should do this as part of iteration activation.
 
 ### Worker Error Handling
 

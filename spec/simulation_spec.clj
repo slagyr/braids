@@ -2,7 +2,8 @@
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
             [clojure.string :as str]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [braids.orch :as orch]))
 
 (def home (System/getProperty "user.home"))
 (def project-root (str (System/getProperty "user.dir")))
@@ -126,37 +127,34 @@
   (it "deliverable name matches convention"
     (should (re-find #"^[a-z0-9]{3}-[a-z0-9-]+\.md$" "aaa-first-test-bead.md"))))
 
-;; ── Scenario 4: Orchestrator Frequency Scaling ──
+;; ── Scenario 4: Orchestrator Self-Disable ──
 
-(describe "Scenario 4: Orchestrator Frequency Scaling"
-  (it "state: idleSince null after spawn"
-    (let [state-file (str test-tmp "/.orchestrator-state.json")]
-      (spit state-file "{\"idleSince\":null,\"idleReason\":null,\"lastRunAt\":\"2026-02-13T12:00:00Z\"}")
-      (should-be-nil (get (json/parse-string (slurp state-file)) "idleSince"))))
+(describe "Scenario 4: Orchestrator Self-Disable"
+  (it "tick returns disable-cron true when idle with no-active-iterations"
+    (let [result (orch/tick {:projects []} {} {} {} {} {})]
+      (should= true (:disable-cron result))))
 
-  (it "state: idleReason null after spawn"
-    (let [state-file (str test-tmp "/.orchestrator-state.json")]
-      (should-be-nil (get (json/parse-string (slurp state-file)) "idleReason"))))
+  (it "tick returns disable-cron true when idle with no-ready-beads"
+    (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+          configs {"proj" {:name "Proj" :status :active :max-workers 1 :channel "123"}}
+          iterations {"proj" "008"}
+          result (orch/tick registry configs iterations {"proj" []} {} {})]
+      (should= true (:disable-cron result))))
 
-  (it "state: lastRunAt is set"
-    (let [state-file (str test-tmp "/.orchestrator-state.json")]
-      (should (get (json/parse-string (slurp state-file)) "lastRunAt"))))
+  (it "tick does not include disable-cron when spawning"
+    (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+          configs {"proj" {:name "Proj" :status :active :max-workers 1 :channel "123"}}
+          iterations {"proj" "008"}
+          beads {"proj" [{:id "proj-abc" :title "Do stuff" :priority "P1"}]}
+          result (orch/tick registry configs iterations beads {} {})]
+      (should-not-contain :disable-cron result)))
 
-  (it "idle state with no-active-iterations"
-    (let [state-file (str test-tmp "/.orchestrator-state.json")]
-      (spit state-file "{\"idleSince\":\"2026-02-13T12:05:00Z\",\"idleReason\":\"no-active-iterations\",\"lastRunAt\":\"2026-02-13T12:05:00Z\"}")
-      (should= "no-active-iterations" (get (json/parse-string (slurp state-file)) "idleReason"))))
-
-  (it "no-active-iterations backoff 30min"
-    (should (re-find #"no-active-iterations.*30" contracts)))
-  (it "no-ready-beads backoff 15min"
-    (should (re-find #"no-ready-beads.*15" contracts)))
-  (it "all-at-capacity backoff 10min"
-    (should (re-find #"all-at-capacity.*10" contracts)))
-
-  (it "all idle reasons documented"
+  (it "all idle reasons documented in CONTRACTS.md"
     (doseq [reason ["no-active-iterations" "no-ready-beads" "all-at-capacity"]]
-      (should-contain reason contracts))))
+      (should-contain reason contracts)))
+
+  (it "self-disable documented in CONTRACTS.md"
+    (should (re-find #"(?i)self-disable|disable.cron" contracts))))
 
 ;; ── Scenario 5: Worker Context Loading ──
 

@@ -3,7 +3,8 @@
             [babashka.fs :as fs]
             [babashka.process :as p]
             [clojure.string :as str]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [braids.orch :as orch]))
 
 (def home (System/getProperty "user.home"))
 (def braids-home (or (System/getenv "BRAIDS_HOME") (str home "/Projects")))
@@ -164,15 +165,8 @@
                 age-s (/ (- now mtime) 1000)]
             (should (< age-s 86400))))))
 
-    (it "orchestrator state is valid (skipped if no registry)"
+    (it "orchestrator self-disable: orch-tick idle results include disable-cron (skipped if no registry)"
       (when (fs/exists? registry)
-        (let [state-file (str state-home "/.orchestrator-state.json")]
-          (should (fs/exists? state-file))
-          (let [parsed (json/parse-string (slurp state-file))]
-            (should parsed)
-            (should (contains? parsed "lastRunAt"))
-            (should (contains? parsed "idleSince"))
-            (should (contains? parsed "idleReason"))
-            (let [reason (get parsed "idleReason")]
-              (should (or (nil? reason)
-                          (contains? #{"no-active-iterations" "no-ready-beads" "all-at-capacity"} reason))))))))))
+        ;; Self-disable replaced .orchestrator-state.json — verify the tick contract
+        (let [result (orch/tick {:projects []} {} {} {} {} {})]
+          (should= true (:disable-cron result)))))))

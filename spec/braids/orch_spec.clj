@@ -105,6 +105,37 @@
             result (orch/tick registry configs iterations beads workers {})]
         (should= 1800 (:worker-timeout (first (:spawns result))))))
 
+    (it "returns disable-cron true when idle with no-active-iterations"
+      (let [result (orch/tick {:projects []} {} {} {} {} {})]
+        (should= true (:disable-cron result))))
+
+    (it "returns disable-cron true when idle with no-ready-beads"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:name "Proj" :status :active :max-workers 1 :channel "123"}}
+            iterations {"proj" "008"}
+            beads {"proj" []}
+            workers {}
+            result (orch/tick registry configs iterations beads workers {})]
+        (should= true (:disable-cron result))))
+
+    (it "returns disable-cron true when idle with all-at-capacity"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:name "Proj" :status :active :max-workers 1 :channel "123"}}
+            iterations {"proj" "008"}
+            beads {"proj" [{:id "proj-abc" :title "Do stuff" :priority "P1"}]}
+            workers {"proj" 1}
+            result (orch/tick registry configs iterations beads workers {})]
+        (should= true (:disable-cron result))))
+
+    (it "does not include disable-cron when spawning work"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:name "Proj" :status :active :max-workers 1 :channel "123"}}
+            iterations {"proj" "008"}
+            beads {"proj" [{:id "proj-abc" :title "Do stuff" :priority "P1"}]}
+            workers {}
+            result (orch/tick registry configs iterations beads workers {})]
+        (should-not-contain :disable-cron result)))
+
     (it "includes notification-mentions in spawn when present"
       (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
             configs {"proj" {:name "Proj" :status :active :max-workers 1 :channel "123"

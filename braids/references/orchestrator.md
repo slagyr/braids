@@ -81,10 +81,20 @@ Key spawn parameters:
 
 The spawn message is intentionally minimal. The worker reads `AGENTS.md` in the project directory for full onboarding.
 
-### 5. Generate Status Dashboard
+### 5. Self-Disable on Idle
+
+If the tick result includes `"disable_cron": true`, the orchestrator should disable its own cron job:
+
+1. Run `openclaw cron delete <cron-id>` to remove the orchestrator cron job
+2. Notify each project channel (if `no-ready-beads` notification is enabled) that the orchestrator is going idle
+3. The orchestrator will not run again until manually re-activated (e.g., when a new iteration is started)
+
+This ensures **zero token usage** during idle periods. To re-activate, set up the cron job again (see SKILL.md § Cron Integration).
+
+### 6. Generate Status Dashboard
 
 Generate `~/.openclaw/braids/STATUS.md` following `references/status-dashboard.md`.
 
-### 6. Done
+### 7. Done
 
 Do not do any bead work yourself. Just spawn and exit.
