@@ -1,4 +1,4 @@
 {:number "014"
  :status :active
- :stories ["projects-skill-w57" "projects-skill-965" "projects-skill-8mb" "projects-skill-0m5" "projects-skill-8xm" "projects-skill-j9i" "projects-skill-4b4" "projects-skill-261" "projects-skill-ryb" "projects-skill-rjp"]
- :notes "Cleanup, polish, and quality improvements: remove dashboard generation, pretty-print EDN files, clean up global braids directory, remove migrate command, fix iteration display bug, add integration tests, establish quality standards, consolidate list/status commands, and colorize help/ready output."}
+ :stories ["projects-skill-w57" "projects-skill-965" "projects-skill-8mb" "projects-skill-0m5" "projects-skill-8xm" "projects-skill-j9i" "projects-skill-4b4" "projects-skill-261" "projects-skill-ryb" "projects-skill-rjp" "projects-skill-oc3" "projects-skill-ttx"]
+ :notes "Cleanup, polish, and quality improvements: remove dashboard generation, pretty-print EDN files, clean up global braids directory, remove migrate command, fix iteration display bug, add integration tests, establish quality standards, consolidate list/status commands, colorize help/ready output, fix Homebrew path resolution, and fix orchestrator spawning logic."}
