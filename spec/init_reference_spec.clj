@@ -23,6 +23,19 @@
   (it "references orchestrator.md"
     (should-contain "orchestrator.md" (slurp init-ref)))
 
+  (it "references registry.edn (not registry.md)"
+    (let [content (slurp init-ref)]
+      (should-contain "registry.edn" content)
+      (should-not (str/includes? content "registry.md"))))
+
+  (it "uses EDN {:projects []} format for registry"
+    (should-contain "{:projects []}" (slurp init-ref)))
+
+  (it "cron message says 'braids orchestrator' not 'projects orchestrator'"
+    (let [content (slurp init-ref)]
+      (should-contain "braids orchestrator" content)
+      (should-not (str/includes? content "projects orchestrator"))))
+
   (it "SKILL.md references init.md"
     (should-contain "init.md" (slurp (str skill-dir "/SKILL.md"))))
 

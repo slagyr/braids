@@ -38,11 +38,8 @@ If `bd` is not found, install it following the [beads documentation](https://git
 mkdir -p ~/Projects
 mkdir -p ~/.openclaw/braids
 
-cat > ~/.openclaw/braids/registry.md << 'EOF'
-# Projects
-
-| Slug | Status | Priority | Path |
-|------|--------|----------|------|
+cat > ~/.openclaw/braids/registry.edn << 'EOF'
+{:projects []}
 EOF
 ```
 
@@ -57,7 +54,7 @@ Create the cron job that drives autonomous project work:
   "schedule": { "kind": "every", "everyMs": 300000 },
   "payload": {
     "kind": "agentTurn",
-    "message": "You are the projects orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md"
+    "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md"
   },
   "sessionTarget": "isolated"
 }
@@ -75,9 +72,9 @@ After setup, confirm everything is in place:
 
 - [ ] `~/.openclaw/skills/braids/SKILL.md` exists (symlink works)
 - [ ] `bd --version` succeeds
-- [ ] `~/.openclaw/braids/registry.md` exists with the header row
+- [ ] `~/.openclaw/braids/registry.edn` exists with `{:projects []}` content
 - [ ] Orchestrator cron job is registered
-- [ ] (If created) first project appears in `registry.md`
+- [ ] (If created) first project appears in `registry.edn`
 
 ## What Happens Next
 
