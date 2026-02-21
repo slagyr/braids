@@ -3,6 +3,7 @@ class Braids < Formula
   homepage "https://github.com/slagyr/braids"
   url "https://github.com/slagyr/braids.git", tag: "v0.1.0"
   license "MIT"
+  head "https://github.com/slagyr/braids.git", branch: "main"
 
   depends_on "borkdude/brew/babashka"
   depends_on "beads"

@@ -24,7 +24,7 @@
     (should-contain "set -euo pipefail" install-content))
 
   (it "clones the correct repo"
-    (should-contain "slagyr/project-skill" install-content))
+    (should-contain "slagyr/braids" install-content))
 
   (it "creates the skill symlink"
     (should-contain ".openclaw/skills/braids" install-content))

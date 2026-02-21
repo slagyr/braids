@@ -20,8 +20,12 @@
   (it "has a description"
     (should-contain "desc " formula-content))
 
-  (it "references the project-skill repo"
-    (should-contain "slagyr/project-skill" formula-content))
+  (it "references the braids repo"
+    (should-contain "slagyr/braids" formula-content))
+
+  (it "supports HEAD install from main branch"
+    (should-contain "head " formula-content)
+    (should-contain "branch: \"main\"" formula-content))
 
   (it "depends on babashka"
     (should-contain "borkdude/brew/babashka" formula-content))
