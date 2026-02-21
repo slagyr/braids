@@ -1,6 +1,7 @@
 (ns braids.registry
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [braids.edn-format :refer [edn-format]]))
 
 (def valid-statuses #{:active :paused :blocked})
 (def valid-priorities #{:high :normal :low})
@@ -25,4 +26,4 @@
     @errors))
 
 (defn registry->edn-string [registry]
-  (pr-str registry))
+  (edn-format registry))

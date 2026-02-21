@@ -1,6 +1,7 @@
 (ns braids.config
   "Pure functions for braids config.edn management."
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [braids.edn-format :refer [edn-format]]))
 
 (def defaults
   {:braids-home "~/Projects"})
@@ -13,7 +14,7 @@
 (defn serialize-config
   "Serialize config map to EDN string."
   [config]
-  (pr-str config))
+  (edn-format config))
 
 (defn config-get
   "Get a config value by key string. Returns {:ok value} or {:error msg}."

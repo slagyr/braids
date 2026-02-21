@@ -3,6 +3,7 @@
             [babashka.fs :as fs]
             [babashka.process :as proc]
             [braids.config-io :as config-io]
+            [braids.edn-format :refer [edn-format]]
             [braids.new :as new]
             [braids.registry :as registry]))
 
@@ -58,10 +59,10 @@
                  ;; Create directories
                  (fs/create-dirs (str project-dir "/.braids/iterations/001"))
                  ;; Write config.edn
-                 (spit (str project-dir "/.braids/config.edn") (pr-str config))
+                 (spit (str project-dir "/.braids/config.edn") (edn-format config))
                  ;; Write iteration.edn
                  (spit (str project-dir "/.braids/iterations/001/iteration.edn")
-                       (pr-str {:number 1 :status :planning :stories [] :notes []}))
+                       (edn-format {:number 1 :status :planning :stories [] :notes []}))
                  ;; Write AGENTS.md
                  (spit (str project-dir "/AGENTS.md") agents-md)
                  ;; Init git
@@ -69,7 +70,7 @@
                  ;; Init bd
                  (proc/shell {:dir project-dir} "bd" "init" "-q")
                  ;; Save registry
-                 (spit reg-path (pr-str new-registry))
+                 (spit reg-path (edn-format new-registry))
                  ;; Initial commit
                  (proc/shell {:dir project-dir} "git" "add" "-A")
                  (proc/shell {:dir project-dir} "git" "commit" "-q" "-m" (str "Initialize project: " slug))

@@ -1,5 +1,6 @@
 (ns braids.project-config
-  (:require [clojure.edn :as edn]))
+  (:require [clojure.edn :as edn]
+            [braids.edn-format :refer [edn-format]]))
 
 (def valid-statuses #{:active :paused :blocked})
 (def valid-priorities #{:high :normal :low})
@@ -55,4 +56,4 @@
     @errors))
 
 (defn project-config->edn-string [config]
-  (pr-str config))
+  (edn-format config))

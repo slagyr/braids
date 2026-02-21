@@ -1,7 +1,8 @@
 (ns braids.iteration
   (:require [clojure.string :as str]
             [clojure.edn :as edn]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [braids.edn-format :refer [edn-format]]))
 
 (def iteration-defaults
   {:status :planning
@@ -30,7 +31,7 @@
 (defn iteration->edn-string
   "Serialize iteration data to an EDN string."
   [data]
-  (pr-str (select-keys data [:number :status :stories :guardrails :notes])))
+  (edn-format (select-keys data [:number :status :stories :guardrails :notes])))
 
 (defn story-ids
   "Extract story ids from iteration data."

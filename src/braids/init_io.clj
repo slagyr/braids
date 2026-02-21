@@ -3,6 +3,7 @@
             [babashka.process :as proc]
             [braids.config :as config]
             [braids.config-io :as config-io]
+            [braids.edn-format :refer [edn-format]]
             [braids.init :as init]
             [braids.registry :as registry]))
 
@@ -55,7 +56,7 @@
            (case action
              :create-braids-dir (do (fs/create-dirs path) (swap! actions-taken conj action))
              :create-braids-home (do (fs/create-dirs path) (swap! actions-taken conj action))
-             :create-registry (do (spit path (pr-str {:projects []}))
+             :create-registry (do (spit path (edn-format {:projects []}))
                                   (swap! actions-taken conj action))
              :save-config (do (config-io/save-config! {:braids-home braids-home} path)
                               (swap! actions-taken conj action))))
