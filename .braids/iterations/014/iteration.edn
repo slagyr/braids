@@ -1,4 +1,4 @@
 {:number "014"
  :status :active
- :stories ["projects-skill-w57" "projects-skill-965" "projects-skill-8mb"]
- :notes "Cleanup and polish: remove dashboard generation, pretty-print EDN files, clean up global braids directory."}
+ :stories ["projects-skill-w57" "projects-skill-965" "projects-skill-8mb" "projects-skill-0m5" "projects-skill-8xm" "projects-skill-j9i" "projects-skill-4b4"]
+ :notes "Cleanup, polish, and quality improvements: remove dashboard generation, pretty-print EDN files, clean up global braids directory, remove migrate command, fix iteration display bug, add integration tests, and establish quality standards."}
