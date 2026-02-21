@@ -72,6 +72,11 @@ Run `bd ready` in the project directory. If no open beads remain for the iterati
 - Update iteration.edn status to `:complete`
 - If notifications `iteration-complete` is `on`, notify the Channel
 - Commit: `git add -A && git commit -m "Complete iteration <N>"`
+- **Update AGENDA.md:** Append a summary to `~/.openclaw/workspace/AGENDA.md` under the relevant project in "Active Projects". Update the status line to reflect the completed iteration and what's next. Example:
+  ```
+  - **Last completed:** Iteration N — [brief summary of what was done]
+  - **Status:** 🟢 Iteration N wrapped up. Next iteration not yet started.
+  ```
 
 ## Error Handling & Escalation
 
