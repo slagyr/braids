@@ -81,11 +81,11 @@ No additional processing needed — the JSON entries map 1:1 to `sessions_spawn`
 
 If the result includes `"disable_cron": true`, disable the orchestrator cron job:
 
-1. Run `openclaw cron delete <cron-id>` to remove the orchestrator cron job
+1. Look up the cron job ID: `openclaw cron list --json`, find the job named `braids-orchestrator`, then run `openclaw cron disable <job-id>` (keeps the job definition intact)
 2. Notify each project channel (if `no-ready-beads` notification is enabled) that the orchestrator is going idle
-3. The orchestrator will not run again until manually re-activated
+3. The orchestrator will not run again until re-enabled
 
-This ensures **zero token usage** during idle periods. To re-activate, set up the cron job again (see SKILL.md § Cron Integration).
+This ensures **zero token usage** during idle periods. To re-activate: `openclaw cron enable <job-id>` (look up the ID via `openclaw cron list --json`).
 
 ### 6. Done
 
@@ -98,11 +98,8 @@ Do not do any bead work yourself. Just spawn and exit.
 If this cron session hits "context overflow", the accumulated transcript is too large. Fix:
 
 ```bash
-# Find the cron job id
-openclaw cron list --json
-
-# Delete and recreate with a fresh session
-openclaw cron rm <job-id>
+# Delete the stale job and recreate with a fresh session
+openclaw cron rm braids-orchestrator
 openclaw cron add \
   --name "braids-orchestrator" \
   --every 5m \

@@ -248,12 +248,16 @@ Set up a recurring cron job for the orchestrator:
 
 ```json
 {
+  "name": "braids-orchestrator",
+  "enabled": true,
   "schedule": { "kind": "every", "everyMs": 300000 },
   "payload": {
     "kind": "agentTurn",
-    "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md"
+    "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md",
+    "timeoutSeconds": 300
   },
-  "sessionTarget": "isolated"
+  "sessionTarget": "isolated",
+  "delivery": "none"
 }
 ```
 
@@ -311,9 +315,9 @@ Workers are spawned with label `project:<slug>:<bead-id>` so the orchestrator ca
 
 When the orchestrator finds no work (any idle reason), it **disables its own cron job** and stops running entirely. This ensures zero token usage during idle periods.
 
-The `orch-tick` CLI output includes `"disable_cron": true` in idle results. When the orchestrator sees this, it deletes its cron job via `openclaw cron delete`.
+The `orch-tick` CLI output includes `"disable_cron": true` in idle results. When the orchestrator sees this, it disables the cron job via `openclaw cron disable <job-id>` (look up the ID from `openclaw cron list --json` by name `braids-orchestrator`). The job definition is preserved — no need to recreate it.
 
-**Re-activation:** When starting a new iteration or unblocking work, manually re-create the orchestrator cron job (see § Cron Integration above). The channel agent should do this as part of iteration activation.
+**Re-activation:** When starting a new iteration or unblocking work, re-enable the cron job: `openclaw cron enable <job-id>`. The channel agent should do this as part of iteration activation.
 
 ### Worker Error Handling
 

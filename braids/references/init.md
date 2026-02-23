@@ -51,16 +51,20 @@ Create the cron job that drives autonomous project work:
 
 ```json
 {
+  "name": "braids-orchestrator",
+  "enabled": true,
   "schedule": { "kind": "every", "everyMs": 300000 },
   "payload": {
     "kind": "agentTurn",
-    "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md"
+    "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md",
+    "timeoutSeconds": 300
   },
-  "sessionTarget": "isolated"
+  "sessionTarget": "isolated",
+  "delivery": "none"
 }
 ```
 
-Use the OpenClaw cron tool to register this. The orchestrator runs every 5 minutes, checks for active projects, and spawns workers as needed. It automatically scales back polling when there's no work (see SKILL.md §Orchestrator Frequency Scaling).
+Use the OpenClaw cron tool to register this (or CLI: `openclaw cron add --name braids-orchestrator --every 5m --session isolated --message "..." --timeout-seconds 300 --no-deliver`). The orchestrator runs every 5 minutes, checks for active projects, and spawns workers as needed. It automatically scales back polling when there's no work (see SKILL.md §Orchestrator Frequency Scaling).
 
 ### 5. (Optional) Create Your First Project
 
