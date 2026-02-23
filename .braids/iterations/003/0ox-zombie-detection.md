@@ -1,4 +1,4 @@
-# Orchestrator should detect and clean up zombie worker sessions (projects-skill-0ox)
+# Orchestrator should detect and clean up zombie worker sessions (braids-0ox)
 
 ## Summary
 

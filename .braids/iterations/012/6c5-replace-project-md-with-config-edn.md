@@ -1,4 +1,4 @@
-# Replace PROJECT.md with .braids/config.edn (projects-skill-6c5)
+# Replace PROJECT.md with .braids/config.edn (braids-6c5)
 
 ## Summary
 

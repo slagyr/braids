@@ -1,4 +1,4 @@
-# Set Up Cron Job for Autonomous Work Sessions (projects-skill-3w7)
+# Set Up Cron Job for Autonomous Work Sessions (braids-3w7)
 
 ## Summary
 A recurring cron job (`523f5816-fd79-42d3-bd2a-75e0907f320e`, label: `projects-worker`) is configured and operational. It triggers isolated agent sessions that autonomously work on active projects.

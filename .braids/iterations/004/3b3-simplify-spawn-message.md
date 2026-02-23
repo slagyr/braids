@@ -1,4 +1,4 @@
-# Simplify Worker Spawn Message (projects-skill-3b3)
+# Simplify Worker Spawn Message (braids-3b3)
 
 ## Summary
 Simplified the orchestrator's worker spawn message from 5 fields to 4, removing the bead title and the explicit `worker.md` path. Workers now discover their workflow via the project's `AGENTS.md` (established in 9xp).

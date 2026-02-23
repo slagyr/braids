@@ -1,4 +1,4 @@
-# Rename .project directory to .braids (projects-skill-ufr)
+# Rename .project directory to .braids (braids-ufr)
 
 ## Summary
 

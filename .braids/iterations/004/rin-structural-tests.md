@@ -1,4 +1,4 @@
-# Structural Test Script (projects-skill-rin)
+# Structural Test Script (braids-rin)
 
 ## Summary
 

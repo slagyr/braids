@@ -1,4 +1,4 @@
-# Orchestrator Self-Disables When Idle (projects-skill-a0e)
+# Orchestrator Self-Disables When Idle (braids-a0e)
 
 ## Summary
 

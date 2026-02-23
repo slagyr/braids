@@ -1,4 +1,4 @@
-# Add MaxAgents to PROJECT.md, Cron Respects Running Agent Count (projects-skill-jmb)
+# Add MaxAgents to PROJECT.md, Cron Respects Running Agent Count (braids-jmb)
 
 ## Summary
 Updated SKILL.md worker workflow to check MaxAgents before starting work on a project. The worker checks running sessions for sub-agents with the `project:<slug>` label prefix and skips projects that are already at capacity.

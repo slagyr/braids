@@ -1,4 +1,4 @@
-# Delete tests/ directory — replaced by spec/ with speclj (projects-skill-top)
+# Delete tests/ directory — replaced by spec/ with speclj (braids-top)
 
 ## Summary
 

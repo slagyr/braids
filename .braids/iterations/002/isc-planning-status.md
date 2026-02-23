@@ -1,4 +1,4 @@
-# Add 'planning' status for iterations (projects-skill-isc)
+# Add 'planning' status for iterations (braids-isc)
 
 ## Summary
 Added `planning` as an iteration status in SKILL.md, with documentation explaining that workers must only work `active` iterations.

@@ -1,4 +1,4 @@
-# Update Skill: No Work During Iteration Meetings (projects-skill-7f7)
+# Update Skill: No Work During Iteration Meetings (braids-7f7)
 
 ## Summary
 Updated SKILL.md to clarify that during check-in meetings, the agent should only create beads and plan iterations — not perform project work. Work happens between meetings via the autonomous cron worker.

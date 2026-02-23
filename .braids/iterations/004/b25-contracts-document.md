@@ -1,4 +1,4 @@
-# CONTRACTS.md: Document Invariants (projects-skill-b25)
+# CONTRACTS.md: Document Invariants (braids-b25)
 
 ## Summary
 

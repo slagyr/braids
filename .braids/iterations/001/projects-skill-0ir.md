@@ -1,4 +1,4 @@
-# Define and Document the Check-in/Review Workflow (projects-skill-0ir)
+# Define and Document the Check-in/Review Workflow (braids-0ir)
 
 ## Summary
 Documented the check-in/review workflow in SKILL.md. The workflow covers how reviews are triggered, what gets presented, and how iteration transitions happen.

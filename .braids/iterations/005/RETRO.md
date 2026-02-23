@@ -6,9 +6,9 @@ Iteration 005 focused on testing maturity and iteration lifecycle reliability. M
 ## Completed
 | Bead | Title | Deliverable |
 |------|-------|-------------|
-| projects-skill-9zf | Migrate all tests to speclj + Babashka | 9zf-migrate-tests-to-speclj.md |
-| projects-skill-um4 | Prevent duplicate iteration-complete notifications | um4-prevent-duplicate-iteration-complete.md |
-| projects-skill-rbl | Workers must generate RETRO.md before marking iteration complete | rbl-retro-generation-enforcement.md |
+| braids-9zf | Migrate all tests to speclj + Babashka | 9zf-migrate-tests-to-speclj.md |
+| braids-um4 | Prevent duplicate iteration-complete notifications | um4-prevent-duplicate-iteration-complete.md |
+| braids-rbl | Workers must generate RETRO.md before marking iteration complete | rbl-retro-generation-enforcement.md |
 
 ## Key Decisions
 - `.completing` lock file chosen over ITERATION.md status check for race condition prevention — simpler and atomic

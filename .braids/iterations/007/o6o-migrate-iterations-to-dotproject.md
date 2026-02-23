@@ -1,4 +1,4 @@
-# Migrate iterations/ to .braids/iterations/ (projects-skill-o6o)
+# Migrate iterations/ to .braids/iterations/ (braids-o6o)
 
 ## Summary
 

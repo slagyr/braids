@@ -1,4 +1,4 @@
-# Move PROJECT.md and iterations/ into .braids/ directory (projects-skill-ly3)
+# Move PROJECT.md and iterations/ into .braids/ directory (braids-ly3)
 
 ## Summary
 

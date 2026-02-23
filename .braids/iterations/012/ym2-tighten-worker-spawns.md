@@ -1,4 +1,4 @@
-# Tighten Worker Spawns to Prevent Zombies (projects-skill-ym2)
+# Tighten Worker Spawns to Prevent Zombies (braids-ym2)
 
 ## Changes
 

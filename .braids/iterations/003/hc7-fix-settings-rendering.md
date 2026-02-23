@@ -1,4 +1,4 @@
-# Fix PROJECT.md settings rendering (projects-skill-hc7)
+# Fix PROJECT.md settings rendering (braids-hc7)
 
 ## Summary
 Converted PROJECT.md and ITERATION.md settings from plain `Key: value` lines to markdown bullet lists (`- **Key:** value`) so they render correctly as separate lines instead of collapsing into a single paragraph.

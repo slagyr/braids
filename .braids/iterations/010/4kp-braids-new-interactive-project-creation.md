@@ -1,4 +1,4 @@
-# Deliverable: braids new — interactive project creation (projects-skill-4kp)
+# Deliverable: braids new — interactive project creation (braids-4kp)
 
 ## Summary
 

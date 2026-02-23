@@ -1,4 +1,4 @@
-# Migrate Existing Projects to New Format (projects-skill-ya0)
+# Migrate Existing Projects to New Format (braids-ya0)
 
 ## Summary
 

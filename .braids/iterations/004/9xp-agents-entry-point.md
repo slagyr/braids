@@ -1,4 +1,4 @@
-# AGENTS.md as Universal Entry Point (projects-skill-9xp)
+# AGENTS.md as Universal Entry Point (braids-9xp)
 
 ## Summary
 Redesigned project-level `AGENTS.md` to serve as a universal entry point for any agent landing in a project repo, whether spawned by the orchestrator or arriving independently.

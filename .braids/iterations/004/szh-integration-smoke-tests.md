@@ -20,7 +20,7 @@ Added `tests/test_integration_smoke.sh` — end-to-end validation that checks li
 ## Design Decisions
 
 - **Tolerant of old data:** Beads not found in `bd` for completed iterations are treated as "archived/pruned" (pass), since older iterations had their beads removed from the tracker.
-- **Both naming conventions:** Handles full bead-id filenames (`projects-skill-fvd.md`, iter 001 style) and suffix-style (`fvd-description.md`, iter 002+ style).
+- **Both naming conventions:** Handles full bead-id filenames (`braids-fvd.md`, iter 001 style) and suffix-style (`fvd-description.md`, iter 002+ style).
 - **Real findings over green:** The test intentionally surfaces pre-existing inconsistencies (missing RETROs for old iterations, orphaned deliverables from migration periods, etc.) rather than suppressing them.
 
 ## Current Results

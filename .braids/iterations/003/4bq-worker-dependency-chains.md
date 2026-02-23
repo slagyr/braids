@@ -1,4 +1,4 @@
-# Worker should explicitly handle bead dependency chains (projects-skill-4bq)
+# Worker should explicitly handle bead dependency chains (braids-4bq)
 
 ## Summary
 Added an explicit dependency verification step to the worker workflow so workers check that all dependencies are resolved before starting work on a bead.

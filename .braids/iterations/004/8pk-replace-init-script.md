@@ -1,6 +1,6 @@
 # Replace projects-init shell script with interactive project-creation.md reference doc
 
-**Bead:** projects-skill-8pk
+**Bead:** braids-8pk
 **Status:** Complete
 
 ## Summary

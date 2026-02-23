@@ -1,4 +1,4 @@
-# braids migrate: migrate existing installs (projects-skill-1qc)
+# braids migrate: migrate existing installs (braids-1qc)
 
 ## Summary
 

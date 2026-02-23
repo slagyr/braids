@@ -1,4 +1,4 @@
-# Standardize terminology: use 'worker' not 'agent' (projects-skill-nkx)
+# Standardize terminology: use 'worker' not 'agent' (braids-nkx)
 
 ## Summary
 Replaced all references to "agent" (when referring to spawned sessions doing project work) with "worker" throughout SKILL.md and PROJECT.md.

@@ -1,4 +1,4 @@
-# Add Progress Dashboard: Auto-generate STATUS.md (projects-skill-1xn)
+# Add Progress Dashboard: Auto-generate STATUS.md (braids-1xn)
 
 ## Summary
 

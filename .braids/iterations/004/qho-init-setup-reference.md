@@ -1,4 +1,4 @@
-# INIT.md: One-Time Skill Setup Reference (projects-skill-qho)
+# INIT.md: One-Time Skill Setup Reference (braids-qho)
 
 ## Summary
 

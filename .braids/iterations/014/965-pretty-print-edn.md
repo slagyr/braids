@@ -1,4 +1,4 @@
-# Pretty-print EDN files (projects-skill-965)
+# Pretty-print EDN files (braids-965)
 
 ## Summary
 

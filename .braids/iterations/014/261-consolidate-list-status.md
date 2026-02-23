@@ -1,6 +1,6 @@
 # Consolidate list and status into enhanced braids list
 
-**Bead:** projects-skill-261
+**Bead:** braids-261
 
 ## Summary
 

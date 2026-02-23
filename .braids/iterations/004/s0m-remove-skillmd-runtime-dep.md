@@ -1,4 +1,4 @@
-# Remove SKILL.md Runtime Dependency (projects-skill-s0m)
+# Remove SKILL.md Runtime Dependency (braids-s0m)
 
 ## Summary
 Removed all SKILL.md references from `orchestrator.md` and `worker.md` so they are fully self-contained at runtime.

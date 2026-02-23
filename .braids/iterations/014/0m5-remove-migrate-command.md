@@ -1,4 +1,4 @@
-# Remove braids migrate command (projects-skill-0m5)
+# Remove braids migrate command (braids-0m5)
 
 ## Summary
 

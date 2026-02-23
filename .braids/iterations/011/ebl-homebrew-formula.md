@@ -1,4 +1,4 @@
-# Homebrew Formula for Braids (projects-skill-ebl)
+# Homebrew Formula for Braids (braids-ebl)
 
 ## Summary
 Created `Formula/braids.rb` Homebrew formula and updated README with brew install as the primary installation method.

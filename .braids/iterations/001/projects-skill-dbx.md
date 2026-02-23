@@ -1,4 +1,4 @@
-# Add README.md with Installation Instructions (projects-skill-dbx)
+# Add README.md with Installation Instructions (braids-dbx)
 
 ## Summary
 Created README.md in the projects skill directory with installation steps, requirements, and basic usage.

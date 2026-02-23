@@ -1,4 +1,4 @@
-# Orchestrator frequency scaling (projects-skill-u1b)
+# Orchestrator frequency scaling (braids-u1b)
 
 ## Summary
 Added frequency scaling to the orchestrator so it reduces polling when there's no work, saving tokens and API calls.

@@ -1,4 +1,4 @@
-# Update AGENTS.md with Quality Standards (projects-skill-4b4)
+# Update AGENTS.md with Quality Standards (braids-4b4)
 
 ## Summary
 Added three new sections to AGENTS.md establishing end-to-end verification requirements and quality standards for bead completion.

@@ -1,4 +1,4 @@
-# Specs must not assume any projects exist (projects-skill-ilo)
+# Specs must not assume any projects exist (braids-ilo)
 
 ## Summary
 Updated `structural_spec.clj` and `integration_smoke_spec.clj` to gracefully skip environment-dependent tests when no projects registry exists.

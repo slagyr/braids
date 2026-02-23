@@ -1,4 +1,4 @@
-# Add Configurable Notification Table to PROJECT.md (projects-skill-9bd)
+# Add Configurable Notification Table to PROJECT.md (braids-9bd)
 
 ## Summary
 Added a per-project notifications table to PROJECT.md format allowing each notification event to be toggled on/off.

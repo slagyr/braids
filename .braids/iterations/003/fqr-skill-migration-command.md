@@ -1,4 +1,4 @@
-# Support skill migration command via project channel (projects-skill-fqr)
+# Support skill migration command via project channel (braids-fqr)
 
 ## Summary
 Added user-triggered skill migration support to the projects skill. Users can request format updates via the project's Channel, and the agent will diff current files against the canonical SKILL.md format and apply/report changes.

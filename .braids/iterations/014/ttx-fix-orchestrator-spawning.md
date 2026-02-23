@@ -1,4 +1,4 @@
-# Fix Orchestrator Spawning Logic (projects-skill-ttx)
+# Fix Orchestrator Spawning Logic (braids-ttx)
 
 ## Problem
 The orchestrator's spawn message and JSON output had two issues:

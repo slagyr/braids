@@ -6,18 +6,18 @@ Iteration 003 focused on hardening the projects skill: improving the orchestrato
 ## Completed
 | Bead | Title | Deliverable |
 |------|-------|-------------|
-| projects-skill-uu0 | Cron worker is orchestrator only — spawns workers, does no bead work | uu0-orchestrator-refactor.md |
-| projects-skill-xrv | Workers must read PROJECT.md and AGENTS.md on startup | xrv-worker-startup-context.md |
-| projects-skill-qh5 | Remove Budget from PROJECT.md format and all docs | qh5-remove-budget.md |
-| projects-skill-hc7 | Fix PROJECT.md settings rendering | hc7-fix-settings-rendering.md |
-| projects-skill-z15 | Formalize worker error handling and escalation path | z15-worker-error-handling.md |
-| projects-skill-5cs | Set up a notification channel for projects-skill project | 5cs-notification-channel.md |
-| projects-skill-fqr | Support skill migration command via project channel | fqr-skill-migration-command.md |
-| projects-skill-463 | Handle skill updates gracefully across existing projects | 463-graceful-skill-updates.md |
-| projects-skill-4bq | Worker should explicitly handle bead dependency chains | 4bq-worker-dependency-chains.md |
-| projects-skill-qc0 | Validate multi-project support with concurrent active projects | qc0-validate-multi-project.md |
-| projects-skill-1xn | Add progress dashboard: auto-generate STATUS.md across all projects | 1xn-progress-dashboard.md |
-| projects-skill-9yv | Auto-generate iteration retrospective on completion | 9yv-auto-retro.md |
+| braids-uu0 | Cron worker is orchestrator only — spawns workers, does no bead work | uu0-orchestrator-refactor.md |
+| braids-xrv | Workers must read PROJECT.md and AGENTS.md on startup | xrv-worker-startup-context.md |
+| braids-qh5 | Remove Budget from PROJECT.md format and all docs | qh5-remove-budget.md |
+| braids-hc7 | Fix PROJECT.md settings rendering | hc7-fix-settings-rendering.md |
+| braids-z15 | Formalize worker error handling and escalation path | z15-worker-error-handling.md |
+| braids-5cs | Set up a notification channel for projects-skill project | 5cs-notification-channel.md |
+| braids-fqr | Support skill migration command via project channel | fqr-skill-migration-command.md |
+| braids-463 | Handle skill updates gracefully across existing projects | 463-graceful-skill-updates.md |
+| braids-4bq | Worker should explicitly handle bead dependency chains | 4bq-worker-dependency-chains.md |
+| braids-qc0 | Validate multi-project support with concurrent active projects | qc0-validate-multi-project.md |
+| braids-1xn | Add progress dashboard: auto-generate STATUS.md across all projects | 1xn-progress-dashboard.md |
+| braids-9yv | Auto-generate iteration retrospective on completion | 9yv-auto-retro.md |
 
 ## Key Decisions
 - Orchestrator/worker split: cron job only orchestrates, never does bead work directly

@@ -1,4 +1,4 @@
-# Workers Must Generate RETRO.md Before Marking Iteration Complete (projects-skill-rbl)
+# Workers Must Generate RETRO.md Before Marking Iteration Complete (braids-rbl)
 
 ## Summary
 Ensured RETRO.md generation is reliably enforced when iterations complete. The `.completing` lock (added in um4) prevents race conditions where multiple workers skip retro generation. Added contract tests for the lock and RETRO requirement, and retroactively generated the missing iteration 004 RETRO.md.

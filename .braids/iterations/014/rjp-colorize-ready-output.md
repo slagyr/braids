@@ -1,4 +1,4 @@
-# Colorize braids ready output (projects-skill-rjp)
+# Colorize braids ready output (braids-rjp)
 
 ## Summary
 

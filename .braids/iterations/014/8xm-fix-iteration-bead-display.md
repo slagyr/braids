@@ -1,4 +1,4 @@
-# Fix braids iteration command bead display (projects-skill-8xm)
+# Fix braids iteration command bead display (braids-8xm)
 
 ## Problem
 

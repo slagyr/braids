@@ -1,4 +1,4 @@
-# Fix PROJECT.md: incorrect skill path in guardrails (projects-skill-7nd)
+# Fix PROJECT.md: incorrect skill path in guardrails (braids-7nd)
 
 ## Summary
 Corrected the guardrails path in PROJECT.md to reference the actual SKILL.md location.

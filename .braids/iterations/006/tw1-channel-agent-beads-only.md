@@ -1,4 +1,4 @@
-# Add guardrail: channel agent must not modify project files directly — beads only (projects-skill-tw1)
+# Add guardrail: channel agent must not modify project files directly — beads only (braids-tw1)
 
 ## Summary
 

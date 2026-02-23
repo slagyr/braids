@@ -1,4 +1,4 @@
-# braids orch spawn-msg: emit spawn message for sessions_spawn (projects-skill-57e)
+# braids orch spawn-msg: emit spawn message for sessions_spawn (braids-57e)
 
 ## Summary
 Added `spawn-msg` CLI command and pure functions to generate the spawn message that the orchestrator passes to `sessions_spawn` when spawning a worker.

@@ -1,4 +1,4 @@
-# bd init integration — auto-generate AGENTS.md, directory structure, and registry entry (projects-skill-eqi)
+# bd init integration — auto-generate AGENTS.md, directory structure, and registry entry (braids-eqi)
 
 ## Summary
 

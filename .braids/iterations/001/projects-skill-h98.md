@@ -1,4 +1,4 @@
-# Cron Should Prioritize Iteration Story Order, Then Bead Priority (projects-skill-h98)
+# Cron Should Prioritize Iteration Story Order, Then Bead Priority (braids-h98)
 
 ## Summary
 Updated SKILL.md's "Working a Project" section to explicitly state that tasks are worked in ITERATION.md story order first, then by bead priority for non-iteration tasks.

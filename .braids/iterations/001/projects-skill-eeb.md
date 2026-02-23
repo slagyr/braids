@@ -1,4 +1,4 @@
-# REVIEW.md Only for Blockers/Questions (projects-skill-eeb)
+# REVIEW.md Only for Blockers/Questions (braids-eeb)
 
 ## Summary
 Updated SKILL.md to clarify that REVIEW.md should only be created when there are blockers or questions needing customer input, not for routine progress summaries.

@@ -1,4 +1,4 @@
-# Add Discord Channel Creation for Project Check-ins (projects-skill-x1t)
+# Add Discord Channel Creation for Project Check-ins (braids-x1t)
 
 ## Summary
 Updated SKILL.md to include Discord channel creation as part of the project creation workflow. Each project gets a dedicated `project-<slug>` channel for notifications and check-ins.

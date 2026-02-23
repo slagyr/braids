@@ -1,4 +1,4 @@
-# Discord Channel Naming Should Be Flexible (projects-skill-5c9)
+# Discord Channel Naming Should Be Flexible (braids-5c9)
 
 ## Summary
 Updated SKILL.md to make channel naming a suggestion rather than a prescribed convention.

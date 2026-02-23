@@ -1,4 +1,4 @@
-# Integration Tests (projects-skill-j9i)
+# Integration Tests (braids-j9i)
 
 ## Summary
 

@@ -1,4 +1,4 @@
-# Add braids config command set (projects-skill-k0p)
+# Add braids config command set (braids-k0p)
 
 ## Summary
 Added `braids config` command with `get`, `set`, and `list` subcommands for reading and updating braids configuration.

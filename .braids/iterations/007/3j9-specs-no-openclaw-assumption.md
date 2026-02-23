@@ -17,4 +17,4 @@ Removed all hard dependencies on OpenClaw installation (`~/.openclaw/` paths) fr
 
 ## Verification
 
-All 144 specs run. The same 6 pre-existing failures remain (related to live project state assumptions, covered by bead `projects-skill-ilo`). No new failures introduced.
+All 144 specs run. The same 6 pre-existing failures remain (related to live project state assumptions, covered by bead `braids-ilo`). No new failures introduced.

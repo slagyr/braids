@@ -1,4 +1,4 @@
-# Cron worker is orchestrator only — spawns workers, does no bead work (projects-skill-uu0)
+# Cron worker is orchestrator only — spawns workers, does no bead work (braids-uu0)
 
 ## Summary
 Refactored the projects cron system into a two-tier architecture: orchestrator + spawned workers.

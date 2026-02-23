@@ -1,4 +1,4 @@
-# Debug orchestrator agent behavior (projects-skill-hk9)
+# Debug orchestrator agent behavior (braids-hk9)
 
 ## Summary
 

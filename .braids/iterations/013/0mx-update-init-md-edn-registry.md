@@ -1,4 +1,4 @@
-# Update init.md for EDN Registry Format (projects-skill-0mx)
+# Update init.md for EDN Registry Format (braids-0mx)
 
 ## Changes
 

@@ -1,4 +1,4 @@
-# Move registry.md, orchestrator-state, and STATUS.md to ~/.openclaw/projects/ (projects-skill-8bf)
+# Move registry.md, orchestrator-state, and STATUS.md to ~/.openclaw/projects/ (braids-8bf)
 
 ## Summary
 

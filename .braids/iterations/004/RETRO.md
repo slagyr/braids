@@ -6,26 +6,26 @@ Iteration 004 focused on token efficiency, robustness, and universal entry point
 ## Completed
 | Bead | Title | Deliverable |
 |------|-------|-------------|
-| projects-skill-9xp | AGENTS.md as universal entry point | 9xp-agents-entry-point.md |
-| projects-skill-0ox | Detect and clean up zombie worker sessions | (no separate deliverable — integrated into orchestrator.md) |
-| projects-skill-s0m | Remove SKILL.md runtime dependency | s0m-remove-skillmd-runtime-dep.md |
-| projects-skill-3b3 | Simplify worker spawn message | 3b3-simplify-spawn-message.md |
-| projects-skill-k0j | Add runTimeoutSeconds to worker spawn | k0j-run-timeout-seconds.md |
-| projects-skill-u1b | Orchestrator frequency scaling | u1b-frequency-scaling.md |
-| projects-skill-eqi | bd init integration | eqi-bd-init-integration.md |
-| projects-skill-rin | Structural test script | rin-structural-tests.md |
-| projects-skill-b25 | CONTRACTS.md: document invariants | b25-contracts-document.md |
-| projects-skill-6q1 | Simulation tests | 6q1-simulation-tests.md |
-| projects-skill-szh | Integration smoke tests | szh-integration-smoke-tests.md |
-| projects-skill-fqr | Support skill migration command | (no separate deliverable — documented in references/migration.md) |
-| projects-skill-463 | Handle skill updates gracefully | (no separate deliverable — tolerance built into worker.md) |
-| projects-skill-zun | Add cleanup: delete to worker spawn | (no separate deliverable — already fixed in orchestrator.md) |
+| braids-9xp | AGENTS.md as universal entry point | 9xp-agents-entry-point.md |
+| braids-0ox | Detect and clean up zombie worker sessions | (no separate deliverable — integrated into orchestrator.md) |
+| braids-s0m | Remove SKILL.md runtime dependency | s0m-remove-skillmd-runtime-dep.md |
+| braids-3b3 | Simplify worker spawn message | 3b3-simplify-spawn-message.md |
+| braids-k0j | Add runTimeoutSeconds to worker spawn | k0j-run-timeout-seconds.md |
+| braids-u1b | Orchestrator frequency scaling | u1b-frequency-scaling.md |
+| braids-eqi | bd init integration | eqi-bd-init-integration.md |
+| braids-rin | Structural test script | rin-structural-tests.md |
+| braids-b25 | CONTRACTS.md: document invariants | b25-contracts-document.md |
+| braids-6q1 | Simulation tests | 6q1-simulation-tests.md |
+| braids-szh | Integration smoke tests | szh-integration-smoke-tests.md |
+| braids-fqr | Support skill migration command | (no separate deliverable — documented in references/migration.md) |
+| braids-463 | Handle skill updates gracefully | (no separate deliverable — tolerance built into worker.md) |
+| braids-zun | Add cleanup: delete to worker spawn | (no separate deliverable — already fixed in orchestrator.md) |
 
 ### Bonus Deliverables
 | Bead | Title | Deliverable |
 |------|-------|-------------|
-| projects-skill-8pk | Replace init script with project-creation.md | 8pk-replace-init-script.md |
-| projects-skill-qho | INIT.md: one-time skill setup reference | qho-init-setup-reference.md |
+| braids-8pk | Replace init script with project-creation.md | 8pk-replace-init-script.md |
+| braids-qho | INIT.md: one-time skill setup reference | qho-init-setup-reference.md |
 
 ## Key Decisions
 - AGENTS.md became the universal entry point for all agents landing in a project, replacing direct worker.md references in spawn messages
@@ -40,6 +40,6 @@ Iteration 004 focused on token efficiency, robustness, and universal entry point
 - Four beads had no separate deliverable files because the work was integrated directly into existing reference docs — deliverable naming convention should account for this
 
 ## Carry-Forward
-- projects-skill-um4: Prevent duplicate iteration-complete notifications (race condition)
-- projects-skill-rbl: Ensure RETRO.md is always generated on iteration completion
-- Migrate bash test scripts to speclj + Babashka (projects-skill-9zf)
+- braids-um4: Prevent duplicate iteration-complete notifications (race condition)
+- braids-rbl: Ensure RETRO.md is always generated on iteration completion
+- Migrate bash test scripts to speclj + Babashka (braids-9zf)

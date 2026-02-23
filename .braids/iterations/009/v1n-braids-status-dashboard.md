@@ -39,7 +39,7 @@ BRAIDS STATUS
 ```
 projects-skill [active] — Iteration 009 — 3/6 (50%) — workers: 0/1
 ────────────────────────────────────────────────────────────
-  ✓ projects-skill-98r: braids list [closed]
-  ▶ projects-skill-v1n: braids status [in_progress]
-  ○ projects-skill-57e: braids orch spawn-msg [open]
+  ✓ braids-98r: braids list [closed]
+  ▶ braids-v1n: braids status [in_progress]
+  ○ braids-57e: braids orch spawn-msg [open]
 ```

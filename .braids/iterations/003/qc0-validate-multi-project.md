@@ -1,4 +1,4 @@
-# Validate Multi-Project Support with Concurrent Active Projects (projects-skill-qc0)
+# Validate Multi-Project Support with Concurrent Active Projects (braids-qc0)
 
 ## Summary
 
@@ -31,7 +31,7 @@ Each project has distinct settings that are respected independently:
 
 ### ✅ Session Label Namespacing
 Worker sessions use `project:<slug>:<bead-id>` labels:
-- `project:projects-skill:projects-skill-qc0`
+- `project:projects-skill:braids-qc0`
 - `project:zane-setup:zane-setup-l3w`
 - `project:wealth:wealth-xxx`
 

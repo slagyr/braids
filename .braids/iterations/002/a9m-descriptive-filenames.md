@@ -1,4 +1,4 @@
-# Use Descriptive Filenames for Story Deliverables (projects-skill-a9m)
+# Use Descriptive Filenames for Story Deliverables (braids-a9m)
 
 ## Summary
 Updated SKILL.md and worker.md to document the new deliverable filename convention: `<id-suffix>-<descriptive-name>.md` where `<id-suffix>` is the last 3 characters of the bead id and `<descriptive-name>` is a short kebab-case summary.

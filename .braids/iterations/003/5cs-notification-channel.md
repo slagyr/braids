@@ -1,4 +1,4 @@
-# Set up a notification channel for projects-skill project (projects-skill-5cs)
+# Set up a notification channel for projects-skill project (braids-5cs)
 
 ## Summary
 Verified and confirmed the Discord notification channel for the projects-skill project is fully operational.

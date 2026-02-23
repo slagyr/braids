@@ -1,4 +1,4 @@
-# Formalize worker error handling and escalation path (projects-skill-z15)
+# Formalize worker error handling and escalation path (braids-z15)
 
 ## Summary
 

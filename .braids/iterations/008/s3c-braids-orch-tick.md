@@ -1,4 +1,4 @@
-# braids orch tick: orchestrator decision engine (projects-skill-s3c)
+# braids orch tick: orchestrator decision engine (braids-s3c)
 
 ## Summary
 

@@ -1,4 +1,4 @@
-# Move SKILL.md to projects/SKILL.md Subdirectory (projects-skill-57k)
+# Move SKILL.md to projects/SKILL.md Subdirectory (braids-57k)
 
 ## Summary
 Verified that SKILL.md is already in the correct location. The skill directory (`~/.openclaw/skills/projects/`) is symlinked to the project repo (`~/projects/projects-skill/`), so the skill definition lives inside its own project — no move needed.

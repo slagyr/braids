@@ -1,4 +1,4 @@
-# braids ready: list beads ready to work (projects-skill-xgq)
+# braids ready: list beads ready to work (braids-xgq)
 
 ## Summary
 

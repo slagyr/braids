@@ -1,4 +1,4 @@
-# Add runTimeoutSeconds to Worker Spawn (projects-skill-k0j)
+# Add runTimeoutSeconds to Worker Spawn (braids-k0j)
 
 ## Summary
 

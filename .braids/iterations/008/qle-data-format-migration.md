@@ -1,4 +1,4 @@
-# Data format migration: registry.edn and project.edn schemas (projects-skill-qle)
+# Data format migration: registry.edn and project.edn schemas (braids-qle)
 
 ## Summary
 

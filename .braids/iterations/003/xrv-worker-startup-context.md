@@ -1,4 +1,4 @@
-# Deliverable: Workers must read PROJECT.md on startup (projects-skill-xrv)
+# Deliverable: Workers must read PROJECT.md on startup (braids-xrv)
 
 ## Changes
 

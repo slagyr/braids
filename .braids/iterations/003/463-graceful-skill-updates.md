@@ -1,4 +1,4 @@
-# Handle skill updates gracefully across existing projects (projects-skill-463)
+# Handle skill updates gracefully across existing projects (braids-463)
 
 ## Summary
 

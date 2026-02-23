@@ -1,4 +1,4 @@
-# Display project settings as a list in PROJECT.md (projects-skill-tn1)
+# Display project settings as a list in PROJECT.md (braids-tn1)
 
 ## Summary
 Verified PROJECT.md settings are already on separate lines. No changes needed.

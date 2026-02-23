@@ -1,4 +1,4 @@
-# braids iteration: show active iteration and bead statuses (projects-skill-604)
+# braids iteration: show active iteration and bead statuses (braids-604)
 
 ## Summary
 Added `braids iteration` CLI command that displays the active iteration for a project with story statuses, dependencies, and completion percentage.

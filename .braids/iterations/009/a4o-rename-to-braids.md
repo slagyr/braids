@@ -1,4 +1,4 @@
-# Rename skill from 'projects' to 'braids' (projects-skill-a4o)
+# Rename skill from 'projects' to 'braids' (braids-a4o)
 
 ## Summary
 

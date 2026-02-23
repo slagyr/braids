@@ -1,4 +1,4 @@
-# Update Cron Example to 5 Min Interval (projects-skill-3yu)
+# Update Cron Example to 5 Min Interval (braids-3yu)
 
 ## Summary
 Updated the cron integration example in SKILL.md from 4-hour interval (14400000ms) to 5-minute interval (300000ms).

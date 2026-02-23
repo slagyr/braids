@@ -1,4 +1,4 @@
 {:number "015"
  :status :active
- :stories ["projects-skill-2o2"]
- :notes "ID Migration: Rename all bead IDs from projects-skill-* to braids-* for consistency."}
+ :stories ["braids-2o2"]
+ :notes "ID Migration: Rename all bead IDs from braids-* to braids-* for consistency."}

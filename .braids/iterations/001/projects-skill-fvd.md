@@ -1,4 +1,4 @@
-# Test End-to-End: Create Story, Spawn Sub-Agent, Produce Deliverable (projects-skill-fvd)
+# Test End-to-End: Create Story, Spawn Sub-Agent, Produce Deliverable (braids-fvd)
 
 ## Summary
 Validated the full end-to-end workflow: cron triggers a worker session that reads the registry, finds active projects, checks MaxAgents, reads the iteration, finds ready beads, claims tasks, does work, writes deliverables, and closes tasks.

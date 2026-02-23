@@ -1,4 +1,4 @@
-# Update Skill: Project Channels Are Planning-Only (projects-skill-179)
+# Update Skill: Project Channels Are Planning-Only (braids-179)
 
 ## Summary
 Updated SKILL.md to clarify that project Discord channels are for planning and notifications only. All actual work happens asynchronously via beads and the cron worker.

@@ -1,4 +1,4 @@
-# Document Agent Spawning Strategy in SKILL.md (projects-skill-a2z)
+# Document Agent Spawning Strategy in SKILL.md (braids-a2z)
 
 ## Summary
 Added a comprehensive "Agent Spawning & Parallel Execution" section to SKILL.md documenting MaxAgents, session labeling, concurrency checks, and the cron worker execution model.

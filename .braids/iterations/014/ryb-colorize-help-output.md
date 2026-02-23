@@ -1,4 +1,4 @@
-# Colorize braids help output (projects-skill-ryb)
+# Colorize braids help output (braids-ryb)
 
 ## Summary
 

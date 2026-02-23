@@ -1,4 +1,4 @@
-# Fix Homebrew braids path resolution (projects-skill-oc3)
+# Fix Homebrew braids path resolution (braids-oc3)
 
 ## Problem
 

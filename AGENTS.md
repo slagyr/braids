@@ -67,7 +67,7 @@ A bead is **not done** until all of the following are satisfied:
    ## Verification
    $ bd ready
    (output)
-   $ bd show projects-skill-xyz
+   $ bd show braids-xyz
    (output)
    ```
 

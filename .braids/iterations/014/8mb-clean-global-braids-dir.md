@@ -1,4 +1,4 @@
-# Clean up global braids directory (projects-skill-8mb)
+# Clean up global braids directory (braids-8mb)
 
 ## What was done
 

@@ -1,4 +1,4 @@
-# Remove STATUS.md Dashboard Generation (projects-skill-w57)
+# Remove STATUS.md Dashboard Generation (braids-w57)
 
 ## Summary
 Removed STATUS.md file generation from the braids system. The `braids status` CLI command remains available for live queries.

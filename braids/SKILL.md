@@ -147,7 +147,7 @@ Completed iterations are **immutable** — never modify them.
 
 ## Story Deliverables
 
-Each story produces `.braids/iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<id-suffix>` is the last 3 characters of the bead id and `<descriptive-name>` is a short kebab-case summary (e.g., `w9g-extract-worker.md` for bead `projects-skill-w9g`):
+Each story produces `.braids/iterations/<N>/<id-suffix>-<descriptive-name>.md` where `<id-suffix>` is the last 3 characters of the bead id and `<descriptive-name>` is a short kebab-case summary (e.g., `w9g-extract-worker.md` for bead `braids-w9g`):
 
 ```markdown
 # <Story Title> (bd-xxxx)

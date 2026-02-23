@@ -1,4 +1,4 @@
-# Auto-generate iteration retrospective on completion (projects-skill-9yv)
+# Auto-generate iteration retrospective on completion (braids-9yv)
 
 ## Summary
 Added automatic retrospective generation when an iteration completes. Workers now generate `RETRO.md` in the iteration directory as part of the completion flow.
