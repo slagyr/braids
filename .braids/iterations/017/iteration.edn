@@ -1,4 +1,4 @@
 {:number "017"
- :status :active
+ :status :complete
  :stories ["braids-q6p" "braids-vgc" "braids-anx" "braids-3m6" "braids-1zy" "braids-914" "braids-4mt"]
  :notes "Orchestrator stability: fix self-disable, reduce overhead, configurable channel, session labels in CLI, persistent session, refined disable logic (open beads), and blocked beads don't keep cron alive."}
