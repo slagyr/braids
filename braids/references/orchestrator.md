@@ -111,16 +111,12 @@ Do not do any bead work yourself. Just spawn and exit.
 
 ### Context Overflow
 
-If this cron session hits "context overflow", the accumulated transcript is too large. Fix:
+The orchestrator uses a persistent session (`sessionKey: braids:orchestrator`) so transcripts accumulate across ticks. The gateway automatically compacts old turns, but if context still overflows, reset the session:
 
 ```bash
-# Delete the stale job and recreate with a fresh session
-openclaw cron rm braids-orchestrator
-openclaw cron add \
-  --name "braids-orchestrator" \
-  --every 5m \
-  --session isolated \
-  --message "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md" \
-  --timeout-seconds 300 \
-  --deliver-to 1476813011925598343  # orchestrator channel (update to match your config)
+# Reset the persistent session by clearing and re-setting the key
+openclaw cron edit <job-id> --clear-session-key
+openclaw cron edit <job-id> --session-key braids:orchestrator
 ```
+
+This forces a fresh session on the next tick while preserving the job definition.

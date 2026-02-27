@@ -315,10 +315,17 @@ Set up a recurring cron job for the orchestrator:
     "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md",
     "timeoutSeconds": 300
   },
-  "sessionTarget": "isolated",
+  "sessionTarget": "main",
+  "sessionKey": "braids:orchestrator",
   "delivery": "none"
 }
 ```
+
+**Persistent session:** The orchestrator uses a `sessionKey` (`braids:orchestrator`) so all cron ticks reuse the same session instead of creating a fresh one each time. The gateway automatically compacts the transcript between runs, keeping context small. Combined with the 3-tool-call flow, each tick is very lightweight.
+
+To configure: `openclaw cron edit <job-id> --session-key braids:orchestrator`
+
+To reset a corrupted session: `openclaw cron edit <job-id> --clear-session-key && openclaw cron edit <job-id> --session-key braids:orchestrator`
 
 The orchestrator checks for work and spawns workers — it never does bead work itself.
 
