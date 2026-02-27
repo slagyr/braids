@@ -1,4 +1,4 @@
 {:number "018"
  :status :active
- :stories ["braids-dwc" "braids-nh6"]
- :notes "Orchestrator observability and responsibility: colored debug output and move worker prompt ownership to orchestrator.md."}
+ :stories ["braids-dwc" "braids-nh6" "braids-hio"]
+ :notes "Orchestrator observability: colored debug output, move worker prompt to orchestrator.md, and verbose mode announcing reasoning to channel."}

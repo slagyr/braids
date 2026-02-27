@@ -155,6 +155,106 @@
                    {:slug slug :bead bead-id :label label :reason "bead-closed"}))))
        vec))
 
+;; ANSI color codes for debug output
+(def ^:private ansi
+  {:bold-white "\033[1;37m"
+   :green      "\033[32m"
+   :red        "\033[31m"
+   :yellow     "\033[33m"
+   :cyan       "\033[36m"
+   :dim        "\033[2m"
+   :reset      "\033[0m"})
+
+(defn- no-color? []
+  (some? (System/getenv "NO_COLOR")))
+
+(defn- c
+  "Wrap text in ANSI color. Returns plain text if NO_COLOR is set."
+  [text color]
+  (if (no-color?)
+    (str text)
+    (str (get ansi color "") text (:reset ansi))))
+
+(defn- bead-status-icon [status]
+  (case status
+    "blocked" "🚫"
+    "in-progress" "⚙️"
+    "closed" "✓"
+    "○"))
+
+(defn- bead-status-color [status]
+  (case status
+    "blocked" :red
+    "closed" :dim
+    ("open" "in-progress") :green
+    :green))
+
+(defn- config-status-color [status]
+  (case (some-> status name clojure.string/lower-case)
+    "active" :green
+    ("paused" "blocked") :red
+    :green))
+
+(defn- decision-color [action reason]
+  (case action
+    "spawn" :green
+    "idle" (case reason
+             ("no-active-iterations") :red
+             ("no-ready-beads" "all-at-capacity") :yellow
+             :red)
+    :yellow))
+
+(defn format-debug-output
+  "Format human-readable debug output for orch-run. Pure function.
+   Takes registry, configs, iterations map, open-beads map (slug->[bead-maps]),
+   and tick-result. Returns a multi-line string for stderr."
+  [registry configs iterations open-beads tick-result]
+  (let [active-projects (->> (:projects registry)
+                             (filter #(= :active (:status %)))
+                             (filter (fn [{:keys [slug]}]
+                                       (let [cfg (get configs slug)]
+                                         (or (nil? cfg) (= :active (:status cfg))))))
+                             (sort-by #(get priority-order (:priority %) 1)))
+        project-lines
+        (mapv (fn [{:keys [slug]}]
+                (let [cfg (get configs slug)
+                      status (or (:status cfg) :active)
+                      iter (get iterations slug)
+                      beads (get open-beads slug [])
+                      status-str (c (name status) (config-status-color status))
+                      name-str (c slug :bold-white)
+                      iter-str (if iter
+                                 (str "iteration " (c iter :cyan))
+                                 "(no iteration)")]
+                  (if (empty? beads)
+                    (if iter
+                      (str "  " name-str "  " status-str "  " iter-str "  → all closed ✓")
+                      (str "  " name-str "  " status-str "  " iter-str))
+                    (let [blocked (count (filter #(= "blocked" (some-> (:status %) name clojure.string/lower-case)) beads))
+                          summary (if (pos? blocked)
+                                    (str "→ " (count beads) " beads (" blocked " blocked)")
+                                    (str "→ " (count beads) " beads"))
+                          header (str "  " name-str "  " status-str "  " iter-str "  " summary)
+                          bead-lines (mapv (fn [b]
+                                            (let [bs (or (some-> (:status b) name clojure.string/lower-case) "open")
+                                                  icon (bead-status-icon bs)
+                                                  id-suffix (last (clojure.string/split (:id b) #"-"))
+                                                  colored-status (c bs (bead-status-color bs))]
+                                              (str "    " icon " " id-suffix "  " colored-status)))
+                                          beads)]
+                      (clojure.string/join "\n" (cons header bead-lines))))))
+              active-projects)
+        decision-line (let [{:keys [action reason disable-cron]} tick-result
+                            spawns (:spawns tick-result)
+                            desc (if (= "spawn" action)
+                                   (str "spawn: " (count spawns) " worker(s)")
+                                   (str action ": " reason))
+                            cron-note (when (some? disable-cron)
+                                        (str "  [disable_cron: " disable-cron "]"))
+                            color (decision-color action reason)]
+                        (str "\n  → " (c (str desc cron-note) color)))]
+    (str (clojure.string/join "\n" project-lines) "\n" decision-line "\n")))
+
 (def worker-instruction
   "You are a project worker for the braids skill. Read and follow ~/.openclaw/skills/braids/references/worker.md")
 

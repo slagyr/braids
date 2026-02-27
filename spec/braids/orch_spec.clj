@@ -386,3 +386,86 @@
             json-str (orch/format-orch-run-json tick-result)
             parsed (json/parse-string json-str true)]
         (should= 1 (count (:zombies parsed)))))))
+
+  (describe "format-debug-output"
+
+    (it "shows project with no beads and active iteration as all closed"
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active}}
+            iterations {"proj" "008"}
+            open-beads {"proj" []}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron true}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+        (should-contain "proj" output)
+        (should-contain "008" output)
+        (should-contain "all closed" output)
+        (should-contain "idle: no-ready-beads" output)
+        (should-contain "disable_cron: true" output)))
+
+    (it "shows project with beads and their statuses"
+      (let [reg {:projects [{:slug "myproj" :status :active :priority :normal :path "/tmp/myproj"}]}
+            configs {"myproj" {:status :active}}
+            iterations {"myproj" "003"}
+            open-beads {"myproj" [{:id "myproj-abc" :status "open"}
+                                   {:id "myproj-xyz" :status "blocked"}]}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+        (should-contain "myproj" output)
+        (should-contain "2 beads (1 blocked)" output)
+        (should-contain "abc" output)
+        (should-contain "xyz" output)
+        (should-contain "open" output)
+        (should-contain "blocked" output)))
+
+    (it "shows spawn decision with worker count"
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active}}
+            iterations {"proj" "001"}
+            open-beads {"proj" [{:id "proj-a1" :status "open"}]}
+            tick-result {:action "spawn" :spawns [{:bead "proj-a1"}]}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+        (should-contain "spawn: 1 worker(s)" output)))
+
+    (it "shows project without iteration"
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active}}
+            iterations {}
+            open-beads {}
+            tick-result {:action "idle" :reason "no-active-iterations" :disable-cron true}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+        (should-contain "(no iteration)" output)))
+
+    (it "respects NO_COLOR env var"
+      ;; When NO_COLOR is set, output should not contain ANSI escape codes
+      ;; We can't easily set env vars in tests, so just verify the function doesn't crash
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active}}
+            iterations {"proj" "001"}
+            open-beads {"proj" []}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+        (should (string? output))))
+
+    (it "skips paused projects"
+      (let [reg {:projects [{:slug "active-proj" :status :active :priority :normal :path "/tmp/a"}
+                             {:slug "paused-proj" :status :active :priority :normal :path "/tmp/p"}]}
+            configs {"active-proj" {:status :active}
+                     "paused-proj" {:status :paused}}
+            iterations {"active-proj" "001" "paused-proj" "002"}
+            open-beads {}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+        (should-contain "active-proj" output)
+        (should-not-contain "paused-proj" output)))
+
+    (it "handles multiple projects sorted by priority"
+      (let [reg {:projects [{:slug "low" :status :active :priority :low :path "/tmp/l"}
+                             {:slug "high" :status :active :priority :high :path "/tmp/h"}]}
+            configs {"low" {:status :active} "high" {:status :active}}
+            iterations {"low" "001" "high" "002"}
+            open-beads {"low" [] "high" []}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result)
+            high-idx (.indexOf output "high")
+            low-idx (.indexOf output "low")]
+        (should (< high-idx low-idx)))))

@@ -90,10 +90,16 @@
       :orch-run (let [args (:args (dispatch args))
                        sessions-str (second (drop-while #(not= "--sessions" %) args))
                        session-labels-json (second (drop-while #(not= "--session-labels" %) args))
-                       result (cond
-                                sessions-str (orch-io/gather-and-tick-from-session-labels sessions-str)
-                                session-labels-json (orch-io/gather-and-tick-with-zombies session-labels-json)
-                                :else (orch-io/gather-and-tick))]
+                       {:keys [result debug-ctx]} (cond
+                                sessions-str (orch-io/gather-and-tick-from-session-labels-debug sessions-str)
+                                session-labels-json (orch-io/gather-and-tick-with-zombies-debug session-labels-json)
+                                :else (orch-io/gather-and-tick-debug))
+                       debug-str (orch/format-debug-output
+                                   (:registry debug-ctx) (:configs debug-ctx)
+                                   (:iterations debug-ctx) (:open-beads debug-ctx) result)]
+                  (binding [*out* *err*]
+                    (print debug-str)
+                    (flush))
                   (println (orch/format-orch-run-json result))
                   0)
       :spawn-msg (let [args (:args (dispatch args))
