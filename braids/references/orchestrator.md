@@ -4,6 +4,10 @@ You are the braids orchestrator. You do NOT perform bead work — you spawn work
 
 **IMPORTANT:** Keep this session lightweight. Do not read large files or produce verbose output. Every token accumulates across cron runs.
 
+## Orchestrator Channel
+
+The orchestrator can have its own dedicated channel for announcements (spawn decisions, idle events, errors), separate from per-project channels. Check `~/.openclaw/braids/config.edn` for the `:orchestrator-channel` field. If set, post orchestrator-level summaries (spawn counts, idle notifications, zombie cleanups) to that channel. If not set, skip orchestrator-level announcements (project-specific notifications still go to each project's channel).
+
 ## Steps
 
 ### 1. Gather Sessions and Run `braids orch-run`
@@ -62,7 +66,8 @@ Both shapes may include a `zombies` array.
 
 If the output includes a `zombies` array, for each zombie:
 1. Kill the session via `sessions_kill` using the zombie's `label`
-2. If `blocker` notifications are enabled for the project, notify the channel: `"🧟 Cleaned up zombie worker session for <bead-id> (reason: <reason>)"`
+2. If `blocker` notifications are enabled for the project, notify the **project's** channel: `"🧟 Cleaned up zombie worker session for <bead-id> (reason: <reason>)"`
+3. If an orchestrator channel is configured, also post a brief summary there
 
 ### 3. Spawn Workers
 
@@ -87,7 +92,8 @@ If the result includes `"disable_cron": true`, disable the orchestrator cron job
 
 1. Look up the cron job ID: `openclaw cron list --json`, find the job named `braids-orchestrator`, then run `openclaw cron disable <job-id>` (keeps the job definition intact)
 2. Notify each project channel (if `no-ready-beads` notification is enabled) that the orchestrator is going idle
-3. The orchestrator will not run again until re-enabled
+3. If an orchestrator channel is configured, post the idle reason there
+4. The orchestrator will not run again until re-enabled
 
 This ensures **zero token usage** during idle periods. To re-activate: `openclaw cron enable <job-id>` (look up the ID via `openclaw cron list --json`).
 
@@ -110,5 +116,5 @@ openclaw cron add \
   --session isolated \
   --message "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md" \
   --timeout-seconds 300 \
-  --no-deliver
+  --deliver-to 1476813011925598343  # orchestrator channel (update to match your config)
 ```

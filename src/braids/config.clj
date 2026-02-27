@@ -4,7 +4,8 @@
             [braids.edn-format :refer [edn-format]]))
 
 (def defaults
-  {:braids-home "~/Projects"})
+  {:braids-home "~/Projects"
+   :orchestrator-channel nil})
 
 (defn parse-config
   "Parse config EDN string. Returns map with defaults applied."

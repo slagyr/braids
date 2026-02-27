@@ -23,6 +23,7 @@ Resolve `BRAIDS_HOME` at the start of every session (default: `~/Projects`). All
 
 ```
 ~/.openclaw/braids/
+  config.edn                     # Global braids config (braids-home, orchestrator-channel)
   registry.edn                   # Master list of all projects
 
 $BRAIDS_HOME/
@@ -39,6 +40,25 @@ $BRAIDS_HOME/
         002/
           ...
     .beads/                      # bd task tracking
+```
+
+## Global Config (`~/.openclaw/braids/config.edn`)
+
+Global settings for the braids system (not per-project). Managed via `braids config` CLI.
+
+```clojure
+{:braids-home "~/Projects"
+ :orchestrator-channel "discord-channel-id"}
+```
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `:braids-home` | `"~/Projects"` | Root directory where all project repos live |
+| `:orchestrator-channel` | `nil` | Optional Discord/Slack channel for orchestrator announcements (spawn decisions, idle events, zombie cleanups). If not set, orchestrator-level announcements are skipped. Project-specific notifications still go to each project's `:channel`. |
+
+Set via CLI:
+```bash
+braids config set orchestrator-channel 1476813011925598343
 ```
 
 ## Registry Format (`~/.openclaw/braids/registry.edn`)
