@@ -10,30 +10,53 @@ The orchestrator can have its own dedicated channel for announcements (spawn dec
 
 ## Verbose Mode
 
-When `:verbose true` is set in `~/.openclaw/braids/config.edn`, the orchestrator posts a detailed summary to the `:orchestrator-channel` on **every tick**. This provides full observability into orchestrator decisions.
+When `:verbose true` is set in `~/.openclaw/braids/config.edn`, the orchestrator posts **step-by-step updates** to the `:orchestrator-channel` as each step completes during the tick. This provides real-time observability — you see what's happening as it happens, not a summary after the fact.
 
 Check verbose mode: `braids config get verbose`
 
-When verbose is enabled, post to the orchestrator channel **after** running `braids orch-run` with a message like:
+When verbose is enabled, post each message **immediately** as the step completes:
 
+**Step 1 — Tick start** (post before doing anything else):
 ```
-🤖 Orchestrator tick — <current time>
-
-**Sessions:** <list of project: session labels passed to CLI, or "none">
-
-**CLI input:** braids orch-run --sessions '<labels>'
-
-**CLI output:**
-```json
-<raw JSON output from orch-run>
+🤖 Orchestrator tick started
 ```
 
-**Decision:** <human-readable summary, e.g. "Spawning 2 workers → bead-abc, bead-xyz" or "Idle: no-ready-beads">
+**Step 2 — After `sessions_list`** (post the session labels found):
+```
+📋 Sessions: project:zaap:zaap-8kq (running), project:braids:braids-xyz (running) | Passing to CLI...
+```
+Or if no project sessions:
+```
+📋 Sessions: none | Passing to CLI...
 ```
 
-**When verbose is off (default):** Skip the detailed tick summary. The orchestrator channel still receives spawn counts, idle notifications, and zombie cleanups per the normal notification rules.
+**Step 3 — After `braids orch-run`** (post the CLI result):
+```
+⚙️ orch-run result: spawn 2 workers [zaap-8kq, braids-dwc]
+```
+Or:
+```
+⚙️ orch-run result: idle (no-ready-beads) → staying alive
+```
+Or:
+```
+⚙️ orch-run result: idle (no-active-iterations) → disabling cron
+```
 
-**Token impact:** Verbose mode adds one channel message per tick. This is fine for debugging but can be noisy — disable it once you're satisfied the orchestrator is working correctly.
+**Step 4 — After each `sessions_spawn`** (post per worker):
+```
+🏗️ Spawning scrapper for zaap-8kq...
+✅ Worker spawned: project:zaap:zaap-8kq
+```
+
+**Step 5 — Tick complete** (post after all spawns/cleanup finished):
+```
+✅ Tick complete
+```
+
+**When verbose is off (default):** Skip all step-by-step messages. The orchestrator channel still receives spawn counts, idle notifications, and zombie cleanups per the normal notification rules.
+
+**Token impact:** Verbose mode adds multiple channel messages per tick (one per step). This is fine for debugging but can be noisy — disable it once you're satisfied the orchestrator is working correctly.
 
 ## Steps
 
