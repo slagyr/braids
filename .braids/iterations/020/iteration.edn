@@ -1,4 +1,4 @@
 {:number "020"
  :status :active
- :stories ["braids-44k" "braids-42h" "braids-et3" "braids-7yg"]
- :notes "Move observability and session/zombie logic into CLI. Remove verbose mode. CLI logs to /tmp/braids.log, collects sessions internally, outputs zombies alongside spawns."}
+ :stories ["braids-44k" "braids-42h" "braids-et3" "braids-7yg" "braids-73f"]
+ :notes "Move observability and session/zombie logic into CLI. Remove verbose mode. CLI logs to /tmp/braids.log, collects sessions internally, outputs zombies alongside spawns. Rename orch-run to orch-tick."}
