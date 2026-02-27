@@ -1,5 +1,6 @@
 (ns braids.orch
-  (:require [cheshire.core :as json]
+  (:require [clojure.string]
+            [cheshire.core :as json]
             [braids.project-config :as pc]))
 
 (def priority-order {:high 0 :normal 1 :low 2})
@@ -81,6 +82,45 @@
           :else
           {:action "idle" :reason "no-ready-beads" :disable-cron false})))))
 
+(defn- parse-project-label
+  "Parse a project: label into [slug bead-id] or nil."
+  [label]
+  (when (and label (.startsWith label "project:"))
+    (let [parts (clojure.string/split label #":" 3)]
+      (when (= 3 (count parts))
+        [(nth parts 1) (nth parts 2)]))))
+
+(def ^:private ended-statuses #{"completed" "failed" "error" "stopped"})
+
+(defn detect-zombies
+  "Pure zombie detection. Given session info, project configs, and a map of
+   bead-id->status-string, returns a vector of zombie entries.
+   Each session is {:label :status :age-seconds}.
+   Zombie reasons: session-ended, bead-closed, timeout."
+  [sessions configs bead-statuses]
+  (->> sessions
+       (keep (fn [{:keys [label status age-seconds]}]
+               (when-let [[slug bead-id] (parse-project-label label)]
+                 (let [cfg (get configs slug {})
+                       timeout (or (:worker-timeout cfg) (:worker-timeout pc/defaults))
+                       bead-status (get bead-statuses bead-id "open")
+                       zombie-entry {:slug slug :bead bead-id :label label}]
+                   (cond
+                     ;; Session ended — always a zombie
+                     (contains? ended-statuses status)
+                     (assoc zombie-entry :reason "session-ended")
+
+                     ;; Bead closed but session still running
+                     (= "closed" bead-status)
+                     (assoc zombie-entry :reason "bead-closed")
+
+                     ;; Session exceeded timeout with open bead
+                     (and (> age-seconds timeout) (= "open" bead-status))
+                     (assoc zombie-entry :reason "timeout")
+
+                     :else nil)))))
+       vec))
+
 (def worker-instruction
   "You are a project worker for the braids skill. Read and follow ~/.openclaw/skills/braids/references/worker.md")
 
@@ -114,16 +154,21 @@
   "Format tick result as JSON with spawns pre-formatted for sessions_spawn.
    Idle results pass through. Spawn results have each spawn entry replaced
    with the full sessions_spawn parameters (task, label, runTimeoutSeconds, etc.).
-   If a spawn has :worker-agent, includes agentId in the output."
+   If a spawn has :worker-agent, includes agentId in the output.
+   If tick-result contains :zombies, includes them in the output."
   [tick-result]
-  (if (= "spawn" (:action tick-result))
-    (let [formatted-spawns (mapv (fn [spawn]
-                                   (cond-> {:task (spawn-msg spawn)
-                                            :label (:label spawn)
-                                            :runTimeoutSeconds (:worker-timeout spawn)
-                                            :cleanup "delete"
-                                            :thinking "low"}
-                                     (:worker-agent spawn) (assoc :agentId (:worker-agent spawn))))
-                                 (:spawns tick-result))]
-      (json/generate-string {:action "spawn" :spawns formatted-spawns}))
-    (json/generate-string tick-result {:key-fn #(-> % name (.replace "-" "_"))})))
+  (let [zombies (:zombies tick-result)
+        base (if (= "spawn" (:action tick-result))
+               (let [formatted-spawns (mapv (fn [spawn]
+                                              (cond-> {:task (spawn-msg spawn)
+                                                       :label (:label spawn)
+                                                       :runTimeoutSeconds (:worker-timeout spawn)
+                                                       :cleanup "delete"
+                                                       :thinking "low"}
+                                                (:worker-agent spawn) (assoc :agentId (:worker-agent spawn))))
+                                            (:spawns tick-result))]
+                 {:action "spawn" :spawns formatted-spawns})
+               (into {} (map (fn [[k v]] [(-> (name k) (.replace "-" "_")) v])
+                             (dissoc tick-result :zombies))))]
+    (json/generate-string (cond-> base
+                            (seq zombies) (assoc :zombies zombies)))))

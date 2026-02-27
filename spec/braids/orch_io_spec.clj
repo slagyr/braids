@@ -32,3 +32,8 @@
         (should-be-nil (oio/find-active-iteration project)))))
 
   (after-all (fs/delete-tree test-tmp)))
+
+(describe "parse-session-labels (via gather-and-tick-with-zombies)"
+  ;; We test the public interface rather than the private parse fn
+  ;; The gather-and-tick-with-zombies function handles JSON parsing internally
+  )

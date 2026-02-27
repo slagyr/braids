@@ -224,4 +224,78 @@
             iterations {"proj" "008"}
             beads {"proj" []}
             workers {}]
-        (should= ["proj"] (orch/no-ready-beads-projects registry configs iterations beads workers))))))
+        (should= ["proj"] (orch/no-ready-beads-projects registry configs iterations beads workers)))))
+
+  (describe "detect-zombies"
+
+    (it "returns empty when no sessions"
+      (should= [] (orch/detect-zombies [] {} {})))
+
+    (it "detects zombie when session is completed/failed/stopped"
+      (let [sessions [{:label "project:proj:proj-abc" :status "completed" :age-seconds 100}
+                      {:label "project:proj:proj-def" :status "failed" :age-seconds 50}
+                      {:label "project:proj:proj-ghi" :status "stopped" :age-seconds 50}]
+            configs {"proj" {:worker-timeout 1800}}
+            bead-statuses {"proj-abc" "open" "proj-def" "open" "proj-ghi" "open"}
+            result (orch/detect-zombies sessions configs bead-statuses)]
+        (should= 3 (count result))
+        (should= #{"proj-abc" "proj-def" "proj-ghi"} (set (map :bead result)))
+        (should (every? #(= "session-ended" (:reason %)) result))))
+
+    (it "detects zombie when bead is closed but session is running"
+      (let [sessions [{:label "project:proj:proj-abc" :status "running" :age-seconds 100}]
+            configs {"proj" {:worker-timeout 1800}}
+            bead-statuses {"proj-abc" "closed"}
+            result (orch/detect-zombies sessions configs bead-statuses)]
+        (should= 1 (count result))
+        (should= "bead-closed" (:reason (first result)))))
+
+    (it "detects zombie when session exceeds worker-timeout and bead is open"
+      (let [sessions [{:label "project:proj:proj-abc" :status "running" :age-seconds 3700}]
+            configs {"proj" {:worker-timeout 3600}}
+            bead-statuses {"proj-abc" "open"}
+            result (orch/detect-zombies sessions configs bead-statuses)]
+        (should= 1 (count result))
+        (should= "timeout" (:reason (first result)))))
+
+    (it "does not flag running session with open bead within timeout"
+      (let [sessions [{:label "project:proj:proj-abc" :status "running" :age-seconds 100}]
+            configs {"proj" {:worker-timeout 1800}}
+            bead-statuses {"proj-abc" "open"}
+            result (orch/detect-zombies sessions configs bead-statuses)]
+        (should= 0 (count result))))
+
+    (it "ignores non-project labels"
+      (let [sessions [{:label "other:thing" :status "completed" :age-seconds 100}]
+            result (orch/detect-zombies sessions {} {})]
+        (should= 0 (count result))))
+
+    (it "includes slug, bead, label, and reason in zombie entries"
+      (let [sessions [{:label "project:proj:proj-abc" :status "completed" :age-seconds 100}]
+            configs {"proj" {:worker-timeout 1800}}
+            bead-statuses {"proj-abc" "open"}
+            result (orch/detect-zombies sessions configs bead-statuses)]
+        (should= "proj" (:slug (first result)))
+        (should= "proj-abc" (:bead (first result)))
+        (should= "project:proj:proj-abc" (:label (first result)))
+        (should= "session-ended" (:reason (first result))))))
+
+  (describe "format-orch-run-json with zombies"
+
+    (it "includes zombies array in spawn output"
+      (let [tick-result {:action "spawn"
+                         :spawns [{:project "proj" :bead "proj-abc" :iteration "008"
+                                   :channel "123" :path "/tmp/proj"
+                                   :label "project:proj:proj-abc" :worker-timeout 3600}]
+                         :zombies [{:slug "proj" :bead "proj-old" :label "project:proj:proj-old" :reason "session-ended"}]}
+            json-str (orch/format-orch-run-json tick-result)
+            parsed (json/parse-string json-str true)]
+        (should= 1 (count (:zombies parsed)))
+        (should= "proj-old" (:bead (first (:zombies parsed))))))
+
+    (it "includes zombies array in idle output"
+      (let [tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false
+                         :zombies [{:slug "proj" :bead "proj-old" :label "project:proj:proj-old" :reason "timeout"}]}
+            json-str (orch/format-orch-run-json tick-result)
+            parsed (json/parse-string json-str true)]
+        (should= 1 (count (:zombies parsed)))))))

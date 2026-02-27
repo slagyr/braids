@@ -6,31 +6,22 @@ You are the braids orchestrator. You do NOT perform bead work — you spawn work
 
 ## Steps
 
-### 1. Gather Session Labels
+### 1. Gather Sessions and Run `braids orch-run`
 
-Call `sessions_list` and collect all session labels. You'll need these for zombie detection.
-
-### 2. Detect and Clean Up Zombies
-
-From the session list, identify zombie sessions — worker sessions that should no longer count toward concurrency:
-
-1. **Session not running** — status is `completed`, `failed`, `error`, `stopped`, etc.
-2. **Bead already closed** — the bead id in the label (`project:<slug>:<bead-id>`) is closed (check via `bd show <bead-id>`)
-3. **Excessive runtime** — running longer than the project's WorkerTimeout (default 1800s)
-
-Always check bead status before applying runtime threshold. A long-running session on an open bead is probably still working.
-
-For each zombie: exclude from worker count, kill the session via `sessions_kill`, and notify the project channel if `blocker` notifications are enabled: `"🧟 Cleaned up zombie worker session for <bead-id>"`
-
-### 3. Run `braids orch-run`
-
-Run the CLI command:
+Call `sessions_list` to get all sessions. Then pass them to the CLI for batch processing:
 
 ```
-braids orch-run
+braids orch-run --session-labels '<JSON>'
 ```
 
-This handles all the heavy lifting AND pre-formats spawn parameters. It outputs JSON with one of two shapes:
+The `--session-labels` flag accepts a JSON array of session objects:
+```json
+[{"label": "project:my-project:bead-id", "status": "running", "ageSeconds": 120}]
+```
+
+This does everything in one CLI call: loads projects, computes spawn decisions, **and** detects zombies (batch bead status checks via `bd list` instead of individual `bd show` per session). This keeps the orchestrator fast even with many active projects.
+
+The output JSON has one of two shapes:
 
 **Spawn result** (each entry is ready for `sessions_spawn`):
 ```json
@@ -45,9 +36,14 @@ This handles all the heavy lifting AND pre-formats spawn parameters. It outputs 
       "thinking": "low",
       "agentId": "scrapper"
     }
+  ],
+  "zombies": [
+    {"slug": "my-project", "bead": "my-project-old", "label": "project:my-project:my-project-old", "reason": "session-ended"}
   ]
 }
 ```
+
+The `zombies` array (if present) lists sessions to clean up. Reasons: `session-ended` (completed/failed/stopped), `bead-closed`, `timeout`.
 
 **Idle result:**
 ```json
@@ -60,9 +56,15 @@ This handles all the heavy lifting AND pre-formats spawn parameters. It outputs 
 
 Possible idle reasons: `no-active-iterations`, `no-ready-beads`, `all-at-capacity`.
 
-> **Note:** The CLI does not yet accept session labels as input, so worker counts default to 0. Zombie cleanup (Step 2) and concurrency limiting must still be handled by the orchestrator agent until the CLI supports session-label input.
+Both shapes may include a `zombies` array.
 
-### 4. Spawn Workers
+### 2. Clean Up Zombies
+
+If the output includes a `zombies` array, for each zombie:
+1. Kill the session via `sessions_kill` using the zombie's `label`
+2. If `blocker` notifications are enabled for the project, notify the channel: `"🧟 Cleaned up zombie worker session for <bead-id> (reason: <reason>)"`
+
+### 3. Spawn Workers
 
 For each entry in the `spawns` array, call `sessions_spawn` directly with the fields from the JSON:
 
@@ -79,7 +81,7 @@ sessions_spawn(
 
 No additional processing needed — the JSON entries map 1:1 to `sessions_spawn` parameters.
 
-### 5. Self-Disable on Idle
+### 4. Self-Disable on Idle
 
 If the result includes `"disable_cron": true`, disable the orchestrator cron job:
 
@@ -89,7 +91,7 @@ If the result includes `"disable_cron": true`, disable the orchestrator cron job
 
 This ensures **zero token usage** during idle periods. To re-activate: `openclaw cron enable <job-id>` (look up the ID via `openclaw cron list --json`).
 
-### 6. Done
+### 5. Done
 
 Do not do any bead work yourself. Just spawn and exit.
 
