@@ -35,7 +35,7 @@
    (slug->iteration-number), ready beads per project, worker counts, notification configs,
    and optionally open-beads (slug->all-open-beads including blocked),
    returns a decision: spawn list or idle with reason.
-   When open-beads is provided: disable-cron is true if no project has open beads.
+   When open-beads is provided: disable-cron is true if no project has workable (non-blocked) open beads.
    When open-beads is nil (backward compat): disable-cron false for no-ready-beads."
   ([registry configs iterations beads workers notifications]
    (tick registry configs iterations beads workers notifications nil))
@@ -76,11 +76,14 @@
                                        (and (>= current-w max-w)
                                             (seq (get beads slug [])))))
                                    eligible)
-             ;; Check if any eligible project has open beads (when open-beads provided)
+             ;; Check if any eligible project has workable (non-blocked) open beads.
+             ;; Blocked beads need human intervention, not more orchestrator polling,
+             ;; so they should not keep the cron alive.
              has-open-beads (if (nil? open-beads)
                               true ;; backward compat: assume open beads exist
                               (some (fn [{:keys [slug]}]
-                                      (seq (get open-beads slug [])))
+                                      (seq (remove #(= "blocked" (some-> (:status %) name clojure.string/lower-case))
+                                                   (get open-beads slug []))))
                                     eligible))]
          (cond
            (seq spawns)
