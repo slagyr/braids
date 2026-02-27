@@ -361,3 +361,133 @@
                  (seq zombies) (assoc :zombies zombies))]
     {:result result
      :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads :ready-beads beads :workers workers}}))
+
+(defn load-sessions-from-stores
+  "Read all agent session store files under openclaw-home/agents/*/sessions/sessions.json.
+   Returns a vector of maps with :label, :status, :age-seconds for sessions
+   that have a project: label."
+  ([] (load-sessions-from-stores (str (System/getProperty "user.home") "/.openclaw")))
+  ([openclaw-home]
+   (let [agents-dir (str openclaw-home "/agents")]
+     (if-not (fs/exists? agents-dir)
+       []
+       (let [now (System/currentTimeMillis)]
+         (->> (fs/list-dir agents-dir)
+              (mapcat (fn [agent-dir]
+                        (let [store-path (str agent-dir "/sessions/sessions.json")]
+                          (if-not (fs/exists? store-path)
+                            []
+                            (try
+                              (let [store (json/parse-string (slurp store-path) true)]
+                                (->> store
+                                     (keep (fn [[_key session]]
+                                       (let [label (or (:label session) "")]
+                                         (when (str/starts-with? label "project:")
+                                           {:label label
+                                            :status "running"
+                                            :age-seconds (long (/ (- now (or (:updatedAt session) now)) 1000))}))))
+                                     vec))
+                              (catch Exception _ []))))))
+              vec))))))
+
+(defn gather-and-tick-from-stores
+  "Full orch pipeline that reads session info directly from openclaw session stores.
+   No external session input needed. Returns tick result with :zombies."
+  ([] (gather-and-tick-from-stores (str (System/getProperty "user.home") "/.openclaw")))
+  ([openclaw-home]
+   (let [sessions (load-sessions-from-stores openclaw-home)
+         labels (mapv :label sessions)
+         home (rio/resolve-state-home)
+         reg (rio/load-registry home)
+         active-projects (filter #(= :active (:status %)) (:projects reg))
+         configs (into {} (map (fn [{:keys [slug path]}]
+                                 [slug (rio/load-project-config path)])
+                               active-projects))
+         projects-with-sessions (set (keep (fn [{:keys [label]}]
+                                             (let [parts (str/split label #":" 3)]
+                                               (when (>= (count parts) 2) (second parts))))
+                                           sessions))
+         bead-statuses (if (empty? projects-with-sessions)
+                         {}
+                         (reduce (fn [acc {:keys [slug path]}]
+                                   (if (contains? projects-with-sessions slug)
+                                     (merge acc (load-bead-statuses path))
+                                     acc))
+                                 {} active-projects))
+         zombies (orch/detect-zombies sessions configs bead-statuses)
+         zombie-labels (set (map :label zombies))
+         clean-labels (vec (remove zombie-labels labels))
+         iterations (into {} (keep (fn [{:keys [slug path]}]
+                                     (when-let [iter (find-active-iteration path)]
+                                       [slug iter]))
+                                   active-projects))
+         beads (into {} (map (fn [{:keys [slug path]}]
+                               [slug (if (contains? iterations slug)
+                                       (rio/load-ready-beads path)
+                                       [])])
+                             active-projects))
+         workers (rio/count-workers clean-labels)
+         notifications (into {} (map (fn [{:keys [slug]}]
+                                       [slug (select-keys (get configs slug)
+                                                          [:notifications :notification-mentions])])
+                                     active-projects))
+         open-beads (into {} (map (fn [{:keys [slug path]}]
+                                    [slug (if (contains? iterations slug)
+                                            (load-open-beads path)
+                                            [])])
+                                  active-projects))
+         tick-result (orch/tick reg configs iterations beads workers notifications open-beads)]
+     (cond-> tick-result
+       (seq zombies) (assoc :zombies zombies)))))
+
+(defn gather-and-tick-from-stores-debug
+  "Like gather-and-tick-from-stores but returns {:result :debug-ctx}."
+  ([] (gather-and-tick-from-stores-debug (str (System/getProperty "user.home") "/.openclaw")))
+  ([openclaw-home]
+   (let [sessions (load-sessions-from-stores openclaw-home)
+         labels (mapv :label sessions)
+         home (rio/resolve-state-home)
+         reg (rio/load-registry home)
+         active-projects (filter #(= :active (:status %)) (:projects reg))
+         configs (into {} (map (fn [{:keys [slug path]}]
+                                 [slug (rio/load-project-config path)])
+                               active-projects))
+         projects-with-sessions (set (keep (fn [{:keys [label]}]
+                                             (let [parts (str/split label #":" 3)]
+                                               (when (>= (count parts) 2) (second parts))))
+                                           sessions))
+         bead-statuses (if (empty? projects-with-sessions)
+                         {}
+                         (reduce (fn [acc {:keys [slug path]}]
+                                   (if (contains? projects-with-sessions slug)
+                                     (merge acc (load-bead-statuses path))
+                                     acc))
+                                 {} active-projects))
+         zombies (orch/detect-zombies sessions configs bead-statuses)
+         zombie-labels (set (map :label zombies))
+         clean-labels (vec (remove zombie-labels labels))
+         iterations (into {} (keep (fn [{:keys [slug path]}]
+                                     (when-let [iter (find-active-iteration path)]
+                                       [slug iter]))
+                                   active-projects))
+         beads (into {} (map (fn [{:keys [slug path]}]
+                               [slug (if (contains? iterations slug)
+                                       (rio/load-ready-beads path)
+                                       [])])
+                             active-projects))
+         workers (rio/count-workers clean-labels)
+         notifications (into {} (map (fn [{:keys [slug]}]
+                                       [slug (select-keys (get configs slug)
+                                                          [:notifications :notification-mentions])])
+                                     active-projects))
+         open-beads (into {} (map (fn [{:keys [slug path]}]
+                                    [slug (if (contains? iterations slug)
+                                            (load-open-beads path)
+                                            [])])
+                                  active-projects))
+         tick-result (orch/tick reg configs iterations beads workers notifications open-beads)
+         result (cond-> tick-result
+                  (seq zombies) (assoc :zombies zombies))]
+     {:result result
+      :debug-ctx {:registry reg :configs configs :iterations iterations
+                  :open-beads open-beads :ready-beads beads :workers workers}})))

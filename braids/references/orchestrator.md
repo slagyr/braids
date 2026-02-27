@@ -21,16 +21,7 @@ When verbose is enabled, post each message **immediately** as the step completes
 🤖 Orchestrator tick started
 ```
 
-**Step 2 — After `sessions_list`** (post the session labels found):
-```
-📋 Sessions: project:zaap:zaap-8kq (running), project:braids:braids-xyz (running) | Passing to CLI...
-```
-Or if no project sessions:
-```
-📋 Sessions: none | Passing to CLI...
-```
-
-**Step 3 — After `braids orch-run`** (post the CLI result):
+**Step 2 — After `braids orch-run`** (post the CLI result):
 ```
 ⚙️ orch-run result: spawn 2 workers [zaap-8kq, braids-dwc]
 ```
@@ -43,13 +34,13 @@ Or:
 ⚙️ orch-run result: idle (no-active-iterations) → disabling cron
 ```
 
-**Step 4 — After each `sessions_spawn`** (post per worker):
+**Step 3 — After each `sessions_spawn`** (post per worker):
 ```
 🏗️ Spawning scrapper for zaap-8kq...
 ✅ Worker spawned: project:zaap:zaap-8kq
 ```
 
-**Step 5 — Tick complete** (post after all spawns/cleanup finished):
+**Step 4 — Tick complete** (post after all spawns/cleanup finished):
 ```
 ✅ Tick complete
 ```
@@ -60,26 +51,26 @@ Or:
 
 ## Steps
 
-### 1. Gather Sessions and Run `braids orch-run`
+### 1. Run `braids orch-run`
 
-Call `sessions_list` to get active session labels. Extract any `project:` labels, then pass them to the CLI:
+Run the CLI with no flags — it collects session information internally by reading the openclaw session stores:
 
 ```
-braids orch-run --sessions 'project:my-project:bead-abc project:other:other-xyz'
+braids orch-run
 ```
 
-The `--sessions` flag accepts a space-separated string of session labels. The CLI then:
-1. Parses labels to extract project slug and bead-id per session
-2. Checks bead status for each via batch `bd list` to detect zombies (closed bead = zombie)
-3. Counts healthy workers per project (excluding zombies)
-4. Filters spawn list to respect max-workers per project
+The CLI:
+1. Reads all agent session stores (`~/.openclaw/agents/*/sessions/sessions.json`)
+2. Extracts sessions with `project:` labels to identify active workers
+3. Checks bead status for each via batch `bd list` to detect zombies (closed bead = zombie)
+4. Counts healthy workers per project (excluding zombies)
+5. Computes spawn decisions respecting max-workers per project
 
-This keeps the orchestrator to just 3 tool calls:
-1. `sessions_list` → extract `project:` labels
-2. `braids orch-run --sessions <labels>` → filtered spawn list + zombies
-3. `sessions_spawn` for each entry
+This keeps the orchestrator to just 2 tool calls:
+1. `braids orch-run` → filtered spawn list + zombies
+2. `sessions_spawn` for each entry
 
-**Legacy:** `--session-labels` (JSON array with status/age) is still supported for full zombie detection (session-ended, timeout). Use `--sessions` for the simpler, lower-token flow.
+**Legacy:** `--sessions` (space-separated labels) and `--session-labels` (JSON array with status/age) flags are still supported for backward compatibility, but no longer needed.
 
 The output JSON has one of two shapes:
 
