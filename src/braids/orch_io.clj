@@ -260,7 +260,7 @@
                                   active-projects))
          result (orch/tick reg configs iterations beads workers notifications open-beads)]
      {:result result
-      :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads}})))
+      :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads :ready-beads beads :workers workers}})))
 
 (defn gather-and-tick-from-session-labels-debug
   "Like gather-and-tick-from-session-labels but returns {:result :debug-ctx}."
@@ -309,7 +309,7 @@
         result (cond-> tick-result
                  (seq zombies) (assoc :zombies zombies))]
     {:result result
-     :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads}}))
+     :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads :ready-beads beads :workers workers}}))
 
 (defn gather-and-tick-with-zombies-debug
   "Like gather-and-tick-with-zombies but returns {:result :debug-ctx}."
@@ -360,4 +360,4 @@
         result (cond-> tick-result
                  (seq zombies) (assoc :zombies zombies))]
     {:result result
-     :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads}}))
+     :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads :ready-beads beads :workers workers}}))

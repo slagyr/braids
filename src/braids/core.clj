@@ -10,7 +10,8 @@
             [braids.new-io :as new-io]
             [braids.init-io :as init-io]
             [braids.config :as config]
-            [braids.config-io :as config-io]))
+            [braids.config-io :as config-io]
+            [braids.orch-log :as orch-log]))
 
 (def commands
   {"list"      {:command :list      :doc "Show projects with status, iterations, and progress"}
@@ -85,7 +86,8 @@
       :orch-tick (let [result (orch-io/gather-and-tick)]
                    (println (orch/format-tick-json result))
                    0)
-      :orch-run (let [args (:args (dispatch args))
+      :orch-run (let [start-ms (System/currentTimeMillis)
+                       args (:args (dispatch args))
                        sessions-str (second (drop-while #(not= "--sessions" %) args))
                        session-labels-json (second (drop-while #(not= "--session-labels" %) args))
                        {:keys [result debug-ctx]} (cond
@@ -98,6 +100,14 @@
                   (binding [*out* *err*]
                     (print debug-str)
                     (flush))
+                  ;; Log to /tmp/braids.log
+                  (let [timestamp (.format (java.time.LocalDateTime/now) (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
+                        zombies (or (:zombies result) [])
+                        log-lines (orch-log/format-log-lines
+                                    (assoc debug-ctx :zombies zombies :tick-result result)
+                                    timestamp)]
+                    (orch-log/write-log! "/tmp/braids.log"
+                      (conj log-lines (str "Duration: " (- (System/currentTimeMillis) start-ms) "ms"))))
                   (println (orch/format-orch-run-json result))
                   0)
 
