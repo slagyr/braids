@@ -114,12 +114,13 @@
    Zombie reasons: session-ended, bead-closed, timeout."
   [sessions configs bead-statuses]
   (->> sessions
-       (keep (fn [{:keys [label status age-seconds]}]
+       (keep (fn [{:keys [label status age-seconds session-id]}]
                (when-let [[slug bead-id] (parse-project-label label)]
                  (let [cfg (get configs slug {})
                        timeout (or (:worker-timeout cfg) (:worker-timeout pc/defaults))
                        bead-status (get bead-statuses bead-id "open")
-                       zombie-entry {:slug slug :bead bead-id :label label}]
+                       zombie-entry (cond-> {:slug slug :bead bead-id :label label}
+                                       session-id (assoc :session-id session-id))]
                    (cond
                      ;; Session ended — always a zombie
                      (contains? ended-statuses status)
@@ -284,5 +285,13 @@
                  {:action "spawn" :spawns formatted-spawns})
                (into {} (map (fn [[k v]] [(-> (name k) (.replace "-" "_")) v])
                              (dissoc tick-result :zombies))))]
-    (json/generate-string (cond-> base
-                            (seq zombies) (assoc :zombies zombies)))))
+    (let [formatted-zombies (when (seq zombies)
+                               (mapv (fn [z]
+                                       (cond-> {:slug (:slug z)
+                                                :bead (:bead z)
+                                                :label (:label z)
+                                                :reason (:reason z)}
+                                         (:session-id z) (assoc :sessionId (:session-id z))))
+                                     zombies))]
+      (json/generate-string (cond-> base
+                              formatted-zombies (assoc :zombies formatted-zombies))))))

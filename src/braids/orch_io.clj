@@ -80,9 +80,10 @@
         ;; Plain labels — wrap in maps
         (mapv (fn [l] {:label l :status "running" :age-seconds 0}) parsed)
         ;; Full session objects
-        (mapv (fn [s] {:label (:label s)
-                       :status (:status s)
-                       :age-seconds (or (:ageSeconds s) (:age-seconds s) (:age_seconds s) 0)})
+        (mapv (fn [s] (cond-> {:label (:label s)
+                               :status (:status s)
+                               :age-seconds (or (:ageSeconds s) (:age-seconds s) (:age_seconds s) 0)}
+                        (:sessionId s) (assoc :session-id (:sessionId s))))
               parsed)))
     (catch Exception _ [])))
 
@@ -383,9 +384,10 @@
                                      (keep (fn [[_key session]]
                                        (let [label (or (:label session) "")]
                                          (when (str/starts-with? label "project:")
-                                           {:label label
-                                            :status "running"
-                                            :age-seconds (long (/ (- now (or (:updatedAt session) now)) 1000))}))))
+                                           (cond-> {:label label
+                                                    :status "running"
+                                                    :age-seconds (long (/ (- now (or (:updatedAt session) now)) 1000))}
+                                             (:sessionId session) (assoc :session-id (:sessionId session)))))))
                                      vec))
                               (catch Exception _ []))))))
               vec))))))

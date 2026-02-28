@@ -56,7 +56,8 @@
       (let [sessions (oio/load-sessions-from-stores dir)]
         (should= 1 (count sessions))
         (should= "project:myproj:myproj-abc" (:label (first sessions)))
-        (should (pos? (:age-seconds (first sessions)))))
+        (should (pos? (:age-seconds (first sessions))))
+        (should= "sid-1" (:session-id (first sessions))))
       (fs/delete-tree dir)))
 
   (it "returns empty vector when no session stores exist"

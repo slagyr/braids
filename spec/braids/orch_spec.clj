@@ -322,8 +322,21 @@
         (should= "proj" (:slug (first result)))
         (should= "proj-abc" (:bead (first result)))
         (should= "project:proj:proj-abc" (:label (first result)))
-        (should= "session-ended" (:reason (first result))))))
+        (should= "session-ended" (:reason (first result)))))
 
+    (it "includes session-id in zombie entries when present in session data"
+      (let [sessions [{:label "project:proj:proj-abc" :status "completed" :age-seconds 100 :session-id "sess-123"}]
+            configs {"proj" {:worker-timeout 1800}}
+            bead-statuses {"proj-abc" "open"}
+            result (orch/detect-zombies sessions configs bead-statuses)]
+        (should= "sess-123" (:session-id (first result)))))
+
+    (it "omits session-id from zombie entries when not present in session data"
+      (let [sessions [{:label "project:proj:proj-abc" :status "completed" :age-seconds 100}]
+            configs {"proj" {:worker-timeout 1800}}
+            bead-statuses {"proj-abc" "open"}
+            result (orch/detect-zombies sessions configs bead-statuses)]
+        (should-not-contain :session-id (first result)))))
   (describe "parse-session-labels-string"
 
     (it "parses space-separated labels into list"
@@ -389,7 +402,21 @@
                          :zombies [{:slug "proj" :bead "proj-old" :label "project:proj:proj-old" :reason "timeout"}]}
             json-str (orch/format-orch-run-json tick-result)
             parsed (json/parse-string json-str true)]
-        (should= 1 (count (:zombies parsed)))))))
+        (should= 1 (count (:zombies parsed)))))
+
+    (it "includes sessionId in zombie JSON when present"
+      (let [tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false
+                         :zombies [{:slug "proj" :bead "proj-old" :label "project:proj:proj-old" :reason "timeout" :session-id "sess-456"}]}
+            json-str (orch/format-orch-run-json tick-result)
+            parsed (json/parse-string json-str true)]
+        (should= "sess-456" (:sessionId (first (:zombies parsed))))))
+
+    (it "omits sessionId from zombie JSON when not present"
+      (let [tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false
+                         :zombies [{:slug "proj" :bead "proj-old" :label "project:proj:proj-old" :reason "timeout"}]}
+            json-str (orch/format-orch-run-json tick-result)
+            parsed (json/parse-string json-str true)]
+        (should-not-contain :sessionId (first (:zombies parsed))))))
 
   (describe "format-debug-output"
 
@@ -473,3 +500,4 @@
             high-idx (.indexOf output "high")
             low-idx (.indexOf output "low")]
         (should (< high-idx low-idx)))))
+)
