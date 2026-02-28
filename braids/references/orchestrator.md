@@ -8,47 +8,6 @@ You are the braids orchestrator. You do NOT perform bead work — you spawn work
 
 The orchestrator can have its own dedicated channel for announcements (spawn decisions, idle events, errors), separate from per-project channels. Check `~/.openclaw/braids/config.edn` for the `:orchestrator-channel` field. If set, post orchestrator-level summaries (spawn counts, idle notifications, zombie cleanups) to that channel. If not set, skip orchestrator-level announcements (project-specific notifications still go to each project's channel).
 
-## Verbose Mode
-
-When `:verbose true` is set in `~/.openclaw/braids/config.edn`, the orchestrator posts **step-by-step updates** to the `:orchestrator-channel` as each step completes during the tick. This provides real-time observability — you see what's happening as it happens, not a summary after the fact.
-
-Check verbose mode: `braids config get verbose`
-
-When verbose is enabled, post each message **immediately** as the step completes:
-
-**Step 1 — Tick start** (post before doing anything else):
-```
-🤖 Orchestrator tick started
-```
-
-**Step 2 — After `braids orch-run`** (post the CLI result):
-```
-⚙️ orch-run result: spawn 2 workers [zaap-8kq, braids-dwc]
-```
-Or:
-```
-⚙️ orch-run result: idle (no-ready-beads) → staying alive
-```
-Or:
-```
-⚙️ orch-run result: idle (no-active-iterations) → disabling cron
-```
-
-**Step 3 — After each `sessions_spawn`** (post per worker):
-```
-🏗️ Spawning scrapper for zaap-8kq...
-✅ Worker spawned: project:zaap:zaap-8kq
-```
-
-**Step 4 — Tick complete** (post after all spawns/cleanup finished):
-```
-✅ Tick complete
-```
-
-**When verbose is off (default):** Skip all step-by-step messages. The orchestrator channel still receives spawn counts, idle notifications, and zombie cleanups per the normal notification rules.
-
-**Token impact:** Verbose mode adds multiple channel messages per tick (one per step). This is fine for debugging but can be noisy — disable it once you're satisfied the orchestrator is working correctly.
-
 ## Steps
 
 ### 1. Run `braids orch-run`
