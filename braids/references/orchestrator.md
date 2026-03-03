@@ -81,7 +81,9 @@ If the output includes a `zombies` array, for each zombie:
 
 ### 3. Spawn Workers — Fire and Forget
 
-**Fire ALL spawns back-to-back without waiting.** `sessions_spawn` is fire-and-forget — do NOT wait for any spawn to complete or confirm before firing the next one. If your runtime supports parallel tool calls, make all `sessions_spawn` calls in a single batch. Otherwise, call them sequentially but without pausing between them.
+**Fire ALL spawns back-to-back without waiting.** `sessions_spawn` is fire-and-forget — do NOT wait for any spawn to complete or confirm before firing the next one. **CRITICAL:** Do not wait for the `sessions_spawn` tool call response before firing the next one — tool calls have overhead, and waiting for each would cause timeouts. Fire all spawns in rapid succession without blocking on any tool call.
+
+If your runtime supports parallel tool calls, make all `sessions_spawn` calls in a single batch. Otherwise, call them sequentially but without pausing between them.
 
 For each entry in the `spawns` array, construct the task message using the **Worker Prompt Template** below, then call `sessions_spawn`:
 
