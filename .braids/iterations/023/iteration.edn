@@ -1,0 +1,4 @@
+{:number "023"
+ :status :active
+ :stories ["braids-yhv"]
+ :notes "Replace LLM orchestrator with shell script for reliable fire-and-forget spawning."}
