@@ -313,7 +313,7 @@ Set up a recurring cron job for the orchestrator:
   "payload": {
     "kind": "agentTurn",
     "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md",
-    "timeoutSeconds": 300
+    "timeoutSeconds": 120
   },
   "sessionTarget": "main",
   "sessionKey": "braids:orchestrator",

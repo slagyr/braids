@@ -79,7 +79,9 @@ If the output includes a `zombies` array, for each zombie:
 2. If `blocker` notifications are enabled for the project, notify the **project's** channel: `"🧟 Cleaned up zombie worker session for <bead-id> (reason: <reason>)"`
 3. If an orchestrator channel is configured, also post a brief summary there
 
-### 3. Spawn Workers
+### 3. Spawn Workers — Fire and Forget
+
+**Fire ALL spawns back-to-back without waiting.** `sessions_spawn` is fire-and-forget — do NOT wait for any spawn to complete or confirm before firing the next one. If your runtime supports parallel tool calls, make all `sessions_spawn` calls in a single batch. Otherwise, call them sequentially but without pausing between them.
 
 For each entry in the `spawns` array, construct the task message using the **Worker Prompt Template** below, then call `sessions_spawn`:
 
@@ -109,6 +111,8 @@ Channel: <channel>
 
 The CLI provides the structural data; the orchestrator owns the prompt content.
 
+**After all spawns are fired (and zombies killed), exit IMMEDIATELY.** The orchestrator's job is done the moment it fires the spawns — it must not linger, poll, or wait for workers to complete.
+
 ### 4. Self-Disable on Idle
 
 If the result includes `"disable_cron": true`, disable the orchestrator cron job:
@@ -120,9 +124,9 @@ If the result includes `"disable_cron": true`, disable the orchestrator cron job
 
 This ensures **zero token usage** during idle periods. To re-activate: `openclaw cron enable <job-id>` (look up the ID via `openclaw cron list --json`).
 
-### 5. Done
+### 5. Done — Exit Immediately
 
-Do not do any bead work yourself. Just spawn and exit.
+**The orchestrator must exit as soon as steps 1–4 are complete.** Do not do any bead work. Do not wait for workers. Do not poll for results. Just spawn and exit. The entire tick should complete in under 60 seconds.
 
 ## Troubleshooting
 
