@@ -6,6 +6,10 @@
             [braids.orch-io :as orch-io]
             [braids.orch-runner :as runner]))
 
+(def ^:private openclaw-bin
+  "Full path to the openclaw binary. Use OPENCLAW_BIN env var to override."
+  (or (System/getenv "OPENCLAW_BIN") "/Users/zane/.local/bin/openclaw"))
+
 (defn spawn-worker!
   "Fire an openclaw agent worker in the background (fire-and-forget).
    In dry-run mode, logs what would happen without executing."
@@ -15,7 +19,7 @@
     (if dry-run
       (println (runner/log-line (str "DRY-RUN: would spawn worker for " bead)))
       (do
-        (proc/process (into ["openclaw"] args)
+        (proc/process (into [openclaw-bin] args)
                       {:out :inherit :err :inherit})
         (println (runner/log-line (str "Spawned worker: bead=" bead)))))))
 
