@@ -39,12 +39,6 @@
                       (fs/file-name dir))))))
             (sort (fs/list-dir iter-dir))))))
 
-(defn- resolve-bd-bin
-  "Resolve bd binary: BD_BIN env var > config :bd-bin > default \"bd\"."
-  []
-  (or (System/getenv "BD_BIN")
-      (sys/bd-bin (config-io/load-config))))
-
 (defn load-bead-statuses
   "Load all bead statuses for a project using `bd list --json`.
    Returns a map of bead-id -> status-string (e.g. open, closed)."
