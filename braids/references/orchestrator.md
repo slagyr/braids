@@ -1,145 +1,106 @@
 # Projects Orchestrator
 
-You are the braids orchestrator. You do NOT perform bead work — you spawn workers that do.
+The braids orchestrator is a **shell script** (`braids/bin/braids-orch.sh`) that runs on a cron schedule.
+It does NOT use an LLM agent — it's pure shell logic for zero reasoning overhead and true fire-and-forget spawning.
 
-**IMPORTANT:** Keep this session lightweight. Do not read large files or produce verbose output. Every token accumulates across cron runs.
+## What It Does
 
-## Orchestrator Channel
+1. Runs `braids orch-tick` to get spawn decisions (JSON)
+2. For each spawn, fires `openclaw agent` in the background (`&`)
+3. Handles idle/disable-cron scenarios
+4. Logs to `/tmp/braids-orch.log` (configurable via `BRAIDS_ORCH_LOG`)
+5. Exits immediately — no waiting for workers
 
-The orchestrator can have its own dedicated channel for announcements (spawn decisions, idle events, errors), separate from per-project channels. Check `~/.openclaw/braids/config.edn` for the `:orchestrator-channel` field. If set, post orchestrator-level summaries (spawn counts, idle notifications, zombie cleanups) to that channel. If not set, skip orchestrator-level announcements (project-specific notifications still go to each project's channel).
+## Installation
 
-## Steps
+The script is installed by `braids init` or manually:
 
-### 1. Run `braids orch-tick`
-
-Run the CLI with no flags — it collects session information internally by reading the openclaw session stores:
-
-```
-braids orch-tick
-```
-
-The CLI:
-1. Reads all agent session stores (`~/.openclaw/agents/*/sessions/sessions.json`)
-2. Extracts sessions with `project:` labels to identify active workers
-3. Checks bead status for each via batch `bd list` to detect zombies (closed bead = zombie)
-4. Counts healthy workers per project (excluding zombies)
-5. Computes spawn decisions respecting max-workers per project
-
-This keeps the orchestrator to just 2 tool calls:
-1. `braids orch-tick` → filtered spawn list + zombies
-2. `sessions_spawn` for each entry
-
-**Legacy:** `--sessions` (space-separated labels) and `--session-labels` (JSON array with status/age) flags are still supported for backward compatibility, but no longer needed.
-
-The output JSON has one of two shapes:
-
-**Spawn result** (structural data — the orchestrator constructs the task message):
-```json
-{
-  "action": "spawn",
-  "spawns": [
-    {
-      "project": "my-project",
-      "bead": "my-project-abc",
-      "iteration": "008",
-      "channel": "1471680593497554998",
-      "path": "~/Projects/my-project",
-      "label": "project:my-project:my-project-abc",
-      "runTimeoutSeconds": 1800,
-      "cleanup": "delete",
-      "thinking": "low",
-      "agentId": "scrapper"
-    }
-  ],
-  "zombies": [
-    {"slug": "my-project", "bead": "my-project-old", "label": "project:my-project:my-project-old", "reason": "session-ended"}
-  ]
-}
+```bash
+# Install or update the script
+cp braids/bin/braids-orch.sh /usr/local/bin/braids-orch
+chmod +x /usr/local/bin/braids-orch
 ```
 
-The `zombies` array (if present) lists sessions to clean up. Reasons: `session-ended` (completed/failed/stopped), `bead-closed`, `timeout`.
+## Cron Setup
 
-**Idle result:**
-```json
-{
-  "action": "idle",
-  "reason": "no-active-iterations",
-  "disable_cron": true
-}
+```bash
+# Create the cron job (runs every 5 minutes)
+openclaw cron add \
+  --name braids-orchestrator \
+  --every 5m \
+  --message "Run braids-orch" \
+  --timeout-seconds 60
+
+# Or update existing agent-based cron to use the script:
+openclaw cron edit <job-id> \
+  --message "Run braids-orch" \
+  --timeout-seconds 60
 ```
 
-Possible idle reasons: `no-active-iterations`, `no-ready-beads`, `all-at-capacity`.
+**Note:** The cron job still uses an `agentTurn` payload because OpenClaw cron only supports agent turns.
+The agent's only job is to execute the shell script — one `exec` tool call vs. the old approach of
+reading orchestrator.md, parsing JSON, constructing prompts, and making multiple `sessions_spawn` calls.
 
-Both shapes may include a `zombies` array.
+Alternatively, the shell script can be run directly from system cron or launchd:
 
-### 2. Clean Up Zombies
-
-If the output includes a `zombies` array, for each zombie:
-1. Kill the session via `sessions_kill` using the zombie's `label`
-2. If `blocker` notifications are enabled for the project, notify the **project's** channel: `"🧟 Cleaned up zombie worker session for <bead-id> (reason: <reason>)"`
-3. If an orchestrator channel is configured, also post a brief summary there
-
-### 3. Spawn Workers — Fire and Forget
-
-**Fire ALL spawns back-to-back without waiting.** `sessions_spawn` is fire-and-forget — do NOT wait for any spawn to complete or confirm before firing the next one. **CRITICAL:** Do not wait for the `sessions_spawn` tool call response before firing the next one — tool calls have overhead, and waiting for each would cause timeouts. Fire all spawns in rapid succession without blocking on any tool call.
-
-If your runtime supports parallel tool calls, make all `sessions_spawn` calls in a single batch. Otherwise, call them sequentially but without pausing between them.
-
-For each entry in the `spawns` array, construct the task message using the **Worker Prompt Template** below, then call `sessions_spawn`:
-
-```
-sessions_spawn(
-  task: <constructed task message>,
-  label: <label>,
-  runTimeoutSeconds: <runTimeoutSeconds>,
-  cleanup: <cleanup>,
-  thinking: <thinking>,
-  agentId: <agentId>  # if present in spawn entry
-)
+```bash
+# System crontab (bypass OpenClaw cron entirely)
+*/5 * * * * /usr/local/bin/braids-orch >> /tmp/braids-orch.log 2>&1
 ```
 
-#### Worker Prompt Template
+## Usage
 
-Construct the `task` field for each spawn entry using this template, filling in values from the spawn JSON:
-
-```
-You are a project worker for the braids skill. Read and follow ~/.openclaw/skills/braids/references/worker.md
-
-Project: <path>
-Bead: <bead>
-Iteration: <iteration>
-Channel: <channel>
+```bash
+braids-orch             # Normal run
+braids-orch --dry-run   # Log what would happen without spawning
+braids-orch --verbose   # Also print to stderr
 ```
 
-The CLI provides the structural data; the orchestrator owns the prompt content.
+## Environment
 
-**After all spawns are fired (and zombies killed), exit IMMEDIATELY.** The orchestrator's job is done the moment it fires the spawns — it must not linger, poll, or wait for workers to complete.
+- `BRAIDS_ORCH_LOG` — Log file path (default: `/tmp/braids-orch.log`)
 
-### 4. Self-Disable on Idle
+## How Spawning Works
 
-If the result includes `"disable_cron": true`, disable the orchestrator cron job:
+For each spawn entry from `braids orch-tick`, the script runs:
 
-1. Look up the cron job ID: `openclaw cron list --json`, find the job named `braids-orchestrator`, then run `openclaw cron disable <job-id>` (keeps the job definition intact)
-2. Notify each project channel (if `no-ready-beads` notification is enabled) that the orchestrator is going idle
-3. If an orchestrator channel is configured, post the idle reason there
-4. The orchestrator will not run again until re-enabled
+```bash
+openclaw agent \
+  --agent <agentId> \
+  --message "<worker prompt>" \
+  --session-id <uuid> \
+  --thinking <level> \
+  --timeout <seconds> \
+  --deliver \
+  --reply-channel discord \
+  --reply-to <channel> &
+```
 
-This ensures **zero token usage** during idle periods. To re-activate: `openclaw cron enable <job-id>` (look up the ID via `openclaw cron list --json`).
+The `&` makes it fire-and-forget. The script doesn't wait for workers to complete.
 
-### 5. Done — Exit Immediately
+## Limitations vs. LLM Orchestrator
 
-**The orchestrator must exit as soon as steps 1–4 are complete.** Do not do any bead work. Do not wait for workers. Do not poll for results. Just spawn and exit. The entire tick should complete in under 60 seconds.
+- **No session labels:** `openclaw agent` doesn't support `--label`, so zombie detection
+  based on session labels won't work for sessions spawned by the shell script.
+  The `braids orch-tick` command still reads session stores directly for zombie detection.
+- **No session cleanup:** Can't kill zombie sessions from the CLI (no `sessions kill` command).
+  Zombies are logged but not cleaned up automatically.
+- **No channel notifications for zombies:** The shell script logs zombies but doesn't send
+  Discord messages about them (would require the message CLI or an agent).
 
 ## Troubleshooting
 
-### Context Overflow
-
-The orchestrator uses a persistent session (`sessionKey: braids:orchestrator`) so transcripts accumulate across ticks. The gateway automatically compacts old turns, but if context still overflows, reset the session:
-
+Check the log:
 ```bash
-# Reset the persistent session by clearing and re-setting the key
-openclaw cron edit <job-id> --clear-session-key
-openclaw cron edit <job-id> --session-key braids:orchestrator
+tail -f /tmp/braids-orch.log
 ```
 
-This forces a fresh session on the next tick while preserving the job definition.
+Test with dry-run:
+```bash
+braids-orch --dry-run --verbose
+```
+
+Check what orch-tick would return:
+```bash
+braids orch-tick
+```
