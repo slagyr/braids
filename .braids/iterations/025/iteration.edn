@@ -1,4 +1,4 @@
 {:number "025"
- :status :active
+ :status :complete
  :stories ["braids-eca"]
  :notes "Clean up orch output: remove timestamps, banner dry-run mode, remove noise."}
