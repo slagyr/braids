@@ -16,13 +16,15 @@
     (it "reads config from file"
       (let [path (str @tmp-dir "/config.edn")]
         (spit path "{:braids-home \"/custom\"}")
-        (should= {:braids-home "/custom" :orchestrator-channel nil}
+        (should= {:braids-home "/custom" :orchestrator-channel nil
+                  :env-path nil :bd-bin "bd" :openclaw-bin "openclaw"}
                  (config-io/load-config path)))))
 
   (describe "save-config!"
     (it "writes config to file"
       (let [path (str @tmp-dir "/save-test.edn")
-            cfg {:braids-home "/my/projects" :orchestrator-channel nil}]
+            cfg {:braids-home "/my/projects" :orchestrator-channel nil
+                 :env-path nil :bd-bin "bd" :openclaw-bin "openclaw"}]
         (config-io/save-config! cfg path)
         (should (fs/exists? path))
         (should= cfg (config-io/load-config path)))))

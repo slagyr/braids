@@ -20,7 +20,7 @@
       (println (runner/log-line (str "DRY-RUN: would spawn worker for " bead)))
       (do
         (proc/process (into [bin] args)
-                      {:out :inherit :err :inherit
+                      {:out :discard :err :discard
                        :extra-env (sys/subprocess-env cfg)})
         (println (runner/log-line (str "Spawned worker: bead=" bead)))))))
 
