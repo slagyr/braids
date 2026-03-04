@@ -2,6 +2,7 @@
  :status :active
  :stories [{:id "braids-lyk" :title "Add :worker-thinking config field — default to 'high', replaces hardcoded 'low'"}
            {:id "braids-2zq" :title "Update SKILL.md config.edn table to document :worker-agent and :worker-thinking"}
-           {:id "braids-01z" :title "Document the 'private project' pattern in SKILL.md"}]
+           {:id "braids-01z" :title "Document the 'private project' pattern in SKILL.md"}
+           {:id "braids-vnm" :title "Add binary paths to global config; use full paths everywhere for cron compatibility"}]
  :notes ["Theme: worker configuration and privacy patterns"
          "lyk is implementation; 2zq and 01z are documentation — can be worked in parallel after lyk"]}
