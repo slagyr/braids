@@ -102,12 +102,11 @@
 
   (describe "log-line"
 
-    (it "includes ISO timestamp"
-      (let [line (runner/log-line "test")]
-        (should (re-find #"\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\]" line))))
+    (it "returns message without timestamp"
+      (should= "test" (runner/log-line "test")))
 
     (it "includes the message"
-      (should (str/ends-with? (runner/log-line "hello world") "hello world"))))
+      (should= "hello world" (runner/log-line "hello world"))))
 
   (describe "format-spawn-log"
 
@@ -161,7 +160,7 @@
                        :env {"BRAIDS_STATE_HOME" state-dir
                              "BRAIDS_OPENCLAW_HOME" tmp})]
           (should= 0 (:exit result))
-          (should (str/includes? (:out result) "Orchestrator tick complete")))
+          (should (str/includes? (:out result) "DRY-RUN")))
         (finally
           (proc/shell {:continue true} "rm" "-rf" tmp)))))
 

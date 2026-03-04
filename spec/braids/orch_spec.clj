@@ -431,7 +431,7 @@
         (should-contain "008" output)
         (should-contain "all closed" output)
         (should-contain "idle: no-ready-beads" output)
-        (should-contain "disable_cron: true" output)))
+))
 
     (it "shows project with beads and their statuses"
       (let [reg {:projects [{:slug "myproj" :status :active :priority :normal :path "/tmp/myproj"}]}

@@ -101,14 +101,12 @@
 
   (describe "log-line"
 
-    (it "includes timestamp in brackets"
-      (let [line (runner/log-line "hello")]
-        (should (str/starts-with? line "["))
-        (should (str/includes? line "] hello"))))
+    (it "returns the message as-is (no timestamp)"
+      (should= "hello" (runner/log-line "hello")))
 
     (it "includes the message"
       (let [line (runner/log-line "test message")]
-        (should (str/ends-with? line "test message")))))
+        (should= "test message" line))))
 
   (describe "format-spawn-log"
 

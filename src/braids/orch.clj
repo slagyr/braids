@@ -245,15 +245,13 @@
                                           beads)]
                       (clojure.string/join "\n" (cons header bead-lines))))))
               active-projects)
-        decision-line (let [{:keys [action reason disable-cron]} tick-result
+        decision-line (let [{:keys [action reason]} tick-result
                             spawns (:spawns tick-result)
                             desc (if (= "spawn" action)
                                    (str "spawn: " (count spawns) " worker(s)")
                                    (str action ": " reason))
-                            cron-note (when (some? disable-cron)
-                                        (str "  [disable_cron: " disable-cron "]"))
                             color (decision-color action reason)]
-                        (str "\n  → " (c (str desc cron-note) color)))]
+                        (str "\n  → " (c desc color)))]
     (str (clojure.string/join "\n" project-lines) "\n" decision-line "\n")))
 
 (defn format-tick-json

@@ -37,11 +37,9 @@ Channel: %s")
       (vec base-args))))
 
 (defn log-line
-  "Format a log line with ISO timestamp."
+  "Format a log line (no timestamp — keep output clean)."
   [msg]
-  (let [ts (.format (java.time.LocalDateTime/now)
-                    (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))]
-    (str "[" ts "] " msg)))
+  msg)
 
 (defn format-spawn-log
   "Format log lines for a spawn action. Returns vector of strings."

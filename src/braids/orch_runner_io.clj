@@ -33,6 +33,10 @@
              action (:action result)
              zombies (seq (:zombies result))]
 
+         ;; Mode banner at the very top
+         (println (if dry-run "── DRY-RUN ──" "── CONFIRMED ──"))
+         (println)
+
          ;; Always print the human-readable summary
          (let [debug-str (orch/format-debug-output
                            (:registry debug-ctx) (:configs debug-ctx)
@@ -45,26 +49,13 @@
            (doseq [line (runner/format-zombie-log (:zombies result))]
              (println line)))
 
-         (cond
-           (= "spawn" action)
+         (when (= "spawn" action)
            (let [spawns (:spawns result)]
              (doseq [line (runner/format-spawn-log result)]
                (println line))
              (doseq [spawn spawns]
-               (spawn-worker! spawn opts))
-             (println (runner/log-line "All workers spawned")))
+               (spawn-worker! spawn opts))))
 
-           (= "idle" action)
-           (doseq [line (runner/format-idle-log result)]
-             (println line))
-
-           :else
-           (println (runner/log-line (str "WARN: unknown action: " action))))
-
-         (when dry-run
-           (println (runner/log-line "DRY-RUN mode — no workers were spawned")))
-
-         (println (runner/log-line "Orchestrator tick complete"))
          0)
        (catch Exception e
          (println (runner/log-line (str "ERROR: " (.getMessage e))))
