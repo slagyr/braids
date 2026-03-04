@@ -1,17 +1,24 @@
 (ns braids.orch-runner-test
-  (:require [clojure.test :refer :all]
-            [braids.orch-runner :as orch]))
+  (:require [speclj.core :refer :all]
+            [braids.orch :as orch]))
 
-(deftest build-worker-args-uses-config-thinking
-  (let [config {:worker-thinking "high"}
-        spawn {:bead "braids-123" :path "/tmp" :iteration "001" :channel "123"}
-        args (orch/build-worker-args config spawn)]
-    (is (some #{"--thinking"} args))
-    (is (some #{"high"} args))))
+(describe "orch/build-worker-spawn"
+  (it "includes agent-id, model, and thinking in spawn data"
+    (let [cfg {:worker-agent "scrapper"
+               :worker-model "grok"
+               :worker-thinking :high}
+          spawn (orch/build-worker-spawn cfg {:path "/tmp/test" :bead "test-bead" :iteration "001" :channel "123"})]
+      (should= "scrapper" (:agent-id spawn))
+      (should= "grok" (:model spawn))
+      (should= :high (:thinking spawn))))
 
-(deftest build-worker-args-default-thinking
-  (let [config {}
-        spawn {:bead "braids-123" :path "/tmp" :iteration "001" :channel "123"}
-        args (orch/build-worker-args config spawn)]
-    (is (some #{"--thinking"} args))
-    (is (some #{"high"} args))))
+  (it "defaults thinking to :high when not specified"
+    (let [cfg {:worker-agent "scrapper"}
+          spawn (orch/build-worker-spawn cfg {:path "/tmp/test" :bead "test-bead" :iteration "001" :channel "123"})]
+      (should= :high (:thinking spawn))))
+
+  (it "handles nil model and thinking"
+    (let [cfg {:worker-agent "scrapper"}
+          spawn (orch/build-worker-spawn cfg {:path "/tmp/test" :bead "test-bead" :iteration "001" :channel "123"})]
+      (should= nil (:model spawn))
+      (should= :high (:thinking spawn)))))

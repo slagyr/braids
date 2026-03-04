@@ -3,19 +3,6 @@
    Converts orchestrator tick results into openclaw agent spawn commands."
   (:require [clojure.string :as str]))
 
-(def worker-task-template
-  "You are a project worker for the braids skill. Read and follow ~/.openclaw/skills/braids/references/worker.md
-
-Project: %s
-Bead: %s
-Iteration: %s
-Channel: %s")
-
-(defn build-worker-task
-  "Build the task message for a worker spawn."
-  [{:keys [path bead iteration channel]}]
-  (format worker-task-template path bead iteration channel))
-
 (defn build-worker-args
   "Build the openclaw agent CLI args for a spawn entry.
    Returns a vector of strings."

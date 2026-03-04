@@ -278,7 +278,9 @@
                                                        :runTimeoutSeconds (:worker-timeout spawn)
                                                        :cleanup "delete"
                                                        :thinking "low"}
-                                                (:worker-agent spawn) (assoc :agentId (:worker-agent spawn))))
+                                                (:worker-agent spawn) (assoc :agentId (:worker-agent spawn)))
+                                        :model (get-in cfg [:worker-model])
+                                        :thinking (get-in cfg [:worker-thinking] :high))))
                                             (:spawns tick-result))]
                  {:action "spawn" :spawns formatted-spawns})
                (into {} (map (fn [[k v]] [(-> (name k) (.replace "-" "_")) v])
