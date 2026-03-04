@@ -5,7 +5,9 @@
             [cheshire.core :as json]
             [clojure.string :as str]
             [braids.orch :as orch]
-            [braids.ready-io :as rio]))
+            [braids.ready-io :as rio]
+            [braids.config-io :as config-io]
+            [braids.sys :as sys]))
 
 (defn parse-iteration-status-edn
   "Extract the status from iteration.edn content string.
@@ -37,9 +39,11 @@
                       (fs/file-name dir))))))
             (sort (fs/list-dir iter-dir))))))
 
-(def ^:private bd-bin
-  "Full path to the bd binary. Use BD_BIN env var to override (useful in tests)."
-  (or (System/getenv "BD_BIN") "/usr/local/bin/bd"))
+(defn- resolve-bd-bin
+  "Resolve bd binary: BD_BIN env var > config :bd-bin > default \"bd\"."
+  []
+  (or (System/getenv "BD_BIN")
+      (sys/bd-bin (config-io/load-config))))
 
 (defn load-bead-statuses
   "Load all bead statuses for a project using `bd list --json`.
