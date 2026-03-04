@@ -5,6 +5,20 @@
 
 (def priority-order {:high 0 :normal 1 :low 2})
 
+(defn worker-session-id
+  "Construct the deterministic session ID for a bead's worker."
+  [bead-id]
+  (str "braids-" bead-id "-worker"))
+
+(defn parse-worker-session-id
+  "Parse a deterministic worker session ID to extract the bead-id. Returns bead-id or nil."
+  [session-id]
+  (when (and session-id
+             (clojure.string/starts-with? session-id "braids-")
+             (clojure.string/ends-with? session-id "-worker")
+             (> (count session-id) 14))
+    (subs session-id 7 (- (count session-id) 7))))
+
 (defn- eligible-projects
   "Returns active projects that have active iterations and aren't paused by config."
   [registry configs iterations]

@@ -90,14 +90,20 @@
             timeout-idx (.indexOf args "--timeout")]
         (should= "3600" (nth args (inc timeout-idx)))))
 
-    (it "generates unique session IDs"
-      (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c"}
+    (it "generates deterministic session ID based on bead-id"
+      (let [spawn {:path "~/p" :bead "proj-abc" :iteration "1" :channel "c"}
+            args (runner/build-worker-args {} spawn)
+            session-idx (.indexOf args "--session-id")]
+        (should= "braids-proj-abc-worker" (nth args (inc session-idx)))))
+
+    (it "generates same session ID for same bead across calls"
+      (let [spawn {:path "~/p" :bead "proj-abc" :iteration "1" :channel "c"}
             args1 (runner/build-worker-args {} spawn)
             args2 (runner/build-worker-args {} spawn)
             session-idx1 (.indexOf args1 "--session-id")
             session-idx2 (.indexOf args2 "--session-id")]
-        (should-not= (nth args1 (inc session-idx1))
-                     (nth args2 (inc session-idx2))))))
+        (should= (nth args1 (inc session-idx1))
+                 (nth args2 (inc session-idx2)))))))
 
   (describe "log-line"
 
@@ -145,4 +151,4 @@
       (let [zombies [{:bead "z1" :reason "bead-closed"}]
             lines (runner/format-zombie-log zombies)]
         (should (some #(str/includes? % "z1") lines))
-        (should (some #(str/includes? % "bead-closed") lines))))))
+        (should (some #(str/includes? % "bead-closed") lines)))))

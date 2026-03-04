@@ -390,12 +390,24 @@
                               (let [store (json/parse-string (slurp store-path) true)]
                                 (->> store
                                      (keep (fn [[_key session]]
-                                       (let [label (or (:label session) "")]
-                                         (when (str/starts-with? label "project:")
+                                       (let [label (or (:label session) "")
+                                             session-id-val (or (:sessionId session) (name _key))
+                                             age (long (/ (- now (or (:updatedAt session) now)) 1000))]
+                                         (cond
+                                           ;; Match by project: label
+                                           (str/starts-with? label "project:")
                                            (cond-> {:label label
                                                     :status "running"
-                                                    :age-seconds (long (/ (- now (or (:updatedAt session) now)) 1000))}
-                                             (:sessionId session) (assoc :session-id (:sessionId session)))))))
+                                                    :age-seconds age}
+                                             (:sessionId session) (assoc :session-id (:sessionId session)))
+
+                                           ;; Match by deterministic worker session-id pattern
+                                           (orch/parse-worker-session-id session-id-val)
+                                           {:label label
+                                            :status "running"
+                                            :age-seconds age
+                                            :session-id session-id-val
+                                            :worker-bead-id (orch/parse-worker-session-id session-id-val)}))))
                                      vec))
                               (catch Exception _ []))))))
               vec))))))
@@ -427,6 +439,16 @@
          zombies (orch/detect-zombies sessions configs bead-statuses)
          zombie-labels (set (map :label zombies))
          clean-labels (vec (remove zombie-labels labels))
+         ;; Build synthetic labels from session-id matched worker sessions
+         sid-labels (keep (fn [{:keys [worker-bead-id]}]
+                            (when worker-bead-id
+                              (let [sorted-projects (sort-by #(- (count (:slug %))) active-projects)]
+                                (some (fn [{:keys [slug]}]
+                                        (when (str/starts-with? worker-bead-id (str slug "-"))
+                                          (str "project:" slug ":" worker-bead-id)))
+                                      sorted-projects))))
+                          sessions)
+         all-labels (into clean-labels sid-labels)
          iterations (into {} (keep (fn [{:keys [slug path]}]
                                      (when-let [iter (find-active-iteration path)]
                                        [slug iter]))
@@ -436,7 +458,7 @@
                                        (rio/load-ready-beads path)
                                        [])])
                              active-projects))
-         workers (rio/count-workers clean-labels)
+         workers (rio/count-workers all-labels)
          notifications (into {} (map (fn [{:keys [slug]}]
                                        [slug (select-keys (get configs slug)
                                                           [:notifications :notification-mentions])])
@@ -476,6 +498,16 @@
          zombies (orch/detect-zombies sessions configs bead-statuses)
          zombie-labels (set (map :label zombies))
          clean-labels (vec (remove zombie-labels labels))
+         ;; Build synthetic labels from session-id matched worker sessions
+         sid-labels (keep (fn [{:keys [worker-bead-id]}]
+                            (when worker-bead-id
+                              (let [sorted-projects (sort-by #(- (count (:slug %))) active-projects)]
+                                (some (fn [{:keys [slug]}]
+                                        (when (str/starts-with? worker-bead-id (str slug "-"))
+                                          (str "project:" slug ":" worker-bead-id)))
+                                      sorted-projects))))
+                          sessions)
+         all-labels (into clean-labels sid-labels)
          iterations (into {} (keep (fn [{:keys [slug path]}]
                                      (when-let [iter (find-active-iteration path)]
                                        [slug iter]))
@@ -485,7 +517,7 @@
                                        (rio/load-ready-beads path)
                                        [])])
                              active-projects))
-         workers (rio/count-workers clean-labels)
+         workers (rio/count-workers all-labels)
          notifications (into {} (map (fn [{:keys [slug]}]
                                        [slug (select-keys (get configs slug)
                                                           [:notifications :notification-mentions])])

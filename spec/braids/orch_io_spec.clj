@@ -111,4 +111,53 @@
       (fs/create-dirs (str dir "/agents/a1/sessions"))
       (spit (str dir "/agents/a1/sessions/sessions.json") "not json")
       (should= [] (oio/load-sessions-from-stores dir))
+      (proc/shell {:continue true} "rm" "-rf" dir)))
+
+  (it "detects worker sessions by deterministic session-id pattern"
+    (let [dir (str (fs/create-temp-dir {:prefix "sess-sid"}))]
+      (fs/create-dirs (str dir "/agents/worker1/sessions"))
+      (spit (str dir "/agents/worker1/sessions/sessions.json")
+            (json/generate-string
+              {"braids-proj-abc-worker"
+               {"sessionId" "braids-proj-abc-worker"
+                "updatedAt" (- (System/currentTimeMillis) 60000)}
+               "agent:worker1:discord:channel:123"
+               {"sessionId" "sid-2"
+                "updatedAt" (System/currentTimeMillis)}}))
+      (let [sessions (oio/load-sessions-from-stores dir)]
+        (should= 1 (count sessions))
+        (should= "proj-abc" (:worker-bead-id (first sessions)))
+        (should= "braids-proj-abc-worker" (:session-id (first sessions))))
+      (proc/shell {:continue true} "rm" "-rf" dir)))
+
+  (it "returns both label-matched and session-id-matched sessions"
+    (let [dir (str (fs/create-temp-dir {:prefix "sess-both"}))]
+      (fs/create-dirs (str dir "/agents/a1/sessions"))
+      (spit (str dir "/agents/a1/sessions/sessions.json")
+            (json/generate-string
+              {"agent:a1:subagent:u1"
+               {"label" "project:proj:proj-x1"
+                "updatedAt" (- (System/currentTimeMillis) 30000)
+                "sessionId" "s1"}
+               "braids-proj-y2-worker"
+               {"sessionId" "braids-proj-y2-worker"
+                "updatedAt" (- (System/currentTimeMillis) 60000)}}))
+      (let [sessions (oio/load-sessions-from-stores dir)]
+        (should= 2 (count sessions))
+        (should= 1 (count (filter #(= "project:proj:proj-x1" (:label %)) sessions)))
+        (should= 1 (count (filter #(= "proj-y2" (:worker-bead-id %)) sessions))))
+      (proc/shell {:continue true} "rm" "-rf" dir)))
+
+  (it "does not duplicate sessions matched by both label and session-id"
+    (let [dir (str (fs/create-temp-dir {:prefix "sess-dedup"}))]
+      (fs/create-dirs (str dir "/agents/a1/sessions"))
+      (spit (str dir "/agents/a1/sessions/sessions.json")
+            (json/generate-string
+              {"braids-proj-abc-worker"
+               {"label" "project:proj:proj-abc"
+                "sessionId" "braids-proj-abc-worker"
+                "updatedAt" (- (System/currentTimeMillis) 30000)}}))
+      (let [sessions (oio/load-sessions-from-stores dir)]
+        (should= 1 (count sessions))
+        (should= "project:proj:proj-abc" (:label (first sessions))))
       (proc/shell {:continue true} "rm" "-rf" dir))))

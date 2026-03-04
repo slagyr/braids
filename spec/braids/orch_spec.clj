@@ -337,6 +337,37 @@
             bead-statuses {"proj-abc" "open"}
             result (orch/detect-zombies sessions configs bead-statuses)]
         (should-not-contain :session-id (first result)))))
+  (describe "worker-session-id"
+
+    (it "constructs deterministic session ID from bead-id"
+      (should= "braids-proj-abc-worker" (orch/worker-session-id "proj-abc")))
+
+    (it "handles bead-ids with hyphens"
+      (should= "braids-my-proj-x1-worker" (orch/worker-session-id "my-proj-x1"))))
+
+  (describe "parse-worker-session-id"
+
+    (it "extracts bead-id from valid session ID"
+      (should= "proj-abc" (orch/parse-worker-session-id "braids-proj-abc-worker")))
+
+    (it "handles bead-ids with hyphens"
+      (should= "my-proj-x1" (orch/parse-worker-session-id "braids-my-proj-x1-worker")))
+
+    (it "returns nil for non-matching session ID"
+      (should-be-nil (orch/parse-worker-session-id "random-uuid-1234")))
+
+    (it "returns nil for nil input"
+      (should-be-nil (orch/parse-worker-session-id nil)))
+
+    (it "returns nil for partial match - missing suffix"
+      (should-be-nil (orch/parse-worker-session-id "braids-abc")))
+
+    (it "returns nil for partial match - missing prefix"
+      (should-be-nil (orch/parse-worker-session-id "abc-worker")))
+
+    (it "returns nil for empty bead-id"
+      (should-be-nil (orch/parse-worker-session-id "braids--worker"))))
+
   (describe "parse-session-labels-string"
 
     (it "parses space-separated labels into list"

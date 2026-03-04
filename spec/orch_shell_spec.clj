@@ -93,12 +93,14 @@
                    {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800})]
         (should= "high" (nth args (inc (.indexOf args "--thinking"))))))
 
-    (it "generates unique session IDs"
+    (it "generates deterministic session ID based on bead-id"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c"}
             args1 (runner/build-worker-args {} spawn)
-            args2 (runner/build-worker-args {} spawn)]
-        (should-not= (nth args1 (inc (.indexOf args1 "--session-id")))
-                     (nth args2 (inc (.indexOf args2 "--session-id")))))))
+            args2 (runner/build-worker-args {} spawn)
+            sid1 (nth args1 (inc (.indexOf args1 "--session-id")))
+            sid2 (nth args2 (inc (.indexOf args2 "--session-id")))]
+        (should= sid1 sid2)
+        (should= "braids-b-worker" sid1))))
 
   (describe "log-line"
 

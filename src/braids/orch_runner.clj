@@ -21,7 +21,7 @@ Channel: %s")
    Returns a vector of strings."
   [config {:keys [bead path iteration channel worker-agent thinking worker-timeout] :as spawn}]
   (let [task (build-worker-task spawn)
-        session-id (str (java.util.UUID/randomUUID))
+        session-id (str "braids-" bead "-worker")
         thinking (or thinking (:worker-thinking config) "high")
         timeout (str (or worker-timeout 1800))
         base-args ["agent"
@@ -78,5 +78,6 @@ Channel: %s")
         (case arg
           "--dry-run"   (recur (rest remaining) (assoc opts :dry-run true))
           "--confirmed" (recur (rest remaining) (assoc opts :dry-run false))
+          "--run"       (recur (rest remaining) (assoc opts :dry-run false))
           "--verbose"   (recur (rest remaining) (assoc opts :verbose true))
           {:error (str "Unknown arg: " arg "\n\nUsage: braids orch [--dry-run] [--confirmed] [--verbose]\n\n  --dry-run    Show what would happen without spawning (default)\n  --confirmed  Actually spawn workers\n  --verbose    Print detailed project/bead information")})))))
