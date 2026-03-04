@@ -165,7 +165,7 @@ If the Notifications table is missing, treat all events as `on`.
 Every notification message **must** include the following prefix immediately after the leading emoji:
 
 ```
-<emoji> Braids worker <agent>|<model>|<bead>: <message>
+<emoji> Braids worker <agent> | <model> | <bead>: <message>
 ```
 
 Where:
@@ -174,10 +174,10 @@ Where:
 - `<bead>` — the bead id you are working on
 
 Examples:
-- `✅ Braids worker scrapper|claude-sonnet-4-6|braids-i4i: bead complete — deliverable at .braids/iterations/026/i4i-feature.md`
-- `🚫 Braids worker scrapper|claude-sonnet-4-6|braids-t3m: blocker — can't find config file`
-- `❓ Braids worker keaton|ollama/llama3.2|braids-w9g: question — which approach should I use?`
-- `▶️ Braids worker scrapper|claude-sonnet-4-6|braids-i4i: bead started — do the thing`
+- `✅ Braids worker scrapper | claude-sonnet-4-6 | braids-i4i: bead complete — deliverable at .braids/iterations/026/i4i-feature.md`
+- `🚫 Braids worker scrapper | claude-sonnet-4-6 | braids-t3m: blocker — can't find config file`
+- `❓ Braids worker keaton | ollama/llama3.2 | braids-w9g: question — which approach should I use?`
+- `▶️ Braids worker scrapper | claude-sonnet-4-6 | braids-i4i: bead started — do the thing`
 
 This prefix makes it easy to identify which worker, model, and bead sent a given notification, especially in shared channels with multiple active projects.
 
