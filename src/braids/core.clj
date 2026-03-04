@@ -25,7 +25,7 @@
                 :help "Usage: braids config <subcommand> [args]\n\nSubcommands:\n  list           Show all config values\n  get <key>      Get a config value\n  set <key> <v>  Set a config value"}
    "help"      {:command :help      :doc "Show this help message"}
    "orch"      {:command :orch      :doc "Run orchestrator: compute spawns, start workers (defaults to dry run)"
-                :help "Usage: braids orch [--dry-run] [--verbose]\n\nRun the orchestrator: scan projects, compute spawn decisions, start workers.\nDefaults to dry-run mode (no workers spawned).\n\nOptions:\n  --dry-run   Show what would happen without spawning (default)\n  --verbose   Print detailed output to stdout"}})
+                :help "Usage: braids orch [--dry-run] [--run] [--verbose]\n\nRun the orchestrator: scan projects, compute spawn decisions, start workers.\nDefaults to dry-run mode (no workers spawned).\n\nOptions:\n  --dry-run   Show what would happen without spawning (default)\n  --run       Actually spawn workers\n  --verbose   Print detailed project/bead information"}})
 
 (def ^:private ansi
   {:bold-white  "\033[1;37m"
