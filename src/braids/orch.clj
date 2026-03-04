@@ -10,6 +10,18 @@
   [bead-id]
   (str "braids-" bead-id "-worker"))
 
+(defn build-worker-spawn
+  "Build spawn data map from config and bead context.
+   Extracts agent-id, model, and thinking from config, applying defaults."
+  [config {:keys [path bead iteration channel]}]
+  {:agent-id  (:worker-agent config)
+   :model     (:worker-model config)
+   :thinking  (or (:worker-thinking config) :high)
+   :bead      bead
+   :path      path
+   :iteration iteration
+   :channel   channel})
+
 (defn parse-worker-session-id
   "Parse a deterministic worker session ID to extract the bead-id. Returns bead-id or nil."
   [session-id]

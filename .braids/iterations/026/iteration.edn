@@ -11,6 +11,7 @@
            {:id "braids-2lz" :title "Workers must use NO_REPLY for everything except defined notification events — no channel spam"}
            {:id "braids-egf" :title "Tighten scrapper AGENTS.md: enforce project AGENTS.md read, TDD skill load, and bb test before close"}
            {:id "braids-gs1" :title "Orch output: show workers:N/M and list in-progress/blocked beads per project"}
+           {:id "braids-gr7" :title "Fix worker announcement format: prefix all notifications with 'Braids worker <agent>|<model>|<bead>: '"}
            {:id "braids-ihy" :title "Remove --deliver from worker spawn args — causes channel spam and routes workers into Discord session context"}
            {:id "braids-lm1" :title "Orchestrator: use --session-id when spawning workers so worker sessions are trackable across cron ticks"}
            {:id "braids-5yb" :title "Fix zombie detection for sessions spawned by main agent — kill any session with a closed bead"}]
