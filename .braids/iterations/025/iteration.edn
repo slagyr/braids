@@ -1,0 +1,4 @@
+{:number "025"
+ :status :active
+ :stories ["braids-3sm"]
+ :notes "Make braids orch safe by default: dry-run mode unless --confirm flag is used."}
