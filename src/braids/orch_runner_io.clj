@@ -53,10 +53,18 @@
            (print debug-str)
            (flush))
 
-         ;; Log zombies if any
+         ;; Log and kill zombies if any
          (when zombies
            (doseq [line (runner/format-zombie-log (:zombies result))]
-             (println line)))
+             (println line))
+           (doseq [zombie zombies]
+             (when (:session-id zombie)
+               (try
+                 ;; Kill the zombie session
+                 (subagents {:action "kill" :target (:session-id zombie)})
+                 (println (runner/log-line (str "Killed zombie session: " (:session-id zombie) " reason=" (:reason zombie))))
+                 (catch Exception e
+                   (println (runner/log-line (str "Failed to kill zombie session: " (:session-id zombie) " " (.getMessage e)))))))))
 
          (when (= "spawn" action)
            (let [spawns (:spawns result)]
