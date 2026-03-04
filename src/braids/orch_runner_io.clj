@@ -34,7 +34,11 @@
              zombies (seq (:zombies result))]
 
          ;; Mode banner at the very top
-         (println (if dry-run "── DRY-RUN ──" "── CONFIRMED ──"))
+         (let [ts (.format (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss")
+                           (java.time.LocalDateTime/now))]
+           (println (if dry-run
+                      (str "── DRY-RUN ── " ts)
+                      (str "── CONFIRMED ── " ts))))
          (println)
 
          ;; Always print the human-readable summary
