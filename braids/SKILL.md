@@ -308,13 +308,13 @@ so cron appends it to a log file:
 
 ```bash
 # Add to system crontab (crontab -e) — runs every 5 minutes
-*/5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1
+*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1
 ```
 
 Or as a one-liner:
 
 ```bash
-(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1") | crontab -
 ```
 
 The orchestrator checks for work and spawns workers — it never does bead work itself.
@@ -326,7 +326,7 @@ To test what the orchestrator would do without spawning:
 braids orch              # Dry-run (default)
 braids orch --dry-run    # Explicit dry-run
 braids orch --verbose    # Dry-run with detailed output
-braids orch --run        # Actually spawn workers
+braids orch --confirmed        # Actually spawn workers
 ```
 
 ## Worker Spawning & Parallel Execution
@@ -371,7 +371,7 @@ See `references/orchestrator.md` §Zombie Detection for full details.
 
 The system uses a two-tier architecture:
 
-1. **Orchestrator** (cron job) — Runs every 5 minutes. Reads registry, finds active iterations, checks concurrency, and spawns workers via `braids orch --run`. Does NO bead work itself. See `references/orchestrator.md`.
+1. **Orchestrator** (cron job) — Runs every 5 minutes. Reads registry, finds active iterations, checks concurrency, and spawns workers via `braids orch --confirmed`. Does NO bead work itself. See `references/orchestrator.md`.
 
 2. **Worker** (spawned session) — Receives a specific bead assignment. Claims the bead, does the work, writes a deliverable, closes the bead, commits, and sends notifications. See `references/worker.md`.
 
