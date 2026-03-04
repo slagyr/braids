@@ -303,7 +303,7 @@ After check-in:
 bd ready              # List unblocked tasks
 bd create "Title"     # Create task
 bd update <id> --claim  # Claim a task
-bd update <id> --close  # Close completed task
+bd close <id>           # Close completed task
 bd show <id>          # View task details
 bd list               # List all tasks
 bd dep add <a> <b>    # Add dependency (a depends on b)

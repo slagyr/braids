@@ -7,6 +7,8 @@ Your task message includes:
 - **Bead** id
 - **Iteration** number
 - **Channel** for notifications
+- **Agent** name (the OpenClaw agent running this worker)
+- **Model** name (the model powering this worker)
 
 Use `bd show <bead-id>` to get the bead title and details.
 
@@ -157,6 +159,27 @@ Check the **Notifications** table in `.braids/config.edn`. Events:
 - `blocker`: A blocker prevents progress
 
 If the Notifications table is missing, treat all events as `on`.
+
+### Notification Message Format
+
+Every notification message **must** include the following prefix immediately after the leading emoji:
+
+```
+<emoji> Braids worker <agent>|<model>|<bead>: <message>
+```
+
+Where:
+- `<agent>` — the Agent name from your task message
+- `<model>` — the Model name from your task message
+- `<bead>` — the bead id you are working on
+
+Examples:
+- `✅ Braids worker scrapper|claude-sonnet-4-6|braids-i4i: bead complete — deliverable at .braids/iterations/026/i4i-feature.md`
+- `🚫 Braids worker scrapper|claude-sonnet-4-6|braids-t3m: blocker — can't find config file`
+- `❓ Braids worker keaton|ollama/llama3.2|braids-w9g: question — which approach should I use?`
+- `▶️ Braids worker scrapper|claude-sonnet-4-6|braids-i4i: bead started — do the thing`
+
+This prefix makes it easy to identify which worker, model, and bead sent a given notification, especially in shared channels with multiple active projects.
 
 **Mentions:** If a Notify value contains `mention <@user-ref>` (e.g., `on (mention <@123456>)`), include that mention in the notification message. This triggers phone alerts on supported platforms (Discord, Slack, etc.).
 
