@@ -53,6 +53,24 @@ Execute the work described in the bead. Respect:
 - **Autonomy** field in config.edn (full = do it, ask-first = ask via Channel)
 - **Guardrails** in AGENTS.md are hard constraints
 
+#### Channel Discipline
+
+**Only send messages to the Channel for defined notification events.** These are:
+- `bead-start` — when you claim the bead (step 2)
+- `bead-complete` — when you close the bead (step 6)
+- `blocker` — when you hit a blocker and stop work
+- `question` — when you need customer input
+- `iteration-complete` — when the iteration finishes (step 7)
+- `no-ready-beads` — when no unblocked beads remain
+
+**Do NOT post any other messages to the Channel.** Specifically:
+- No intermediate progress updates ("Reviewing code...", "Running tests...")
+- No step-by-step commentary ("## Reading config...", "## Checking dependencies...")
+- No thinking-out-loud messages
+- No status updates between start and complete
+
+If a message isn't one of the notification events above, **do not send it**. Work silently — the `bead-start` and `bead-complete` notifications are sufficient to track progress.
+
 ### 5. Write Deliverable
 
 Write output to `.braids/iterations/<N>/<id-suffix>-<descriptive-name>.md`
