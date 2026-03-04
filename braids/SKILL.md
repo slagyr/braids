@@ -434,6 +434,54 @@ When a skill update introduces a **breaking change** that tolerance alone can't 
 
 Breaking changes should be rare. Prefer additive, backwards-compatible changes whenever possible.
 
+## Advanced Configuration
+
+### Private Projects (Local/Private Model Workers)
+
+For projects where bead work involves sensitive data (personal finance, private code, confidential docs), you can route all workers through a dedicated agent configured with a local or private model. This prevents work content from being sent to external model providers.
+
+**How it works:**
+
+Set `:worker-agent` in the project's `.braids/config.edn`:
+
+```clojure
+{:braids-home "~/Projects"
+ :projects
+ {:wealth
+  {:worker-agent "keaton"         ; use this agent for all workers in this project
+   :worker-thinking "low"
+   :max-workers 1}}}
+```
+
+The orchestrator will spawn workers using `openclaw agent --agent keaton ...` instead of the default agent, routing all bead work through that agent's model and context.
+
+**Setting up a private worker agent:**
+
+1. Create an agent configured with a local model (e.g., Ollama, LM Studio) or a privacy-preserving provider
+2. Give it a worker-style `AGENTS.md` and `SOUL.md` (see `references/worker-agent-template.md`)
+3. Set `:worker-agent "<agent-id>"` in the project's config.edn
+
+**Example — wealth project with local model:**
+
+```clojure
+; ~/Projects/wealth/.braids/config.edn
+{:worker-agent "keaton"
+ :worker-thinking "low"   ; local models benefit from less overthinking
+ :max-workers 1
+ :channel "discord-channel-id"
+ :notifications {:iteration-complete :on :blocker :on :question :on}}
+```
+
+```yaml
+# ~/.openclaw/openclaw.json — keaton agent config
+agents:
+  keaton:
+    model: ollama/llama3.2  # or any local/private model
+    system: "~/.openclaw/agents/keaton/agent/AGENTS.md"
+```
+
+This pattern keeps sensitive project data entirely within your local infrastructure while still using the full braids workflow.
+
 ## Skill Migration
 
 When the skill format evolves (e.g., config.edn fields change, iteration.edn structure updates), existing projects need migration. This is **user-triggered, not automatic**.
