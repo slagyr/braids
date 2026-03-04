@@ -325,8 +325,10 @@ The orchestrator checks for work and spawns workers — it never does bead work 
 
 To test what the orchestrator would do without spawning:
 ```bash
-braids orch           # Dry-run (default)
-braids orch --verbose # Dry-run with detailed output
+braids orch              # Dry-run (default)
+braids orch --dry-run    # Explicit dry-run
+braids orch --verbose    # Dry-run with detailed output
+braids orch --run        # Actually spawn workers
 ```
 
 ## Worker Spawning & Parallel Execution
