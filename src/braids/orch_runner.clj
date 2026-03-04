@@ -33,7 +33,7 @@ Channel: %s")
                    "--reply-channel" "discord"
                    "--reply-to" channel]]
     (if (and worker-agent (not (str/blank? worker-agent)))
-      (vec (concat ["--agent" worker-agent] base-args))
+      (vec (concat ["agent" "--agent" worker-agent] (rest base-args)))
       (vec base-args))))
 
 (defn log-line
