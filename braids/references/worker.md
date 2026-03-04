@@ -71,6 +71,8 @@ Execute the work described in the bead. Respect:
 
 If a message isn't one of the notification events above, **do not send it**. Work silently — the `bead-start` and `bead-complete` notifications are sufficient to track progress.
 
+To enforce this discipline and prevent channel spam, worker sessions must respond with ONLY: NO_REPLY for all their output, and only use the message tool to send notifications to the channel for the defined events.
+
 ### 5. Write Deliverable
 
 Write output to `.braids/iterations/<N>/<id-suffix>-<descriptive-name>.md`
