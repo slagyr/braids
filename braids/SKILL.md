@@ -307,21 +307,19 @@ Set up a system cron job to run the orchestrator periodically. All output goes t
 so cron appends it to a log file:
 
 ```bash
-# System crontab — runs every 5 minutes, appends to /tmp/braids.log
+# Add to system crontab (crontab -e) — runs every 5 minutes
 */5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1
 ```
 
-Or via OpenClaw cron:
+Or as a one-liner:
 
 ```bash
-openclaw cron add \
-  --name braids-orchestrator \
-  --every 5m \
-  --message "Run: braids orch --run >> /tmp/braids.log 2>&1" \
-  --timeout-seconds 60
+(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1") | crontab -
 ```
 
 The orchestrator checks for work and spawns workers — it never does bead work itself.
+
+> **Note:** Use the system crontab, not OpenClaw cron. `braids orch` is a standalone CLI and does not require OpenClaw's scheduler.
 
 To test what the orchestrator would do without spawning:
 ```bash

@@ -47,24 +47,27 @@ If using a custom `BRAIDS_HOME`, replace `~/Projects` with the desired path. The
 
 ### 4. Set Up Orchestrator Cron Job
 
-Set up a system cron job to run the orchestrator periodically:
+Add to the system crontab (`crontab -e`):
 
 ```bash
-# System crontab — runs every 5 minutes, appends to /tmp/braids.log
 */5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1
 ```
 
-Or via OpenClaw cron:
+Or via one-liner:
 
 ```bash
-openclaw cron add \
-  --name braids-orchestrator \
-  --every 5m \
-  --message "Run: braids orch --run >> /tmp/braids.log 2>&1" \
-  --timeout-seconds 60
+(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1") | crontab -
+```
+
+Verify it was added:
+
+```bash
+crontab -l
 ```
 
 The orchestrator runs every 5 minutes, checks for active projects, and spawns workers as needed. Test with `braids orch` (dry-run by default) before enabling.
+
+> **Note:** Use the system crontab, not OpenClaw cron. The braids orchestrator is a standalone CLI (`braids orch --run`) and does not require OpenClaw's cron scheduler.
 
 ### 5. (Optional) Create Your First Project
 
