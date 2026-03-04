@@ -11,7 +11,8 @@
             [braids.init-io :as init-io]
             [braids.config :as config]
             [braids.config-io :as config-io]
-            [braids.orch-log :as orch-log]))
+            [braids.orch-log :as orch-log]
+            [braids.orch-runner-io :as orch-runner-io]))
 
 (def commands
   {"list"      {:command :list      :doc "Show projects with status, iterations, and progress"}
@@ -21,7 +22,8 @@
    "new"       {:command :new       :doc "Create a new project"}
    "init"      {:command :init      :doc "First-time setup for braids"}
    "config"    {:command :config    :doc "Get/set/list braids configuration"}
-   "help"      {:command :help      :doc "Show this help message"}})
+   "help"      {:command :help      :doc "Show this help message"}
+   "orch"      {:command :orch      :doc "Run orchestrator: compute spawns, fire workers (replaces braids-orch script)"}})
 
 (def ^:private ansi
   {:bold-white  "\033[1;37m"
@@ -135,5 +137,6 @@
                             0))
                   ;; no subcommand or unknown
                   (do (println (config/config-help)) 0)))
+      :orch (orch-runner-io/run-orch-command! (:args (dispatch args)))
       ;; Default for unimplemented commands
       (do (println (str "Command '" (name command) "' not yet implemented.")) 0))))

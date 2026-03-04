@@ -27,8 +27,6 @@ echo "✅ Braids skill installed. Symlinked $SKILL_DIR → $INSTALL_DIR/braids"
 echo ""
 echo "Next: Ask your agent to 'set up braids' to complete first-time setup."
 
-# Install orchestrator shell script
-echo "Installing braids-orch..."
-cp "$INSTALL_DIR/braids/bin/braids-orch.sh" /usr/local/bin/braids-orch
-chmod +x /usr/local/bin/braids-orch
-echo "✅ braids-orch installed to /usr/local/bin/braids-orch"
+# The braids orchestrator is now built into the braids CLI as 'braids orch'.
+# No separate shell script installation needed.
+echo "✅ Use 'braids orch' to run the orchestrator (replaces braids-orch.sh)."
