@@ -4,8 +4,7 @@
             [clojure.string :as str]
             [braids.orch :as orch]
             [braids.orch-io :as orch-io]
-            [braids.orch-runner :as runner]
-            [braids.sys :as sys]))
+            [braids.orch-runner :as runner]))
 
 (def ^:private openclaw-bin
   "Full path to the openclaw binary. Use OPENCLAW_BIN env var to override."
@@ -21,7 +20,7 @@
       (println (runner/log-line (str "DRY-RUN: would spawn worker for " bead)))
       (do
         (proc/process (into [openclaw-bin] args)
-                      {:out :inherit :err :inherit :env (sys/subprocess-env)})
+                      {:out :inherit :err :inherit})
         (println (runner/log-line (str "Spawned worker: bead=" bead)))))))
 
 (defn run-orch!
