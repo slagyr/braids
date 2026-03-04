@@ -1,4 +1,4 @@
 {:number "022"
- :status :active
+ :status :complete
  :stories ["braids-lzj" "braids-330" "braids-09y"]
  :notes "Canary iteration: busywork beads for testing orchestrator spawn behavior under realistic load."}
