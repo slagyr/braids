@@ -1,6 +1,6 @@
 (ns braids.orch-runner
   "Pure functions for the braids orch runner.
-   Converts orch-tick results into openclaw agent spawn commands."
+   Converts orchestrator tick results into openclaw agent spawn commands."
   (:require [clojure.string :as str]))
 
 (def worker-task-template
@@ -48,17 +48,15 @@ Channel: %s")
   [tick-result]
   (let [spawns (:spawns tick-result)
         n (count spawns)]
-    (into [(log-line (str "orch-tick action=spawn"))
-           (log-line (str "Spawning " n " worker(s)"))]
+    (into [(log-line (str "Spawning " n " worker(s)"))]
           (map (fn [{:keys [bead worker-agent]}]
-                 (log-line (str "Spawning worker: bead=" bead " agent=" (or worker-agent "default"))))
+                 (log-line (str "  → bead=" bead " agent=" (or worker-agent "default"))))
                spawns))))
 
 (defn format-idle-log
   "Format log lines for an idle action. Returns vector of strings."
-  [{:keys [reason disable-cron]}]
-  [(log-line (str "orch-tick action=idle"))
-   (log-line (str "Idle: reason=" reason " disable_cron=" (boolean disable-cron)))])
+  [{:keys [reason]}]
+  [(log-line (str "Idle: " reason))])
 
 (defn format-zombie-log
   "Format log lines for zombies. Returns vector of strings."
@@ -71,14 +69,16 @@ Channel: %s")
 
 (defn parse-cli-args
   "Parse CLI args vector into options map.
+   Defaults to dry-run mode. Use --run to actually spawn workers.
    Returns {:dry-run bool :verbose bool} or {:error string}."
   [args]
   (loop [remaining args
-         opts {:dry-run false :verbose false}]
+         opts {:dry-run true :verbose false}]
     (if (empty? remaining)
       opts
       (let [arg (first remaining)]
         (case arg
           "--dry-run" (recur (rest remaining) (assoc opts :dry-run true))
+          "--run" (recur (rest remaining) (assoc opts :dry-run false))
           "--verbose" (recur (rest remaining) (assoc opts :verbose true))
-          {:error (str "Unknown arg: " arg)})))))
+          {:error (str "Unknown arg: " arg "\n\nUsage: braids orch [--dry-run] [--run] [--verbose]\n\n  --dry-run   Show what would happen without spawning (default)\n  --run       Actually spawn workers\n  --verbose   Print detailed project/bead information")})))))

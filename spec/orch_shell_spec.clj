@@ -1,11 +1,9 @@
 (ns orch-shell-spec
-  "Tests for the Babashka-based orchestrator runner (braids orch).
-   This replaces the shell script orchestrator tests; all orchestration
-   logic now lives in braids.orch-runner and braids.orch-runner-io."
+  "Tests for the braids orch CLI command.
+   Tests both pure functions and subprocess integration."
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
             [babashka.process :as proc]
-            [cheshire.core :as json]
             [clojure.string :as str]
             [braids.orch-runner :as runner]))
 
@@ -35,14 +33,17 @@
 
   (describe "parse-cli-args"
 
-    (it "returns defaults for empty args"
-      (should= {:dry-run false :verbose false} (runner/parse-cli-args [])))
+    (it "returns defaults for empty args (dry-run=true)"
+      (should= {:dry-run true :verbose false} (runner/parse-cli-args [])))
 
     (it "parses --dry-run"
       (should= {:dry-run true :verbose false} (runner/parse-cli-args ["--dry-run"])))
 
+    (it "parses --run"
+      (should= {:dry-run false :verbose false} (runner/parse-cli-args ["--run"])))
+
     (it "parses --verbose"
-      (should= {:dry-run false :verbose true} (runner/parse-cli-args ["--verbose"])))
+      (should= {:dry-run true :verbose true} (runner/parse-cli-args ["--verbose"])))
 
     (it "returns error for unknown arg"
       (let [result (runner/parse-cli-args ["--bogus"])]
@@ -110,10 +111,6 @@
 
   (describe "format-spawn-log"
 
-    (it "includes action=spawn"
-      (let [lines (runner/format-spawn-log {:action "spawn" :spawns [{:bead "b1"}]})]
-        (should (some #(str/includes? % "action=spawn") lines))))
-
     (it "shows worker count"
       (let [lines (runner/format-spawn-log {:action "spawn" :spawns [{:bead "b1"} {:bead "b2"}]})]
         (should (some #(str/includes? % "2 worker") lines))))
@@ -124,17 +121,13 @@
 
   (describe "format-idle-log"
 
-    (it "includes action=idle"
-      (let [lines (runner/format-idle-log {:reason "no-ready-beads" :disable-cron false})]
-        (should (some #(str/includes? % "action=idle") lines))))
-
     (it "includes reason"
-      (let [lines (runner/format-idle-log {:reason "all-at-capacity" :disable-cron false})]
-        (should (some #(str/includes? % "reason=all-at-capacity") lines))))
+      (let [lines (runner/format-idle-log {:reason "all-at-capacity"})]
+        (should (some #(str/includes? % "all-at-capacity") lines))))
 
-    (it "includes disable_cron flag"
-      (let [lines (runner/format-idle-log {:reason "no-ready-beads" :disable-cron true})]
-        (should (some #(str/includes? % "disable_cron=true") lines)))))
+    (it "includes idle"
+      (let [lines (runner/format-idle-log {:reason "no-ready-beads"})]
+        (should (some #(str/includes? % "Idle") lines)))))
 
   (describe "format-zombie-log"
 
@@ -155,56 +148,33 @@
   (it "rejects unknown arguments"
     (let [result (run-braids-orch ["--bogus"])]
       (should= 1 (:exit result))
-      (should (str/includes? (:err result) "Unknown arg"))))
+      (should (str/includes? (str (:out result) (:err result)) "Unknown arg"))))
 
-  (it "runs with --dry-run against empty registry"
-    ;; With an empty registry, it should idle (no-active-iterations) and exit 0
+  (it "outputs to stdout (not log files)"
+    ;; All output should go to stdout now
     (let [tmp (str (fs/create-temp-dir {:prefix "braids-orch-cli-test-"}))
-          state-dir (str tmp "/state")
-          log-file (str tmp "/orch.log")]
+          state-dir (str tmp "/state")]
       (try
         (fs/create-dirs state-dir)
         (spit (str state-dir "/registry.edn") "{:projects []}")
-        (let [result (run-braids-orch ["--dry-run"]
+        (let [result (run-braids-orch []
                        :env {"BRAIDS_STATE_HOME" state-dir
-                             "BRAIDS_OPENCLAW_HOME" tmp
-                             "BRAIDS_ORCH_LOG" log-file})]
+                             "BRAIDS_OPENCLAW_HOME" tmp})]
           (should= 0 (:exit result))
-          (when (fs/exists? log-file)
-            (let [log (slurp log-file)]
-              (should (str/includes? log "action=idle")))))
+          (should (str/includes? (:out result) "Orchestrator tick complete")))
         (finally
           (proc/shell {:continue true} "rm" "-rf" tmp)))))
 
-  (it "runs with --verbose and emits log lines to stderr"
-    (let [tmp (str (fs/create-temp-dir {:prefix "braids-orch-verbose-test-"}))
-          state-dir (str tmp "/state")
-          log-file (str tmp "/orch.log")]
+  (it "defaults to dry-run mode"
+    (let [tmp (str (fs/create-temp-dir {:prefix "braids-orch-dryrun-test-"}))
+          state-dir (str tmp "/state")]
       (try
         (fs/create-dirs state-dir)
         (spit (str state-dir "/registry.edn") "{:projects []}")
-        (let [result (run-braids-orch ["--dry-run" "--verbose"]
+        (let [result (run-braids-orch []
                        :env {"BRAIDS_STATE_HOME" state-dir
-                             "BRAIDS_OPENCLAW_HOME" tmp
-                             "BRAIDS_ORCH_LOG" log-file})]
+                             "BRAIDS_OPENCLAW_HOME" tmp})]
           (should= 0 (:exit result))
-          ;; --verbose prints log lines to stderr
-          (should (str/includes? (str (:out result) (:err result)) "idle")))
-        (finally
-          (proc/shell {:continue true} "rm" "-rf" tmp)))))
-
-  (it "writes log to BRAIDS_ORCH_LOG path"
-    (let [tmp (str (fs/create-temp-dir {:prefix "braids-orch-log-test-"}))
-          state-dir (str tmp "/state")
-          custom-log (str tmp "/custom.log")]
-      (try
-        (fs/create-dirs state-dir)
-        (spit (str state-dir "/registry.edn") "{:projects []}")
-        (run-braids-orch ["--dry-run"]
-          :env {"BRAIDS_STATE_HOME" state-dir
-                "BRAIDS_OPENCLAW_HOME" tmp
-                "BRAIDS_ORCH_LOG" custom-log})
-        (should (fs/exists? custom-log))
-        (should (str/includes? (slurp custom-log) "Orchestrator tick complete"))
+          (should (str/includes? (:out result) "DRY-RUN")))
         (finally
           (proc/shell {:continue true} "rm" "-rf" tmp))))))

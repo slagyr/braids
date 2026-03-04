@@ -1,29 +1,31 @@
 (ns braids.core
   (:require [clojure.string :as str]
-            [cheshire.core :as json]
             [braids.ready :as ready]
             [braids.ready-io :as ready-io]
-            [braids.orch :as orch]
-            [braids.orch-io :as orch-io]
             [braids.list-io :as list-io]
             [braids.iteration-io :as iter-io]
             [braids.new-io :as new-io]
             [braids.init-io :as init-io]
             [braids.config :as config]
             [braids.config-io :as config-io]
-            [braids.orch-log :as orch-log]
             [braids.orch-runner-io :as orch-runner-io]))
 
 (def commands
-  {"list"      {:command :list      :doc "Show projects with status, iterations, and progress"}
-   "iteration" {:command :iteration :doc "Show active iteration and bead statuses"}
-   "ready"     {:command :ready     :doc "List beads ready to work"}
-   "orch-tick" {:command :orch-tick :doc "Orchestrator tick: compute spawns, detect zombies, log to /tmp/braids.log (JSON)"}
-   "new"       {:command :new       :doc "Create a new project"}
-   "init"      {:command :init      :doc "First-time setup for braids"}
-   "config"    {:command :config    :doc "Get/set/list braids configuration"}
+  {"list"      {:command :list      :doc "Show projects with status, iterations, and progress"
+                :help "Usage: braids list [--json]\n\nShow all registered projects with status, iterations, and progress.\n\nOptions:\n  --json    Output as JSON"}
+   "iteration" {:command :iteration :doc "Show active iteration and bead statuses"
+                :help "Usage: braids iteration [--project <path>] [--json]\n\nShow the active iteration and bead statuses for a project.\n\nOptions:\n  --project <path>  Project path (default: current directory)\n  --json            Output as JSON"}
+   "ready"     {:command :ready     :doc "List beads ready to work"
+                :help "Usage: braids ready\n\nList all beads that are unblocked and ready for work across all active projects."}
+   "new"       {:command :new       :doc "Create a new project"
+                :help "Usage: braids new <slug> [--path <path>]\n\nCreate a new braids project with scaffolding."}
+   "init"      {:command :init      :doc "First-time setup for braids"
+                :help "Usage: braids init\n\nRun first-time setup: create directories, install bd, configure BRAIDS_HOME."}
+   "config"    {:command :config    :doc "Get/set/list braids configuration"
+                :help "Usage: braids config <subcommand> [args]\n\nSubcommands:\n  list           Show all config values\n  get <key>      Get a config value\n  set <key> <v>  Set a config value"}
    "help"      {:command :help      :doc "Show this help message"}
-   "orch"      {:command :orch      :doc "Run orchestrator: compute spawns, fire workers (replaces braids-orch script)"}})
+   "orch"      {:command :orch      :doc "Run orchestrator: compute spawns, start workers (defaults to dry run)"
+                :help "Usage: braids orch [--dry-run] [--verbose]\n\nRun the orchestrator: scan projects, compute spawn decisions, start workers.\nDefaults to dry-run mode (no workers spawned).\n\nOptions:\n  --dry-run   Show what would happen without spawning (default)\n  --verbose   Print detailed output to stdout"}})
 
 (def ^:private ansi
   {:bold-white  "\033[1;37m"
@@ -49,6 +51,9 @@
      (c "Options:" :bold-yellow)
      (str "  " (c "-h, --help" :bold-blue) "   Show this help message")]))
 
+(defn- subcommand-help? [args]
+  (some #{"--help" "-h"} args))
+
 (defn dispatch [args]
   (let [first-arg (first args)
         rest-args (vec (rest args))]
@@ -58,85 +63,63 @@
 
       (contains? commands first-arg)
       (merge {:command (get-in commands [first-arg :command])
-              :args rest-args})
+              :args rest-args
+              :cmd-name first-arg})
 
       :else
       {:command :unknown :input first-arg})))
 
 (defn run [args]
-  (let [{:keys [command input]} (dispatch args)]
-    (case command
-      :help (do (println (help-text)) 0)
-      :unknown (do (println (str "Unknown command: " input))
-                   (println)
-                   (println (help-text))
-                   1)
-      :list (let [json? (some #{"--json"} (:args (dispatch args)))]
-              (println (list-io/load-and-list {:json? json?}))
-              0)
-      :iteration (let [args (:args (dispatch args))
-                       json? (some #{"--json"} args)
-                       ;; Use --project path or default to cwd
-                       project-path (or (second (drop-while #(not= "--project" %) args))
-                                        (System/getProperty "user.dir"))]
-                   (println (iter-io/load-and-show {:project-path project-path :json? json?}))
-                   0)
-      :ready (let [result (ready-io/gather-and-compute)]
-               (println (ready/format-ready-output result))
-               0)
-      :orch-tick (let [start-ms (System/currentTimeMillis)
-                       args (:args (dispatch args))
-                       sessions-str (second (drop-while #(not= "--sessions" %) args))
-                       session-labels-json (second (drop-while #(not= "--session-labels" %) args))
-                       {:keys [result debug-ctx]} (cond
-                                sessions-str (orch-io/gather-and-tick-from-session-labels-debug sessions-str)
-                                session-labels-json (orch-io/gather-and-tick-with-zombies-debug session-labels-json)
-                                :else (orch-io/gather-and-tick-from-stores-debug))
-                       debug-str (orch/format-debug-output
-                                   (:registry debug-ctx) (:configs debug-ctx)
-                                   (:iterations debug-ctx) (:open-beads debug-ctx) result)]
-                  (binding [*out* *err*]
-                    (print debug-str)
-                    (flush))
-                  ;; Log to /tmp/braids.log
-                  (let [timestamp (.format (java.time.LocalDateTime/now) (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss"))
-                        zombies (or (:zombies result) [])
-                        log-lines (orch-log/format-log-lines
-                                    (assoc debug-ctx :zombies zombies :tick-result result)
-                                    timestamp)]
-                    (orch-log/write-log! "/tmp/braids.log"
-                      (conj log-lines (str "Duration: " (- (System/currentTimeMillis) start-ms) "ms"))))
-                  (println (orch/format-orch-tick-json result))
-                  0)
-
-      :init (let [args (:args (dispatch args))
-                 result (init-io/run-init args)]
-              (println (:message result))
-              (:exit result))
-      :new (let [args (:args (dispatch args))
-                 result (new-io/run-new args)]
-             (println (:message result))
-             (:exit result))
-      :config (let [args (:args (dispatch args))
-                    sub (first args)
-                    sub-args (rest args)]
-                (case sub
-                  "list" (do (println (config/config-list (config-io/load-config))) 0)
-                  "get" (if (empty? sub-args)
-                          (do (println "Usage: braids config get <key>") 1)
-                          (let [result (config/config-get (config-io/load-config) (first sub-args))]
-                            (if (:ok result)
-                              (do (println (:ok result)) 0)
-                              (do (println (:error result)) 1))))
-                  "set" (if (< (count sub-args) 2)
-                          (do (println "Usage: braids config set <key> <value>") 1)
-                          (let [cfg (config-io/load-config)
-                                updated (config/config-set cfg (first sub-args) (second sub-args))]
-                            (config-io/save-config! updated)
-                            (println (str (first sub-args) " = " (second sub-args)))
-                            0))
-                  ;; no subcommand or unknown
-                  (do (println (config/config-help)) 0)))
-      :orch (orch-runner-io/run-orch-command! (:args (dispatch args)))
-      ;; Default for unimplemented commands
-      (do (println (str "Command '" (name command) "' not yet implemented.")) 0))))
+  (let [{:keys [command input cmd-name] :as dispatched} (dispatch args)
+        sub-args (:args dispatched)]
+    ;; Handle --help for any sub-command
+    (if (and (not= command :help) (not= command :unknown) (subcommand-help? sub-args))
+      (let [help-str (get-in commands [cmd-name :help])]
+        (if help-str
+          (do (println help-str) 0)
+          (do (println (help-text)) 0)))
+      (case command
+        :help (do (println (help-text)) 0)
+        :unknown (do (println (str "Unknown command: " input))
+                     (println)
+                     (println (help-text))
+                     1)
+        :list (let [json? (some #{"--json"} sub-args)]
+                (println (list-io/load-and-list {:json? json?}))
+                0)
+        :iteration (let [json? (some #{"--json"} sub-args)
+                         project-path (or (second (drop-while #(not= "--project" %) sub-args))
+                                          (System/getProperty "user.dir"))]
+                     (println (iter-io/load-and-show {:project-path project-path :json? json?}))
+                     0)
+        :ready (let [result (ready-io/gather-and-compute)]
+                 (println (ready/format-ready-output result))
+                 0)
+        :init (let [result (init-io/run-init (vec sub-args))]
+                (println (:message result))
+                (:exit result))
+        :new (let [result (new-io/run-new (vec sub-args))]
+               (println (:message result))
+               (:exit result))
+        :config (let [sub (first sub-args)
+                      sub-sub-args (rest sub-args)]
+                  (case sub
+                    "list" (do (println (config/config-list (config-io/load-config))) 0)
+                    "get" (if (empty? sub-sub-args)
+                            (do (println "Usage: braids config get <key>") 1)
+                            (let [result (config/config-get (config-io/load-config) (first sub-sub-args))]
+                              (if (:ok result)
+                                (do (println (:ok result)) 0)
+                                (do (println (:error result)) 1))))
+                    "set" (if (< (count sub-sub-args) 2)
+                            (do (println "Usage: braids config set <key> <value>") 1)
+                            (let [cfg (config-io/load-config)
+                                  updated (config/config-set cfg (first sub-sub-args) (second sub-sub-args))]
+                              (config-io/save-config! updated)
+                              (println (str (first sub-sub-args) " = " (second sub-sub-args)))
+                              0))
+                    ;; no subcommand or unknown
+                    (do (println (config/config-help)) 0)))
+        :orch (orch-runner-io/run-orch-command! (vec sub-args))
+        ;; Default for unimplemented commands
+        (do (println (str "Command '" (name command) "' not yet implemented.")) 0)))))

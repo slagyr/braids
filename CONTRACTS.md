@@ -62,11 +62,15 @@ This document defines the invariants that the orchestrator, worker, and file for
 - **One deliverable per bead** per iteration
 - **Required sections:** Summary (at minimum)
 
-### 1.5 Orchestrator Self-Disable
+### 1.5 Orchestrator Output
 
-When `orch-tick` returns an idle result with reason `no-active-iterations`, the JSON includes `"disable_cron": true`. The orchestrator agent must delete its cron job to achieve zero token usage. Re-activation is manual (e.g., when a new iteration is started).
+The `braids orch` command writes all output to stdout in human-readable format. When run from cron, output should be appended to `/tmp/braids.log`:
 
-When the idle reason is `no-ready-beads` or `all-at-capacity`, `"disable_cron": false` — the cron should stay active because active iterations exist and beads may become unblocked.
+```bash
+*/5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1
+```
+
+The command defaults to dry-run mode. Use `--run` to actually spawn workers.
 
 ---
 

@@ -303,31 +303,31 @@ bd dep list <id>      # List dependencies of a bead
 
 ## Cron Integration
 
-Set up a recurring cron job for the orchestrator:
+Set up a system cron job to run the orchestrator periodically. All output goes to stdout,
+so cron appends it to a log file:
 
-```json
-{
-  "name": "braids-orchestrator",
-  "enabled": true,
-  "schedule": { "kind": "every", "everyMs": 300000 },
-  "payload": {
-    "kind": "agentTurn",
-    "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md",
-    "timeoutSeconds": 120
-  },
-  "sessionTarget": "main",
-  "sessionKey": "braids:orchestrator",
-  "delivery": "none"
-}
+```bash
+# System crontab — runs every 5 minutes, appends to /tmp/braids.log
+*/5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1
 ```
 
-**Persistent session:** The orchestrator uses a `sessionKey` (`braids:orchestrator`) so all cron ticks reuse the same session instead of creating a fresh one each time. The gateway automatically compacts the transcript between runs, keeping context small. Combined with the 3-tool-call flow, each tick is very lightweight.
+Or via OpenClaw cron:
 
-To configure: `openclaw cron edit <job-id> --session-key braids:orchestrator`
-
-To reset a corrupted session: `openclaw cron edit <job-id> --clear-session-key && openclaw cron edit <job-id> --session-key braids:orchestrator`
+```bash
+openclaw cron add \
+  --name braids-orchestrator \
+  --every 5m \
+  --message "Run: braids orch --run >> /tmp/braids.log 2>&1" \
+  --timeout-seconds 60
+```
 
 The orchestrator checks for work and spawns workers — it never does bead work itself.
+
+To test what the orchestrator would do without spawning:
+```bash
+braids orch           # Dry-run (default)
+braids orch --verbose # Dry-run with detailed output
+```
 
 ## Worker Spawning & Parallel Execution
 
@@ -371,19 +371,11 @@ See `references/orchestrator.md` §Zombie Detection for full details.
 
 The system uses a two-tier architecture:
 
-1. **Orchestrator** (cron job) — Runs every 5 minutes. Reads registry, finds active iterations, checks concurrency, and spawns worker sessions via `sessions_spawn`. Does NO bead work itself. See `references/orchestrator.md`.
+1. **Orchestrator** (cron job) — Runs every 5 minutes. Reads registry, finds active iterations, checks concurrency, and spawns workers via `braids orch --run`. Does NO bead work itself. See `references/orchestrator.md`.
 
 2. **Worker** (spawned session) — Receives a specific bead assignment. Claims the bead, does the work, writes a deliverable, closes the bead, commits, and sends notifications. See `references/worker.md`.
 
 Workers are spawned with label `project:<slug>:<bead-id>` so the orchestrator can count active workers per project. The `MaxWorkers` cap applies to spawned workers — the orchestrator doesn't count toward it.
-
-### Orchestrator Self-Disable
-
-When the orchestrator finds no work (any idle reason), it **disables its own cron job** and stops running entirely. This ensures zero token usage during idle periods.
-
-The `orch-tick` CLI output includes `"disable_cron": true` in idle results. When the orchestrator sees this, it disables the cron job via `openclaw cron disable <job-id>` (look up the ID from `openclaw cron list --json` by name `braids-orchestrator`). The job definition is preserved — no need to recreate it.
-
-**Re-activation:** When starting a new iteration or unblocking work, re-enable the cron job: `openclaw cron enable <job-id>`. The channel agent should do this as part of iteration activation.
 
 ### Worker Error Handling
 

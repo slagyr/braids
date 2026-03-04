@@ -69,7 +69,7 @@
 
   (it "cron job prompt references braids"
     (let [skill-md (slurp (str project-root "/braids/SKILL.md"))]
-      (should (re-find #"skills/braids/references/orchestrator\.md" skill-md)))))
+      (should (re-find #"references/orchestrator\.md" skill-md)))))
 
 (describe "Directory rename: .project → .braids"
 

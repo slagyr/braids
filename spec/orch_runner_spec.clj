@@ -7,17 +7,20 @@
 
   (describe "parse-cli-args"
 
-    (it "returns defaults for empty args"
-      (should= {:dry-run false :verbose false} (runner/parse-cli-args [])))
+    (it "returns defaults for empty args (dry-run=true)"
+      (should= {:dry-run true :verbose false} (runner/parse-cli-args [])))
 
     (it "parses --dry-run"
       (should= {:dry-run true :verbose false} (runner/parse-cli-args ["--dry-run"])))
 
-    (it "parses --verbose"
-      (should= {:dry-run false :verbose true} (runner/parse-cli-args ["--verbose"])))
+    (it "parses --run"
+      (should= {:dry-run false :verbose false} (runner/parse-cli-args ["--run"])))
 
-    (it "parses both flags"
-      (should= {:dry-run true :verbose true} (runner/parse-cli-args ["--dry-run" "--verbose"])))
+    (it "parses --verbose"
+      (should= {:dry-run true :verbose true} (runner/parse-cli-args ["--verbose"])))
+
+    (it "parses --run and --verbose"
+      (should= {:dry-run false :verbose true} (runner/parse-cli-args ["--run" "--verbose"])))
 
     (it "returns error for unknown arg"
       (let [result (runner/parse-cli-args ["--bogus"])]
@@ -53,7 +56,6 @@
                    :channel "12345" :worker-timeout 1800 :worker-agent "scrapper"}
             args (runner/build-worker-args spawn)]
         (should (some #{"--agent"} args))
-        ;; --agent should be followed by the agent id
         (let [agent-idx (.indexOf args "--agent")]
           (should= "scrapper" (nth args (inc agent-idx))))))
 
@@ -110,11 +112,6 @@
 
   (describe "format-spawn-log"
 
-    (it "includes action=spawn"
-      (let [result {:action "spawn" :spawns [{:bead "b1" :worker-agent "ag"}]}
-            lines (runner/format-spawn-log result)]
-        (should (some #(str/includes? % "action=spawn") lines))))
-
     (it "shows worker count"
       (let [result {:action "spawn"
                     :spawns [{:bead "b1"} {:bead "b2"}]}
@@ -128,17 +125,13 @@
 
   (describe "format-idle-log"
 
-    (it "includes action=idle"
-      (let [lines (runner/format-idle-log {:reason "no-ready-beads" :disable-cron false})]
-        (should (some #(str/includes? % "action=idle") lines))))
-
     (it "includes reason"
-      (let [lines (runner/format-idle-log {:reason "all-at-capacity" :disable-cron false})]
-        (should (some #(str/includes? % "reason=all-at-capacity") lines))))
+      (let [lines (runner/format-idle-log {:reason "all-at-capacity"})]
+        (should (some #(str/includes? % "all-at-capacity") lines))))
 
-    (it "includes disable_cron flag"
-      (let [lines (runner/format-idle-log {:reason "no-ready-beads" :disable-cron true})]
-        (should (some #(str/includes? % "disable_cron=true") lines)))))
+    (it "includes idle message"
+      (let [lines (runner/format-idle-log {:reason "no-ready-beads"})]
+        (should (some #(str/includes? % "Idle") lines)))))
 
   (describe "format-zombie-log"
 

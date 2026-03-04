@@ -47,24 +47,24 @@ If using a custom `BRAIDS_HOME`, replace `~/Projects` with the desired path. The
 
 ### 4. Set Up Orchestrator Cron Job
 
-Create the cron job that drives autonomous project work:
+Set up a system cron job to run the orchestrator periodically:
 
-```json
-{
-  "name": "braids-orchestrator",
-  "enabled": true,
-  "schedule": { "kind": "every", "everyMs": 300000 },
-  "payload": {
-    "kind": "agentTurn",
-    "message": "You are the braids orchestrator. Read and follow ~/.openclaw/skills/braids/references/orchestrator.md",
-    "timeoutSeconds": 120
-  },
-  "sessionTarget": "isolated",
-  "delivery": "none"
-}
+```bash
+# System crontab — runs every 5 minutes, appends to /tmp/braids.log
+*/5 * * * * /usr/local/bin/braids orch --run >> /tmp/braids.log 2>&1
 ```
 
-Use the OpenClaw cron tool to register this (or CLI: `openclaw cron add --name braids-orchestrator --every 5m --session isolated --message "..." --timeout-seconds 300 --no-deliver`). The orchestrator runs every 5 minutes, checks for active projects, and spawns workers as needed. It automatically scales back polling when there's no work (see SKILL.md §Orchestrator Frequency Scaling).
+Or via OpenClaw cron:
+
+```bash
+openclaw cron add \
+  --name braids-orchestrator \
+  --every 5m \
+  --message "Run: braids orch --run >> /tmp/braids.log 2>&1" \
+  --timeout-seconds 60
+```
+
+The orchestrator runs every 5 minutes, checks for active projects, and spawns workers as needed. Test with `braids orch` (dry-run by default) before enabling.
 
 ### 5. (Optional) Create Your First Project
 
