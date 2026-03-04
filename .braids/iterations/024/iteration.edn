@@ -1,0 +1,4 @@
+{:number "024"
+ :status :active
+ :stories ["braids-ao6"]
+ :notes "CLI cleanup: simplify commands, improve UX, remove legacy features, update docs."}
