@@ -28,10 +28,7 @@ Channel: %s")
                    "--message" task
                    "--session-id" session-id
                    "--thinking" thinking
-                   "--timeout" timeout
-                   "--deliver"
-                   "--reply-channel" "discord"
-                   "--reply-to" channel]]
+                   "--timeout" timeout]]
     (if (and worker-agent (not (str/blank? worker-agent)))
       (vec (concat ["agent" "--agent" worker-agent] (rest base-args)))
       (vec base-args))))

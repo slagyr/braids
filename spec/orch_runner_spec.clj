@@ -48,8 +48,7 @@
         (should (some #{"--message"} args))
         (should (some #{"--session-id"} args))
         (should (some #{"--thinking"} args))
-        (should (some #{"--timeout"} args))
-        (should (some #{"--deliver"} args))))
+        (should (some #{"--timeout"} args))))
 
     (it "includes --agent when worker-agent is set"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
