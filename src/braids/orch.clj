@@ -64,8 +64,10 @@
                                           :channel channel
                                           :path path
                                           :label (str "project:" slug ":" (:id bead))
-                                          :worker-timeout timeout}
-                                   agent-id (assoc :worker-agent agent-id)))
+                                          :worker-timeout timeout
+                                          :worker-thinking (or (:worker-thinking cfg) "high")}
+                                   agent-id (assoc :worker-agent agent-id)
+                                   (:worker-model cfg) (assoc :worker-model (:worker-model cfg))))
                                to-spawn)))
                       eligible))
              ;; Determine if any projects had beads but were at capacity
@@ -277,10 +279,9 @@
                                                        :label (:label spawn)
                                                        :runTimeoutSeconds (:worker-timeout spawn)
                                                        :cleanup "delete"
-                                                       :thinking "low"}
-                                                (:worker-agent spawn) (assoc :agentId (:worker-agent spawn)))
-                                        :model (get-in cfg [:worker-model])
-                                        :thinking (get-in cfg [:worker-thinking] :high))))
+                                                       :thinking (:worker-thinking spawn "high")}
+                                                (:worker-agent spawn) (assoc :agentId (:worker-agent spawn))
+                                                (:worker-model spawn) (assoc :model (:worker-model spawn))))
                                             (:spawns tick-result))]
                  {:action "spawn" :spawns formatted-spawns})
                (into {} (map (fn [[k v]] [(-> (name k) (.replace "-" "_")) v])
