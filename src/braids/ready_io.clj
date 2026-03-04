@@ -51,13 +51,17 @@
       :else
       pc/defaults)))
 
+(def ^:private bd-bin
+  "Full path to the bd binary. Use BD_BIN env var to override."
+  (or (System/getenv "BD_BIN") "/usr/local/bin/bd"))
+
 (defn load-ready-beads
   "Run `bd ready --json` in the project directory and parse the result."
   [project-path]
   (let [path (expand-path project-path)]
     (try
       (let [result (proc/shell {:dir path :out :string :err :string}
-                               "bd" "ready" "--json")
+                               bd-bin "ready" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)
           (mapv (fn [b] {:id (:id b) :title (:title b)
