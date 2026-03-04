@@ -45,21 +45,35 @@ EOF
 
 If using a custom `BRAIDS_HOME`, replace `~/Projects` with the desired path. The registry and orchestrator state always live in `~/.openclaw/braids/` regardless of `BRAIDS_HOME`.
 
-### 4. Set Up Orchestrator Cron Job
+### 4. Configure Binary Paths (Recommended)
+
+Set `env-path` so subprocesses (`bd`, `openclaw`, `node`) are found in cron and other minimal-PATH environments:
+
+```bash
+braids config set env-path "/usr/local/bin:/Users/YOUR_USER/.local/bin"
+```
+
+Optionally set explicit binary paths:
+
+```bash
+braids config set bd-bin /usr/local/bin/bd
+braids config set openclaw-bin /Users/YOUR_USER/.local/bin/openclaw
+```
+
+These are stored in `~/.openclaw/braids/config.edn` and used by the orchestrator and all subprocess calls. This replaces the need for a `PATH=` line in crontab.
+
+### 5. Set Up Orchestrator Cron Job
 
 Add to the system crontab (`crontab -e`):
 
 ```bash
-PATH=/usr/local/bin:/Users/YOUR_USER/.local/bin:/usr/bin:/bin
 */5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1
 ```
 
-The `PATH` line is required — cron runs with a minimal environment and won't find `bb`, `bd`, `openclaw`, or `node` otherwise.
-
-Or via one-liner (replace `YOUR_USER` with your username):
+Or via one-liner:
 
 ```bash
-(crontab -l 2>/dev/null; printf 'PATH=/usr/local/bin:/Users/YOUR_USER/.local/bin:/usr/bin:/bin\n*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1\n') | crontab -
+(crontab -l 2>/dev/null; echo '*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1') | crontab -
 ```
 
 Verify it was added:
@@ -71,8 +85,10 @@ crontab -l
 The orchestrator runs every 5 minutes, checks for active projects, and spawns workers as needed. Test with `braids orch` (dry-run by default) before enabling.
 
 > **Note:** Use the system crontab, not OpenClaw cron. The braids orchestrator is a standalone CLI (`braids orch --confirmed`) and does not require OpenClaw's cron scheduler.
+>
+> **Note:** No `PATH=` line is needed in crontab if you configured `env-path` in step 4.
 
-### 5. (Optional) Create Your First Project
+### 6. (Optional) Create Your First Project
 
 Follow [`project-creation.md`](project-creation.md) — an interactive guide that walks through gathering project info, scaffolding the directory, and generating real `.braids/config.edn` content.
 

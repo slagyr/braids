@@ -48,17 +48,26 @@ Global settings for the braids system (not per-project). Managed via `braids con
 
 ```clojure
 {:braids-home "~/Projects"
- :orchestrator-channel "discord-channel-id"}
+ :orchestrator-channel "discord-channel-id"
+ :env-path "/usr/local/bin:/Users/you/.local/bin"
+ :bd-bin "bd"
+ :openclaw-bin "openclaw"}
 ```
 
 | Key | Default | Description |
 |-----|---------|-------------|
 | `:braids-home` | `"~/Projects"` | Root directory where all project repos live |
 | `:orchestrator-channel` | `nil` | Optional Discord/Slack channel for orchestrator announcements (spawn decisions, idle events, zombie cleanups). If not set, orchestrator-level announcements are skipped. Project-specific notifications still go to each project's `:channel`. |
+| `:env-path` | `nil` | Extra PATH directories prepended to subprocess PATH. Ensures `bd`, `openclaw`, `node` are found in cron and other minimal-PATH environments. |
+| `:bd-bin` | `"bd"` | Binary name or full path for the `bd` CLI tool. |
+| `:openclaw-bin` | `"openclaw"` | Binary name or full path for the `openclaw` CLI tool. |
 
 Set via CLI:
 ```bash
 braids config set orchestrator-channel 1476813011925598343
+braids config set env-path "/usr/local/bin:/Users/you/.local/bin"
+braids config set bd-bin /usr/local/bin/bd
+braids config set openclaw-bin /Users/you/.local/bin/openclaw
 ```
 
 ## Registry Format (`~/.openclaw/braids/registry.edn`)

@@ -19,10 +19,10 @@ Channel: %s")
 (defn build-worker-args
   "Build the openclaw agent CLI args for a spawn entry.
    Returns a vector of strings."
-  [{:keys [bead path iteration channel worker-agent thinking worker-timeout] :as spawn}]
+  [config {:keys [bead path iteration channel worker-agent thinking worker-timeout] :as spawn}]
   (let [task (build-worker-task spawn)
         session-id (str (java.util.UUID/randomUUID))
-        thinking (or thinking "low")
+        thinking (or thinking (:worker-thinking config) "high")
         timeout (str (or worker-timeout 1800))
         base-args ["agent"
                    "--message" task

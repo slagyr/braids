@@ -49,7 +49,16 @@
      "  get <key>      Get a config value"
      "  set <key> <val> Set a config value"
      ""
+     "Keys:"
+     "  braids-home          Root directory for project repos (default: ~/Projects)"
+     "  orchestrator-channel Channel for orchestrator announcements (default: nil)"
+     "  env-path             Extra PATH prepended for subprocesses (default: nil)"
+     "  bd-bin               Binary name/path for bd (default: bd)"
+     "  openclaw-bin         Binary name/path for openclaw (default: openclaw)"
+     ""
      "Examples:"
      "  braids config list"
      "  braids config get braids-home"
-     "  braids config set braids-home ~/MyProjects"]))
+     "  braids config set braids-home ~/MyProjects"
+     "  braids config set env-path /usr/local/bin:/Users/you/.local/bin"
+     "  braids config set bd-bin /usr/local/bin/bd"]))

@@ -51,10 +51,13 @@
   [project-path]
   (let [path (if (str/starts-with? project-path "~/")
                (str (fs/expand-home "~") "/" (subs project-path 2))
-               project-path)]
+               project-path)
+        cfg (config-io/load-config)
+        bin (or (System/getenv "BD_BIN") (sys/bd-bin cfg))]
     (try
-      (let [result (proc/shell {:dir path :out :string :err :string}
-                               bd-bin "list" "--json")
+      (let [result (proc/shell {:dir path :out :string :err :string
+                                :extra-env (sys/subprocess-env cfg)}
+                               bin "list" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)
           (into {} (map (fn [b] [(:id b) (str/lower-case (or (:status b) "open"))]) parsed))
@@ -67,10 +70,13 @@
   [project-path]
   (let [path (if (str/starts-with? project-path "~/")
                (str (fs/expand-home "~") "/" (subs project-path 2))
-               project-path)]
+               project-path)
+        cfg (config-io/load-config)
+        bin (or (System/getenv "BD_BIN") (sys/bd-bin cfg))]
     (try
-      (let [result (proc/shell {:dir path :out :string :err :string}
-                               bd-bin "list" "--json")
+      (let [result (proc/shell {:dir path :out :string :err :string
+                                :extra-env (sys/subprocess-env cfg)}
+                               bin "list" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)
           (vec (filter #(not= "closed" (str/lower-case (or (:status %) "open"))) parsed))

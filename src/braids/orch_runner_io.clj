@@ -4,23 +4,24 @@
             [clojure.string :as str]
             [braids.orch :as orch]
             [braids.orch-io :as orch-io]
-            [braids.orch-runner :as runner]))
-
-(def ^:private openclaw-bin
-  "Full path to the openclaw binary. Use OPENCLAW_BIN env var to override."
-  (or (System/getenv "OPENCLAW_BIN") "/Users/zane/.local/bin/openclaw"))
+            [braids.orch-runner :as runner]
+            [braids.config-io :as config-io]
+            [braids.sys :as sys]))
 
 (defn spawn-worker!
   "Fire an openclaw agent worker in the background (fire-and-forget).
    In dry-run mode, logs what would happen without executing."
   [spawn {:keys [dry-run]}]
   (let [{:keys [bead]} spawn
-        args (runner/build-worker-args spawn)]
+        args (runner/build-worker-args spawn)
+        cfg (config-io/load-config)
+        bin (or (System/getenv "OPENCLAW_BIN") (sys/openclaw-bin cfg))]
     (if dry-run
       (println (runner/log-line (str "DRY-RUN: would spawn worker for " bead)))
       (do
-        (proc/process (into [openclaw-bin] args)
-                      {:out :inherit :err :inherit})
+        (proc/process (into [bin] args)
+                      {:out :inherit :err :inherit
+                       :extra-env (sys/subprocess-env cfg)})
         (println (runner/log-line (str "Spawned worker: bead=" bead)))))))
 
 (defn run-orch!

@@ -6,7 +6,8 @@
             [braids.project-config :as pc]
             [braids.config-io :as config-io]
             [braids.ready :as ready]
-            [braids.registry :as registry]))
+            [braids.registry :as registry]
+            [braids.sys :as sys]))
 
 (def default-braids-home
   (str (fs/expand-home "~/Projects")))
@@ -51,17 +52,16 @@
       :else
       pc/defaults)))
 
-(def ^:private bd-bin
-  "Full path to the bd binary. Use BD_BIN env var to override."
-  (or (System/getenv "BD_BIN") "/usr/local/bin/bd"))
-
 (defn load-ready-beads
   "Run `bd ready --json` in the project directory and parse the result."
   [project-path]
-  (let [path (expand-path project-path)]
+  (let [path (expand-path project-path)
+        cfg (config-io/load-config)
+        bin (or (System/getenv "BD_BIN") (sys/bd-bin cfg))]
     (try
-      (let [result (proc/shell {:dir path :out :string :err :string}
-                               bd-bin "ready" "--json")
+      (let [result (proc/shell {:dir path :out :string :err :string
+                                :extra-env (sys/subprocess-env cfg)}
+                               bin "ready" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)
           (mapv (fn [b] {:id (:id b) :title (:title b)
