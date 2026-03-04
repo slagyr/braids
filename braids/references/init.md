@@ -50,13 +50,16 @@ If using a custom `BRAIDS_HOME`, replace `~/Projects` with the desired path. The
 Add to the system crontab (`crontab -e`):
 
 ```bash
+PATH=/usr/local/bin:/Users/YOUR_USER/.local/bin:/usr/bin:/bin
 */5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1
 ```
 
-Or via one-liner:
+The `PATH` line is required — cron runs with a minimal environment and won't find `bb`, `bd`, `openclaw`, or `node` otherwise.
+
+Or via one-liner (replace `YOUR_USER` with your username):
 
 ```bash
-(crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1") | crontab -
+(crontab -l 2>/dev/null; printf 'PATH=/usr/local/bin:/Users/YOUR_USER/.local/bin:/usr/bin:/bin\n*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1\n') | crontab -
 ```
 
 Verify it was added:
