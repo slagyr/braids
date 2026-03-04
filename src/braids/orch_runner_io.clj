@@ -49,7 +49,7 @@
          ;; Always print the human-readable summary
          (let [debug-str (orch/format-debug-output
                            (:registry debug-ctx) (:configs debug-ctx)
-                           (:iterations debug-ctx) (:open-beads debug-ctx) result)]
+                           (:iterations debug-ctx) (:open-beads debug-ctx) result (:workers debug-ctx))]
            (print debug-str)
            (flush))
 

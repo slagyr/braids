@@ -206,9 +206,9 @@
 
 (defn- bead-status-icon [status]
   (case status
-    "blocked" "🚫"
-    ("in-progress" "in_progress") "⚙️"
-    "closed" "✓"
+    "blocked" "✗"
+    ("in-progress" "in_progress") "●"
+    "open" "○"
     "○"))
 
 (defn- bead-status-color [status]
@@ -236,8 +236,8 @@
 (defn format-debug-output
   "Format human-readable debug output for orch-tick. Pure function.
    Takes registry, configs, iterations map, open-beads map (slug->[bead-maps]),
-   and tick-result. Returns a multi-line string for stderr."
-  [registry configs iterations open-beads tick-result]
+   tick-result, and workers map (slug->count). Returns a multi-line string for stderr."
+  [registry configs iterations open-beads tick-result workers]
   (let [active-projects (->> (:projects registry)
                              (filter #(= :active (:status %)))
                              (filter (fn [{:keys [slug]}]
@@ -249,28 +249,30 @@
                 (let [cfg (get configs slug)
                       status (or (:status cfg) :active)
                       iter (get iterations slug)
-                      beads (get open-beads slug [])
+                      all-beads (get open-beads slug [])
+                      active-beads (filter #(let [s (some-> (:status %) name clojure.string/lower-case)]
+                                              (or (= "in-progress" s) (= "blocked" s) (= "in_progress" s)))
+                                           all-beads)
                       status-str (c (name status) (config-status-color status))
                       name-str (c slug :bold-white)
                       iter-str (if iter
                                  (str "iteration " (c iter :cyan))
-                                 "(no iteration)")]
-                  (if (empty? beads)
+                                 "(no iteration)")
+                      current-w (get workers slug 0)
+                      max-w (or (:max-workers cfg) 1)
+                      workers-str (str "workers:" current-w "/" max-w)]
+                  (if (empty? active-beads)
                     (if iter
-                      (str "  " name-str "  " status-str "  " iter-str "  → all closed ✓")
-                      (str "  " name-str "  " status-str "  " iter-str))
-                    (let [blocked (count (filter #(= "blocked" (some-> (:status %) name clojure.string/lower-case)) beads))
-                          summary (if (pos? blocked)
-                                    (str "→ " (count beads) " beads (" blocked " blocked)")
-                                    (str "→ " (count beads) " beads"))
-                          header (str "  " name-str "  " status-str "  " iter-str "  " summary)
+                      (str "  " name-str "  " status-str "  " iter-str "  " workers-str "  beads: (none)")
+                      (str "  " name-str "  " status-str "  " iter-str "  " workers-str))
+                    (let [header (str "  " name-str "  " status-str "  " iter-str "  " workers-str "  beads:")
                           bead-lines (mapv (fn [b]
                                             (let [bs (or (some-> (:status b) name clojure.string/lower-case) "open")
                                                   icon (bead-status-icon bs)
                                                   id-suffix (last (clojure.string/split (:id b) #"-"))
                                                   colored-status (c bs (bead-status-color bs))]
                                               (str "    " icon " " id-suffix "  " colored-status)))
-                                          beads)]
+                                          active-beads)]
                       (clojure.string/join "\n" (cons header bead-lines))))))
               active-projects)
         decision-line (let [{:keys [action reason]} tick-result
