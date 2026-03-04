@@ -43,7 +43,7 @@
     (it "includes required openclaw agent args"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
                    :channel "12345" :worker-timeout 1800}
-            args (runner/build-worker-args spawn)]
+            args (runner/build-worker-args {} spawn)]
         (should (some #{"agent"} args))
         (should (some #{"--message"} args))
         (should (some #{"--session-id"} args))
@@ -54,7 +54,7 @@
     (it "includes --agent when worker-agent is set"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
                    :channel "12345" :worker-timeout 1800 :worker-agent "scrapper"}
-            args (runner/build-worker-args spawn)]
+            args (runner/build-worker-args {} spawn)]
         (should (some #{"--agent"} args))
         (let [agent-idx (.indexOf args "--agent")]
           (should= "scrapper" (nth args (inc agent-idx))))))
@@ -62,38 +62,38 @@
     (it "omits --agent when worker-agent is nil"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
                    :channel "12345" :worker-timeout 1800}
-            args (runner/build-worker-args spawn)]
+            args (runner/build-worker-args {} spawn)]
         (should-not (some #{"--agent"} args))))
 
-    (it "uses default thinking=low"
+    (it "uses default thinking=high"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800}
-            args (runner/build-worker-args spawn)
+            args (runner/build-worker-args {} spawn)
             thinking-idx (.indexOf args "--thinking")]
-        (should= "low" (nth args (inc thinking-idx)))))
+        (should= "high" (nth args (inc thinking-idx)))))
 
     (it "uses provided thinking level"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c"
                    :worker-timeout 1800 :thinking "high"}
-            args (runner/build-worker-args spawn)
+            args (runner/build-worker-args {} spawn)
             thinking-idx (.indexOf args "--thinking")]
         (should= "high" (nth args (inc thinking-idx)))))
 
     (it "uses default timeout=1800 when not provided"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c"}
-            args (runner/build-worker-args spawn)
+            args (runner/build-worker-args {} spawn)
             timeout-idx (.indexOf args "--timeout")]
         (should= "1800" (nth args (inc timeout-idx)))))
 
     (it "uses provided timeout"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 3600}
-            args (runner/build-worker-args spawn)
+            args (runner/build-worker-args {} spawn)
             timeout-idx (.indexOf args "--timeout")]
         (should= "3600" (nth args (inc timeout-idx)))))
 
     (it "generates unique session IDs"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c"}
-            args1 (runner/build-worker-args spawn)
-            args2 (runner/build-worker-args spawn)
+            args1 (runner/build-worker-args {} spawn)
+            args2 (runner/build-worker-args {} spawn)
             session-idx1 (.indexOf args1 "--session-id")
             session-idx2 (.indexOf args2 "--session-id")]
         (should-not= (nth args1 (inc session-idx1))

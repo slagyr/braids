@@ -68,7 +68,7 @@
   (describe "build-worker-args"
 
     (it "includes required openclaw agent args"
-      (let [args (runner/build-worker-args
+      (let [args (runner/build-worker-args {}
                    {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800})]
         (should (some #{"agent"} args))
         (should (some #{"--message"} args))
@@ -77,26 +77,26 @@
         (should (some #{"--timeout"} args))))
 
     (it "includes --agent when worker-agent is set"
-      (let [args (runner/build-worker-args
+      (let [args (runner/build-worker-args {}
                    {:path "~/p" :bead "b" :iteration "1" :channel "c"
                     :worker-timeout 1800 :worker-agent "scrapper"})]
         (should (some #{"--agent"} args))
         (should= "scrapper" (nth args (inc (.indexOf args "--agent"))))))
 
     (it "omits --agent when worker-agent is nil"
-      (let [args (runner/build-worker-args
+      (let [args (runner/build-worker-args {}
                    {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800})]
         (should-not (some #{"--agent"} args))))
 
-    (it "uses default thinking=low"
-      (let [args (runner/build-worker-args
+    (it "uses default thinking=high"
+      (let [args (runner/build-worker-args {}
                    {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800})]
-        (should= "low" (nth args (inc (.indexOf args "--thinking"))))))
+        (should= "high" (nth args (inc (.indexOf args "--thinking"))))))
 
     (it "generates unique session IDs"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c"}
-            args1 (runner/build-worker-args spawn)
-            args2 (runner/build-worker-args spawn)]
+            args1 (runner/build-worker-args {} spawn)
+            args2 (runner/build-worker-args {} spawn)]
         (should-not= (nth args1 (inc (.indexOf args1 "--session-id")))
                      (nth args2 (inc (.indexOf args2 "--session-id")))))))
 
