@@ -7,7 +7,9 @@
            {:id "braids-sxv" :title "Workers should include agent ID and model in announcements"}
            {:id "braids-8dz" :title "Document the 'private project' pattern in SKILL.md (with explicit full path)"}
            {:id "braids-i4i" :title "Fix worker.md: clarify skill paths (~/.openclaw/skills/ not ~/openclaw/skills/)"}
-           {:id "braids-t3m" :title "Orchestrator: print closing banner with timestamp on exit"}]
+           {:id "braids-t3m" :title "Orchestrator: print closing banner with timestamp on exit"}
+           {:id "braids-2lz" :title "Workers must use NO_REPLY for everything except defined notification events — no channel spam"}]
  :notes ["Theme: worker configuration and privacy patterns"
          "lyk is implementation; 2zq and 01z are documentation — can be worked in parallel after lyk"
-         "8dz/i4i fix path confusion bug; t3m improves log readability"]}
+         "8dz/i4i fix path confusion bug; t3m improves log readability"
+         "2lz is P1 — channel spam is a critical regression, fix first"]}
