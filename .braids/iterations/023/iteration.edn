@@ -1,4 +1,4 @@
 {:number "023"
- :status :active
- :stories ["braids-yhv"]
- :notes "Replace LLM orchestrator with shell script for reliable fire-and-forget spawning."}
+ :status :complete
+ :stories ["braids-yhv" "braids-e4d" "braids-3sm"]
+ :notes "Orchestrator evolution: shell script → Babashka → safe defaults. Replaced LLM orchestrator with reliable fire-and-forget Babashka implementation with safety-first CLI design."}

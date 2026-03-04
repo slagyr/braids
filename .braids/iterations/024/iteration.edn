@@ -1,4 +1,0 @@
-{:number "024"
- :status :complete
- :stories ["braids-e4d"]
- :notes "Convert orchestrator to Babashka: maintainable, testable, CLI-integrated fire-and-forget spawning."}
