@@ -6,7 +6,8 @@
             [braids.project-config :as pc]
             [braids.config-io :as config-io]
             [braids.ready :as ready]
-            [braids.registry :as registry]))
+            [braids.registry :as registry]
+            [braids.sys :as sys]))
 
 (def default-braids-home
   (str (fs/expand-home "~/Projects")))
@@ -60,7 +61,7 @@
   [project-path]
   (let [path (expand-path project-path)]
     (try
-      (let [result (proc/shell {:dir path :out :string :err :string}
+      (let [result (proc/shell {:dir path :out :string :err :string :env (sys/subprocess-env)}
                                bd-bin "ready" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)

@@ -5,7 +5,8 @@
             [cheshire.core :as json]
             [clojure.string :as str]
             [braids.orch :as orch]
-            [braids.ready-io :as rio]))
+            [braids.ready-io :as rio]
+            [braids.sys :as sys]))
 
 (defn parse-iteration-status-edn
   "Extract the status from iteration.edn content string.
@@ -49,7 +50,7 @@
                (str (fs/expand-home "~") "/" (subs project-path 2))
                project-path)]
     (try
-      (let [result (proc/shell {:dir path :out :string :err :string}
+      (let [result (proc/shell {:dir path :out :string :err :string :env (sys/subprocess-env)}
                                bd-bin "list" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)
@@ -65,7 +66,7 @@
                (str (fs/expand-home "~") "/" (subs project-path 2))
                project-path)]
     (try
-      (let [result (proc/shell {:dir path :out :string :err :string}
+      (let [result (proc/shell {:dir path :out :string :err :string :env (sys/subprocess-env)}
                                bd-bin "list" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)
