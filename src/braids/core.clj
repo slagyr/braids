@@ -79,7 +79,11 @@
           (do (println help-str) 0)
           (do (println (help-text)) 0)))
       (case command
-        :help (do (println (help-text)) 0)
+        :help (let [target (first sub-args)
+                    cmd-help (when target (get-in commands [target :help]))]
+                (if cmd-help
+                  (do (println cmd-help) 0)
+                  (do (println (help-text)) 0)))
         :unknown (do (println (str "Unknown command: " input))
                      (println)
                      (println (help-text))
