@@ -2,6 +2,7 @@
   (:require [speclj.core :refer :all]
             [braids.new-io :as new-io]
             [babashka.fs :as fs]
+            [babashka.process :as proc]
             [clojure.edn :as edn]))
 
 (describe "braids.new-io"
@@ -38,7 +39,7 @@
       (spit @reg-file (pr-str {:projects []})))
 
     (after-all
-      (fs/delete-tree @tmp-dir))
+      (proc/shell {:continue true} "rm" "-rf" @tmp-dir))
 
     (it "rejects missing required params"
       (let [result (new-io/run-new ["--braids-home" @tmp-dir] {:registry-file @reg-file})]

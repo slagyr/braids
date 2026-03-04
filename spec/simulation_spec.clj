@@ -1,6 +1,7 @@
 (ns simulation-spec
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
+  [babashka.process :as proc]
             [clojure.string :as str]
             [cheshire.core :as json]
             [braids.orch :as orch]))
@@ -12,7 +13,7 @@
 (def test-project (str test-tmp "/test-sim-project"))
 
 (defn setup-test-project! []
-  (fs/delete-tree test-project)
+  (proc/shell {:continue true} "rm" "-rf" test-project)
   (fs/create-dirs (str test-project "/.braids/iterations/001"))
 
   (spit (str test-project "/.braids/config.edn")
@@ -287,4 +288,4 @@
     (should-not (str/includes? contracts ".completing"))))
 
 ;; Cleanup
-(fs/delete-tree test-tmp)
+(proc/shell {:continue true} "rm" "-rf" test-tmp)

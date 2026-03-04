@@ -82,9 +82,12 @@
          log-fn (fn [lines] (verbose-log! verbose lines))]
      (try
        ;; Get tick result from stores
-       (let [tick-result (orch-io/gather-and-tick-from-stores)
+       (let [openclaw-home (or (System/getenv "BRAIDS_OPENCLAW_HOME")
+                               (str (System/getProperty "user.home") "/.openclaw"))
+             tick-result (orch-io/gather-and-tick-from-stores openclaw-home)
              action (:action tick-result)
              zombies (seq (:zombies tick-result))]
+        (println (json/generate-string tick-result))
 
          ;; Log zombies if any
          (when zombies
@@ -124,3 +127,8 @@
           (println (:error opts)))
         1)
       (run-orch! opts))))
+
+(defn -main
+  "Babashka entry point"
+  [& args]
+  (System/exit (run-orch-command! args)))

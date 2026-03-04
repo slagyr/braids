@@ -163,7 +163,7 @@
 
 (defn cleanup-test-env [env]
   (when (:root env)
-    (fs/delete-tree (:root env))))
+    (proc/shell {:continue true} "rm" "-rf" (:root env))))
 
 ;; ── Test Suites ──
 

@@ -1,6 +1,7 @@
 (ns braids.orch-io-spec
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
+  [babashka.process :as proc]
             [cheshire.core :as json]
             [braids.orch-io :as oio]))
 
@@ -32,7 +33,7 @@
         (make-iteration-dir! project "001" {:number 1 :status :complete :stories []})
         (should-be-nil (oio/find-active-iteration project)))))
 
-  (after-all (fs/delete-tree test-tmp)))
+  (after-all (proc/shell {:continue true} "rm" "-rf" test-tmp)))
 
 (describe "parse-session-labels (via gather-and-tick-with-zombies)"
   ;; We test the public interface rather than the private parse fn
@@ -58,12 +59,12 @@
         (should= "project:myproj:myproj-abc" (:label (first sessions)))
         (should (pos? (:age-seconds (first sessions))))
         (should= "sid-1" (:session-id (first sessions))))
-      (fs/delete-tree dir)))
+      (proc/shell {:continue true} "rm" "-rf" dir)))
 
   (it "returns empty vector when no session stores exist"
     (let [dir (str (fs/create-temp-dir {:prefix "sess-empty"}))]
       (should= [] (oio/load-sessions-from-stores dir))
-      (fs/delete-tree dir)))
+      (proc/shell {:continue true} "rm" "-rf" dir)))
 
   (it "handles multiple agents with project sessions"
     (let [dir (str (fs/create-temp-dir {:prefix "sess-multi"}))]
@@ -85,7 +86,7 @@
         (should= 2 (count sessions))
         (should= #{"project:proj1:proj1-x1" "project:proj2:proj2-y2"}
                  (set (map :label sessions))))
-      (fs/delete-tree dir)))
+      (proc/shell {:continue true} "rm" "-rf" dir)))
 
   (it "skips sessions without project labels"
     (let [dir (str (fs/create-temp-dir {:prefix "sess-noproj"}))]
@@ -103,11 +104,11 @@
       (let [sessions (oio/load-sessions-from-stores dir)]
         (should= 1 (count sessions))
         (should= "project:braids:braids-42h" (:label (first sessions))))
-      (fs/delete-tree dir)))
+      (proc/shell {:continue true} "rm" "-rf" dir)))
 
   (it "handles malformed JSON gracefully"
     (let [dir (str (fs/create-temp-dir {:prefix "sess-bad"}))]
       (fs/create-dirs (str dir "/agents/a1/sessions"))
       (spit (str dir "/agents/a1/sessions/sessions.json") "not json")
       (should= [] (oio/load-sessions-from-stores dir))
-      (fs/delete-tree dir))))
+      (proc/shell {:continue true} "rm" "-rf" dir))))

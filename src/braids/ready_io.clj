@@ -20,7 +20,7 @@
 (defn resolve-state-home []
   "Returns the directory for agent infrastructure files (registry, orchestrator state, STATUS).
    Defaults to ~/.openclaw/braids/"
-  default-state-home)
+  (or (System/getenv "BRAIDS_STATE_HOME") default-state-home))
 
 (defn- expand-path [path]
   (if (str/starts-with? path "~/")

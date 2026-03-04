@@ -1,4 +1,210 @@
 (ns orch-shell-spec
-  "Legacy shell spec - replaced by orch-runner-spec.
-   The shell script braids-orch.sh has been removed.
-   The orchestrator is now available as `braids orch`.")
+  "Tests for the Babashka-based orchestrator runner (braids orch).
+   This replaces the shell script orchestrator tests; all orchestration
+   logic now lives in braids.orch-runner and braids.orch-runner-io."
+  (:require [speclj.core :refer :all]
+            [babashka.fs :as fs]
+            [babashka.process :as proc]
+            [cheshire.core :as json]
+            [clojure.string :as str]
+            [braids.orch-runner :as runner]))
+
+;; ── Helper to run `bb braids orch` as a subprocess ──
+
+(def project-root (str (fs/canonicalize ".")))
+
+(defn run-braids-orch
+  "Run `bb braids orch` with optional extra args and env vars.
+   Returns {:exit :out :err}."
+  [args & {:keys [env]}]
+  (let [base-env {"PATH" (System/getenv "PATH")
+                  "HOME" (System/getenv "HOME")}
+        merged-env (merge base-env (or env {}))
+        cmd (into ["bb" "braids" "orch"] args)
+        result (apply proc/shell {:dir project-root
+                                  :out :string
+                                  :err :string
+                                  :continue true
+                                  :env merged-env}
+                      cmd)]
+    {:exit (:exit result) :out (:out result) :err (:err result)}))
+
+;; ── Pure function tests (orch-runner) ──
+
+(describe "braids.orch-runner (pure functions)"
+
+  (describe "parse-cli-args"
+
+    (it "returns defaults for empty args"
+      (should= {:dry-run false :verbose false} (runner/parse-cli-args [])))
+
+    (it "parses --dry-run"
+      (should= {:dry-run true :verbose false} (runner/parse-cli-args ["--dry-run"])))
+
+    (it "parses --verbose"
+      (should= {:dry-run false :verbose true} (runner/parse-cli-args ["--verbose"])))
+
+    (it "returns error for unknown arg"
+      (let [result (runner/parse-cli-args ["--bogus"])]
+        (should-contain :error result)
+        (should (str/includes? (:error result) "--bogus")))))
+
+  (describe "build-worker-task"
+
+    (it "includes worker.md reference"
+      (let [task (runner/build-worker-task
+                   {:path "~/p" :bead "b" :iteration "1" :channel "c"})]
+        (should (str/includes? task "worker.md"))))
+
+    (it "includes all spawn fields"
+      (let [task (runner/build-worker-task
+                   {:path "~/Projects/test" :bead "test-abc" :iteration "001" :channel "12345"})]
+        (should (str/includes? task "~/Projects/test"))
+        (should (str/includes? task "test-abc"))
+        (should (str/includes? task "001"))
+        (should (str/includes? task "12345")))))
+
+  (describe "build-worker-args"
+
+    (it "includes required openclaw agent args"
+      (let [args (runner/build-worker-args
+                   {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800})]
+        (should (some #{"agent"} args))
+        (should (some #{"--message"} args))
+        (should (some #{"--session-id"} args))
+        (should (some #{"--thinking"} args))
+        (should (some #{"--timeout"} args))))
+
+    (it "includes --agent when worker-agent is set"
+      (let [args (runner/build-worker-args
+                   {:path "~/p" :bead "b" :iteration "1" :channel "c"
+                    :worker-timeout 1800 :worker-agent "scrapper"})]
+        (should (some #{"--agent"} args))
+        (should= "scrapper" (nth args (inc (.indexOf args "--agent"))))))
+
+    (it "omits --agent when worker-agent is nil"
+      (let [args (runner/build-worker-args
+                   {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800})]
+        (should-not (some #{"--agent"} args))))
+
+    (it "uses default thinking=low"
+      (let [args (runner/build-worker-args
+                   {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800})]
+        (should= "low" (nth args (inc (.indexOf args "--thinking"))))))
+
+    (it "generates unique session IDs"
+      (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c"}
+            args1 (runner/build-worker-args spawn)
+            args2 (runner/build-worker-args spawn)]
+        (should-not= (nth args1 (inc (.indexOf args1 "--session-id")))
+                     (nth args2 (inc (.indexOf args2 "--session-id")))))))
+
+  (describe "log-line"
+
+    (it "includes ISO timestamp"
+      (let [line (runner/log-line "test")]
+        (should (re-find #"\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\]" line))))
+
+    (it "includes the message"
+      (should (str/ends-with? (runner/log-line "hello world") "hello world"))))
+
+  (describe "format-spawn-log"
+
+    (it "includes action=spawn"
+      (let [lines (runner/format-spawn-log {:action "spawn" :spawns [{:bead "b1"}]})]
+        (should (some #(str/includes? % "action=spawn") lines))))
+
+    (it "shows worker count"
+      (let [lines (runner/format-spawn-log {:action "spawn" :spawns [{:bead "b1"} {:bead "b2"}]})]
+        (should (some #(str/includes? % "2 worker") lines))))
+
+    (it "includes bead IDs"
+      (let [lines (runner/format-spawn-log {:action "spawn" :spawns [{:bead "my-bead-abc"}]})]
+        (should (some #(str/includes? % "my-bead-abc") lines)))))
+
+  (describe "format-idle-log"
+
+    (it "includes action=idle"
+      (let [lines (runner/format-idle-log {:reason "no-ready-beads" :disable-cron false})]
+        (should (some #(str/includes? % "action=idle") lines))))
+
+    (it "includes reason"
+      (let [lines (runner/format-idle-log {:reason "all-at-capacity" :disable-cron false})]
+        (should (some #(str/includes? % "reason=all-at-capacity") lines))))
+
+    (it "includes disable_cron flag"
+      (let [lines (runner/format-idle-log {:reason "no-ready-beads" :disable-cron true})]
+        (should (some #(str/includes? % "disable_cron=true") lines)))))
+
+  (describe "format-zombie-log"
+
+    (it "returns nil for empty zombies"
+      (should-be-nil (runner/format-zombie-log [])))
+
+    (it "includes zombie count and details"
+      (let [lines (runner/format-zombie-log [{:bead "z1" :reason "bead-closed"}
+                                             {:bead "z2" :reason "timeout"}])]
+        (should (some #(str/includes? % "2 zombie") lines))
+        (should (some #(str/includes? % "z1") lines))
+        (should (some #(str/includes? % "bead-closed") lines))))))
+
+;; ── CLI integration tests (braids orch subprocess) ──
+
+(describe "braids orch (CLI)"
+
+  (it "rejects unknown arguments"
+    (let [result (run-braids-orch ["--bogus"])]
+      (should= 1 (:exit result))
+      (should (str/includes? (:err result) "Unknown arg"))))
+
+  (it "runs with --dry-run against empty registry"
+    ;; With an empty registry, it should idle (no-active-iterations) and exit 0
+    (let [tmp (str (fs/create-temp-dir {:prefix "braids-orch-cli-test-"}))
+          state-dir (str tmp "/state")
+          log-file (str tmp "/orch.log")]
+      (try
+        (fs/create-dirs state-dir)
+        (spit (str state-dir "/registry.edn") "{:projects []}")
+        (let [result (run-braids-orch ["--dry-run"]
+                       :env {"BRAIDS_STATE_HOME" state-dir
+                             "BRAIDS_OPENCLAW_HOME" tmp
+                             "BRAIDS_ORCH_LOG" log-file})]
+          (should= 0 (:exit result))
+          (when (fs/exists? log-file)
+            (let [log (slurp log-file)]
+              (should (str/includes? log "action=idle")))))
+        (finally
+          (proc/shell {:continue true} "rm" "-rf" tmp)))))
+
+  (it "runs with --verbose and emits log lines to stderr"
+    (let [tmp (str (fs/create-temp-dir {:prefix "braids-orch-verbose-test-"}))
+          state-dir (str tmp "/state")
+          log-file (str tmp "/orch.log")]
+      (try
+        (fs/create-dirs state-dir)
+        (spit (str state-dir "/registry.edn") "{:projects []}")
+        (let [result (run-braids-orch ["--dry-run" "--verbose"]
+                       :env {"BRAIDS_STATE_HOME" state-dir
+                             "BRAIDS_OPENCLAW_HOME" tmp
+                             "BRAIDS_ORCH_LOG" log-file})]
+          (should= 0 (:exit result))
+          ;; --verbose prints log lines to stderr
+          (should (str/includes? (str (:out result) (:err result)) "idle")))
+        (finally
+          (proc/shell {:continue true} "rm" "-rf" tmp)))))
+
+  (it "writes log to BRAIDS_ORCH_LOG path"
+    (let [tmp (str (fs/create-temp-dir {:prefix "braids-orch-log-test-"}))
+          state-dir (str tmp "/state")
+          custom-log (str tmp "/custom.log")]
+      (try
+        (fs/create-dirs state-dir)
+        (spit (str state-dir "/registry.edn") "{:projects []}")
+        (run-braids-orch ["--dry-run"]
+          :env {"BRAIDS_STATE_HOME" state-dir
+                "BRAIDS_OPENCLAW_HOME" tmp
+                "BRAIDS_ORCH_LOG" custom-log})
+        (should (fs/exists? custom-log))
+        (should (str/includes? (slurp custom-log) "Orchestrator tick complete"))
+        (finally
+          (proc/shell {:continue true} "rm" "-rf" tmp))))))
