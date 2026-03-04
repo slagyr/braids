@@ -60,8 +60,11 @@
            (doseq [zombie zombies]
              (when (:session-id zombie)
                (try
-                 ;; Kill the zombie session
-                 (subagents {:action "kill" :target (:session-id zombie)})
+                 ;; Kill the zombie session via openclaw CLI
+                 (let [cfg (config-io/load-config)
+                       bin (or (System/getenv "OPENCLAW_BIN") (sys/openclaw-bin cfg))]
+                   (proc/process (into [bin] ["sessions" "kill" (:session-id zombie)])
+                                 {:out :string :err :string}))
                  (println (runner/log-line (str "Killed zombie session: " (:session-id zombie) " reason=" (:reason zombie))))
                  (catch Exception e
                    (println (runner/log-line (str "Failed to kill zombie session: " (:session-id zombie) " " (.getMessage e)))))))))
