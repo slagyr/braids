@@ -37,6 +37,10 @@
                       (fs/file-name dir))))))
             (sort (fs/list-dir iter-dir))))))
 
+(def ^:private bd-bin
+  "Full path to the bd binary. Use BD_BIN env var to override (useful in tests)."
+  (or (System/getenv "BD_BIN") "/usr/local/bin/bd"))
+
 (defn load-bead-statuses
   "Load all bead statuses for a project using `bd list --json`.
    Returns a map of bead-id -> status-string (e.g. open, closed)."
@@ -46,7 +50,7 @@
                project-path)]
     (try
       (let [result (proc/shell {:dir path :out :string :err :string}
-                               "bd" "list" "--json")
+                               bd-bin "list" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)
           (into {} (map (fn [b] [(:id b) (str/lower-case (or (:status b) "open"))]) parsed))
@@ -62,7 +66,7 @@
                project-path)]
     (try
       (let [result (proc/shell {:dir path :out :string :err :string}
-                               "bd" "list" "--json")
+                               bd-bin "list" "--json")
             parsed (json/parse-string (:out result) true)]
         (if (sequential? parsed)
           (vec (filter #(not= "closed" (str/lower-case (or (:status %) "open"))) parsed))
