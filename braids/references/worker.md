@@ -119,7 +119,10 @@ If notifications `bead-complete` is `on`, send a message to the Channel with a s
 Run `bd ready` in the project directory. If no open beads remain for the iteration, and all iteration stories are closed:
 
 - Update iteration.edn status to `:complete`
-- If notifications `iteration-complete` is `on`, notify the Channel
+- If notifications `iteration-complete` is `on`, notify the Channel:
+  - Use emoji ✅ (Unicode, not `:white_check_mark:`)
+  - Include any mentions from `:notification-mentions :iteration-complete` verbatim (e.g. `<@274692642116337664>` — copy exactly, including angle brackets)
+  - Example: `✅ Braids worker scrapper | claude-sonnet-4-6 | braids-xyz: Iteration 027 complete — <@274692642116337664> Theme: Specifications and agent routing`
 - Commit: `git add -A && git commit -m "Complete iteration <N>"`
 
 ## Error Handling & Escalation
@@ -208,7 +211,9 @@ Examples:
 
 This prefix makes it easy to identify which worker, model, and bead sent a given notification, especially in shared channels with multiple active projects.
 
-**Mentions:** If a Notify value contains `mention <@user-ref>` (e.g., `on (mention <@123456>)`), include that mention in the notification message. This triggers phone alerts on supported platforms (Discord, Slack, etc.).
+**Mentions:** Read mention strings from `:notification-mentions` in config.edn and include them verbatim in the notification message. The strings are already formatted for Discord (e.g. `<@274692642116337664>`) — copy them exactly, including the angle brackets. Do NOT strip the `<>` or use bare `@ID` format. This triggers phone alerts on supported platforms.
+
+**Emojis:** Use Unicode emojis directly (✅ ❌ ⚙️ ❓ 🚫) — never Discord text codes like `:white_check_mark:`.
 
 ## Exit Cleanly
 
