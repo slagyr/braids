@@ -1,0 +1,12 @@
+{:number "027"
+ :status :active
+ :stories [{:id "braids-bam" :title "Build thin Gherkin runner in Babashka"}
+           {:id "braids-m41" :title "Spec: orchestrator spawning behavior" :label "spec"}
+           {:id "braids-b9v" :title "Spec: zombie detection" :label "spec"}
+           {:id "braids-2ix" :title "Spec: worker session tracking" :label "spec"}
+           {:id "braids-5vw" :title "Label-based agent routing for worker spawning"}]
+ :notes ["Theme: Specifications and agent routing"
+         "bam first — runner must exist before specs can be verified"
+         "m41/b9v/2ix are spec beads — routed to prowl once label routing (5vw) is implemented"
+         "For now, prowl can be dispatched manually by Zane until 5vw lands"
+         "Workers must NOT modify .feature files — specs are the contract"]}
