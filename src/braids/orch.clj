@@ -276,13 +276,11 @@
                       (clojure.string/join "\n" (cons header bead-lines))))))
               active-projects)
         decision-line (let [{:keys [action reason]} tick-result
-                            spawns (:spawns tick-result)
-                            desc (if (= "spawn" action)
-                                   (str "spawn: " (count spawns) " worker(s)")
-                                   (str action ": " reason))
+                            desc (str action ": " reason)
                             color (decision-color action reason)]
-                        (str "\n  → " (c desc color)))]
-    (str (clojure.string/join "\n" project-lines) "\n" decision-line "\n")))
+                        (when (not= "spawn" action)
+                          (str "\n  → " (c desc color))))]
+    (str (clojure.string/join "\n" project-lines) (when decision-line (str "\n" decision-line)) "\n")))
 
 (defn format-tick-json
   "Format tick result as JSON string."
