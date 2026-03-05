@@ -1,5 +1,5 @@
 {:number "026"
- :status :active
+ :status :complete
  :stories [{:id "braids-lyk" :title "Add :worker-thinking config field — default to 'high', replaces hardcoded 'low'"}
            {:id "braids-2zq" :title "Update SKILL.md config.edn table to document :worker-agent and :worker-thinking"}
            {:id "braids-01z" :title "Document the 'private project' pattern in SKILL.md"}
