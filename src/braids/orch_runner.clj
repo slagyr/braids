@@ -11,14 +11,16 @@ Bead: %s
 Iteration: %s
 Channel: %s
 Agent: %s
-Model: %s")
+Model: %s
+Announcement-Prefix: %s")
 
 (defn build-worker-task
   "Build the task message for a worker spawn."
   [{:keys [path bead iteration channel worker-agent worker-model]}]
-  (format worker-task-template path bead iteration channel
-          (or worker-agent "default")
-          (or worker-model "default")))
+  (let [agent (or worker-agent "default")
+        model (or worker-model "default")
+        prefix (str "Braids worker " agent " | " model " | " bead ":")]
+    (format worker-task-template path bead iteration channel agent model prefix)))
 
 (defn build-worker-args
   "Build the openclaw agent CLI args for a spawn entry.
