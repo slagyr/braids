@@ -1,5 +1,5 @@
 {:number "027"
- :status :active
+ :status :complete
  :stories [{:id "braids-bam" :title "Build thin Gherkin runner in Babashka"}
            {:id "braids-m41" :title "Spec: orchestrator spawning behavior" :label "spec"}
            {:id "braids-b9v" :title "Spec: zombie detection" :label "spec"}
