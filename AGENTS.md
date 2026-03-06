@@ -2,23 +2,33 @@
 
 This project is managed by the **braids** skill. Config: `.braids/config.edn`. Goals and guardrails are below.
 
+## Skills
+
+This project uses [toolbox](https://raw.githubusercontent.com/slagyr/toolbox/main/SKILL.md)
+to manage skills. If `.skills/` doesn't exist, fetch the toolbox SKILL.md
+from the URL above and follow its instructions. Once bootstrapped, load
+skills from `.skills/{name}/SKILL.md` when their descriptions match the
+task at hand.
+
+- [tdd](https://raw.githubusercontent.com/slagyr/agent-skills/main/tdd/SKILL.md)
+- [solid](https://raw.githubusercontent.com/slagyr/agent-skills/main/solid/SKILL.md)
+- [braids](https://raw.githubusercontent.com/slagyr/braids/main/braids/SKILL.md)
+
 ## Development Process
 
-**This project follows strict Test-Driven Development.** Read the TDD skill (`~/.openclaw/skills/tdd/SKILL.md`) before writing any code. RED → GREEN → REFACTOR. No production code without a failing test.
+**This project follows strict Test-Driven Development.** Load the `tdd` skill before writing any code. RED → GREEN → REFACTOR. No production code without a failing test.
 
 ## How to Work on This Project
 
 **If you were spawned by the orchestrator** (your task message includes a bead id):
-→ Follow `~/.openclaw/skills/braids/references/worker.md`
-  (or online: https://raw.githubusercontent.com/slagyr/braids/refs/heads/main/braids/references/worker.md)
+→ Load the `braids` skill and follow its `references/worker.md`
 
 **If you're here on your own** (manual session, human asked you to help, etc.):
 1. Read `.braids/config.edn` — understand the project settings
 2. Read this file (AGENTS.md) — for goals, guardrails, and conventions
 3. Find the active iteration: look in `.braids/iterations/*/iteration.edn` for `:status :active`
 4. Run `bd ready` to see available work
-5. Pick a bead, then follow the worker workflow: `~/.openclaw/skills/braids/references/worker.md`
-   (or online: https://raw.githubusercontent.com/slagyr/braids/refs/heads/main/braids/references/worker.md)
+5. Pick a bead, then load the `braids` skill and follow its `references/worker.md`
 
 ## Quick Reference
 
