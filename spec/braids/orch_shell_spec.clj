@@ -2,30 +2,9 @@
   "Tests for the braids orch CLI command.
    Tests both pure functions and subprocess integration."
   (:require [speclj.core :refer :all]
-            [babashka.fs :as fs]
-            [babashka.process :as proc]
             [clojure.string :as str]
-            [braids.orch-runner :as runner]))
-
-;; ── Helper to run `bb braids orch` as a subprocess ──
-
-(def project-root (str (fs/canonicalize ".")))
-
-(defn run-braids-orch
-  "Run `bb braids orch` with optional extra args and env vars.
-   Returns {:exit :out :err}."
-  [args & {:keys [env]}]
-  (let [base-env {"PATH" (System/getenv "PATH")
-                  "HOME" (System/getenv "HOME")}
-        merged-env (merge base-env (or env {}))
-        cmd (into ["bb" "braids" "orch"] args)
-        result (apply proc/shell {:dir project-root
-                                  :out :string
-                                  :err :string
-                                  :continue true
-                                  :env merged-env}
-                      cmd)]
-    {:exit (:exit result) :out (:out result) :err (:err result)}))
+            [braids.orch-runner :as runner]
+            [braids.orch-runner-io :as runner-io]))
 
 ;; ── Pure function tests (orch-runner) ──
 
@@ -142,13 +121,23 @@
         (should (some #(str/includes? % "z1") lines))
         (should (some #(str/includes? % "bead-closed") lines))))))
 
-;; ── CLI integration tests (braids orch subprocess) ──
-;; NOTE: These tests are PENDING — they shell out to `bb braids orch` as
-;; subprocesses which can hang or fail when tools are unavailable.
-;; Move to a separate `bb test:integration` task when ready.
-;; See: braids-kog
+;; ── CLI integration tests (pure, no subprocess) ──
+;; These test the CLI flow via run-orch-command! without shelling out.
+;; The actual subprocess spawning is not tested here (see bb test:integration).
 
-(describe "braids orch (CLI)"
-  (xit "rejects unknown arguments")
-  (xit "outputs to stdout (not log files)")
-  (xit "defaults to dry-run mode"))
+(describe "braids orch (CLI flow)"
+
+  (it "rejects unknown arguments via run-orch-command!"
+    (let [output (with-out-str
+                   (let [exit (runner-io/run-orch-command! ["--bogus"])]
+                     (should= 1 exit)))]
+      (should (str/includes? output "--bogus"))))
+
+  (it "defaults to dry-run mode (parse-cli-args empty args)"
+    (let [opts (runner/parse-cli-args [])]
+      (should= true (:dry-run opts))
+      (should= false (:verbose opts))))
+
+  (it "--confirmed disables dry-run"
+    (let [opts (runner/parse-cli-args ["--confirmed"])]
+      (should= false (:dry-run opts)))))
