@@ -2,6 +2,50 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]))
 
+;; --- Step classification: pattern-match step text into typed IR nodes ---
+
+(def ^:private step-patterns
+  "Ordered list of [regex handler-fn] pairs for classifying step text.
+   First match wins. Handler receives regex match groups."
+  [[#"^a project \"([^\"]+)\" with worker-timeout (\d+)$"
+    (fn [[_ slug timeout]]
+      {:type :project-config :slug slug :worker-timeout (parse-long timeout)})]
+
+   [#"^a session \"([^\"]+)\" with label \"([^\"]+)\"$"
+    (fn [[_ session-id label]]
+      {:type :session :session-id session-id :label label})]
+
+   [#"^session \"([^\"]+)\" has status \"([^\"]+)\" and age (\d+) seconds$"
+    (fn [[_ session-id status age]]
+      {:type :session-status :session-id session-id :status status :age-seconds (parse-long age)})]
+
+   [#"^bead \"([^\"]+)\" has status \"([^\"]+)\"$"
+    (fn [[_ bead-id status]]
+      {:type :bead-status :bead-id bead-id :status status})]
+
+   [#"^bead \"([^\"]+)\" has no recorded status$"
+    (fn [[_ bead-id]]
+      {:type :bead-no-status :bead-id bead-id})]
+
+   [#"^checking for zombies$"
+    (fn [_] {:type :check-zombies})]
+
+   [#"^session \"([^\"]+)\" should be a zombie with reason \"([^\"]+)\"$"
+    (fn [[_ session-id reason]]
+      {:type :assert-zombie :session-id session-id :reason reason})]
+
+   [#"^no zombies should be detected$"
+    (fn [_] {:type :assert-no-zombies})]])
+
+(defn classify-step
+  "Pattern-match step text into a typed IR node map, or {:type :unrecognized :text text}."
+  [text]
+  (or (some (fn [[pattern handler]]
+              (when-let [match (re-matches pattern text)]
+                (handler match)))
+            step-patterns)
+      {:type :unrecognized :text text}))
+
 (def ^:private step-keywords #{"Given" "When" "Then" "And" "But"})
 
 (defn- step-keyword? [trimmed]
@@ -19,18 +63,19 @@
     (str/starts-with? trimmed "Then ")  :thens
     :else                               nil))
 
-(defn- add-step [scenario phase text]
-  (update scenario phase (fnil conj []) text))
+(defn- add-step [scenario phase ir-node]
+  (update scenario phase (fnil conj []) ir-node))
 
 (defn- process-step [state trimmed]
   (let [phase (phase-for-keyword trimmed)]
     (if phase
-      (-> state
-          (assoc :current-phase phase)
-          (update :scenario add-step phase (strip-keyword trimmed)))
+      (let [text (strip-keyword trimmed)]
+        (-> state
+            (assoc :current-phase phase)
+            (update :scenario add-step phase (classify-step text))))
       ;; And/But — append to current phase
       (let [text (strip-keyword trimmed)]
-        (update state :scenario add-step (:current-phase state) text)))))
+        (update state :scenario add-step (:current-phase state) (classify-step text))))))
 
 (defn- parse-scenario-lines [lines]
   (let [result (reduce process-step
@@ -128,7 +173,7 @@
       (assoc :description (str/join "\n" description-lines))
 
       (seq background-lines)
-      (assoc :background {:givens (mapv strip-keyword background-lines)}))))
+      (assoc :background {:givens (mapv (comp classify-step strip-keyword) background-lines)}))))
 
 (defn parse-feature-file
   "Parse a .feature file into an EDN IR map with :source."

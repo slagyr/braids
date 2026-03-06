@@ -4,6 +4,44 @@
 
 (describe "Gherkin Parser"
 
+  (describe "classify-step"
+
+    (it "classifies project config with worker-timeout"
+      (should= {:type :project-config :slug "proj" :worker-timeout 3600}
+               (gherkin/classify-step "a project \"proj\" with worker-timeout 3600")))
+
+    (it "classifies session with label"
+      (should= {:type :session :session-id "s1" :label "project:proj:proj-abc"}
+               (gherkin/classify-step "a session \"s1\" with label \"project:proj:proj-abc\"")))
+
+    (it "classifies session status and age"
+      (should= {:type :session-status :session-id "s1" :status "running" :age-seconds 100}
+               (gherkin/classify-step "session \"s1\" has status \"running\" and age 100 seconds")))
+
+    (it "classifies bead status"
+      (should= {:type :bead-status :bead-id "proj-abc" :status "closed"}
+               (gherkin/classify-step "bead \"proj-abc\" has status \"closed\"")))
+
+    (it "classifies bead with no recorded status"
+      (should= {:type :bead-no-status :bead-id "proj-mno"}
+               (gherkin/classify-step "bead \"proj-mno\" has no recorded status")))
+
+    (it "classifies checking for zombies"
+      (should= {:type :check-zombies}
+               (gherkin/classify-step "checking for zombies")))
+
+    (it "classifies zombie assertion with reason"
+      (should= {:type :assert-zombie :session-id "s1" :reason "bead-closed"}
+               (gherkin/classify-step "session \"s1\" should be a zombie with reason \"bead-closed\"")))
+
+    (it "classifies no zombies assertion"
+      (should= {:type :assert-no-zombies}
+               (gherkin/classify-step "no zombies should be detected")))
+
+    (it "returns unrecognized for unknown step text"
+      (should= {:type :unrecognized :text "something totally unknown"}
+               (gherkin/classify-step "something totally unknown"))))
+
   (describe "parse-feature"
 
     (it "parses a minimal feature with one scenario"
@@ -12,45 +50,52 @@
         (should= "Simple feature" (:feature result))
         (should= 1 (count (:scenarios result)))
         (should= "Basic test" (-> result :scenarios first :scenario))
-        (should= ["a step"] (-> result :scenarios first :givens))
-        (should= ["another step"] (-> result :scenarios first :whens))
-        (should= ["final step"] (-> result :scenarios first :thens))))
+        (should= [{:type :unrecognized :text "a step"}] (-> result :scenarios first :givens))
+        (should= [{:type :unrecognized :text "another step"}] (-> result :scenarios first :whens))
+        (should= [{:type :unrecognized :text "final step"}] (-> result :scenarios first :thens))))
 
     (it "strips Given/When/Then keywords from step text"
       (let [text "Feature: Keyword stripping\n\n  Scenario: Strip keywords\n    Given the first step\n    When the second step\n    Then the third step"
             result (gherkin/parse-feature text)]
-        (should= ["the first step"] (-> result :scenarios first :givens))
-        (should= ["the second step"] (-> result :scenarios first :whens))
-        (should= ["the third step"] (-> result :scenarios first :thens))))
+        (should= [{:type :unrecognized :text "the first step"}] (-> result :scenarios first :givens))
+        (should= [{:type :unrecognized :text "the second step"}] (-> result :scenarios first :whens))
+        (should= [{:type :unrecognized :text "the third step"}] (-> result :scenarios first :thens))))
 
     (it "appends And steps to the previous phase"
       (let [text "Feature: And steps\n\n  Scenario: And handling\n    Given first given\n    And second given\n    When first when\n    And second when\n    Then first then\n    And second then"
             result (gherkin/parse-feature text)]
-        (should= ["first given" "second given"] (-> result :scenarios first :givens))
-        (should= ["first when" "second when"] (-> result :scenarios first :whens))
-        (should= ["first then" "second then"] (-> result :scenarios first :thens))))
+        (should= [{:type :unrecognized :text "first given"}
+                  {:type :unrecognized :text "second given"}] (-> result :scenarios first :givens))
+        (should= [{:type :unrecognized :text "first when"}
+                  {:type :unrecognized :text "second when"}] (-> result :scenarios first :whens))
+        (should= [{:type :unrecognized :text "first then"}
+                  {:type :unrecognized :text "second then"}] (-> result :scenarios first :thens))))
 
     (it "appends But steps to the previous phase"
       (let [text "Feature: But steps\n\n  Scenario: But handling\n    Given a condition\n    But not another condition\n    When an action\n    But not another action\n    Then a result\n    But not another result"
             result (gherkin/parse-feature text)]
-        (should= ["a condition" "not another condition"] (-> result :scenarios first :givens))
-        (should= ["an action" "not another action"] (-> result :scenarios first :whens))
-        (should= ["a result" "not another result"] (-> result :scenarios first :thens))))
+        (should= [{:type :unrecognized :text "a condition"}
+                  {:type :unrecognized :text "not another condition"}] (-> result :scenarios first :givens))
+        (should= [{:type :unrecognized :text "an action"}
+                  {:type :unrecognized :text "not another action"}] (-> result :scenarios first :whens))
+        (should= [{:type :unrecognized :text "a result"}
+                  {:type :unrecognized :text "not another result"}] (-> result :scenarios first :thens))))
 
     (it "parses background givens separately from scenarios"
       (let [text "Feature: Feature with background\n\n  Background:\n    Given a common setup\n    And another common setup\n\n  Scenario: First scenario\n    Given a specific given\n    When something happens\n    Then a result"
             result (gherkin/parse-feature text)]
-        (should= {:givens ["a common setup" "another common setup"]}
+        (should= {:givens [{:type :unrecognized :text "a common setup"}
+                           {:type :unrecognized :text "another common setup"}]}
                  (:background result))
-        (should= ["a specific given"] (-> result :scenarios first :givens))
-        (should= ["something happens"] (-> result :scenarios first :whens))
-        (should= ["a result"] (-> result :scenarios first :thens))))
+        (should= [{:type :unrecognized :text "a specific given"}] (-> result :scenarios first :givens))
+        (should= [{:type :unrecognized :text "something happens"}] (-> result :scenarios first :whens))
+        (should= [{:type :unrecognized :text "a result"}] (-> result :scenarios first :thens))))
 
     (it "does NOT merge background givens into scenarios"
       (let [text "Feature: Background separation\n\n  Background:\n    Given background step\n\n  Scenario: Test scenario\n    Given scenario step\n    When action\n    Then result"
             result (gherkin/parse-feature text)]
-        (should= {:givens ["background step"]} (:background result))
-        (should= ["scenario step"] (-> result :scenarios first :givens))))
+        (should= {:givens [{:type :unrecognized :text "background step"}]} (:background result))
+        (should= [{:type :unrecognized :text "scenario step"}] (-> result :scenarios first :givens))))
 
     (it "parses multiple scenarios"
       (let [text "Feature: Multiple scenarios\n\n  Scenario: First\n    Given step A\n    When action A\n    Then result A\n\n  Scenario: Second\n    Given step B\n    When action B\n    Then result B"
@@ -75,8 +120,8 @@
       (let [text "Feature: No givens\n\n  Scenario: When/then only\n    When something happens\n    Then a result"
             result (gherkin/parse-feature text)]
         (should= [] (-> result :scenarios first :givens))
-        (should= ["something happens"] (-> result :scenarios first :whens))
-        (should= ["a result"] (-> result :scenarios first :thens))))
+        (should= [{:type :unrecognized :text "something happens"}] (-> result :scenarios first :whens))
+        (should= [{:type :unrecognized :text "a result"}] (-> result :scenarios first :thens))))
 
     (it "has no background key when feature has no background"
       (let [text "Feature: No background\n\n  Scenario: Simple\n    Given a step\n    When action\n    Then result"
@@ -92,18 +137,18 @@
 
     (it "parses orch_spawning.feature correctly"
       (let [result (gherkin/parse-feature-file "spec/features/orch_spawning.feature")]
-        (should= {:givens ["a project \"alpha\" with max-workers 2"
-                           "project \"alpha\" has an active iteration \"003\""]}
+        (should= {:givens [{:type :unrecognized :text "a project \"alpha\" with max-workers 2"}
+                           {:type :unrecognized :text "project \"alpha\" has an active iteration \"003\""}]}
                  (:background result))
         (should= 7 (count (:scenarios result)))
         (let [first-scenario (first (:scenarios result))]
           (should= "Spawn workers when beads ready and capacity available" (:scenario first-scenario))
-          (should= ["project \"alpha\" has 3 ready beads"
-                    "project \"alpha\" has 0 active workers"]
+          (should= [{:type :unrecognized :text "project \"alpha\" has 3 ready beads"}
+                    {:type :unrecognized :text "project \"alpha\" has 0 active workers"}]
                    (:givens first-scenario))
-          (should= ["the orchestrator ticks"] (:whens first-scenario))
-          (should= ["the action should be \"spawn\""
-                    "2 workers should be spawned"]
+          (should= [{:type :unrecognized :text "the orchestrator ticks"}] (:whens first-scenario))
+          (should= [{:type :unrecognized :text "the action should be \"spawn\""}
+                    {:type :unrecognized :text "2 workers should be spawned"}]
                    (:thens first-scenario)))))
 
     (it "parses worker_session_tracking.feature with @wip tags"
@@ -120,9 +165,18 @@
     (it "parses zombie_detection.feature with background and @wip"
       (let [result (gherkin/parse-feature-file "spec/features/zombie_detection.feature")]
         (should= "Zombie detection" (:feature result))
-        (should= {:givens ["a project \"proj\" with worker-timeout 3600"]}
+        (should= {:givens [{:type :project-config :slug "proj" :worker-timeout 3600}]}
                  (:background result))
         (should= 7 (count (:scenarios result)))
+        ;; First scenario should have typed IR nodes
+        (let [first-scenario (first (:scenarios result))]
+          (should= [{:type :session :session-id "s1" :label "project:proj:proj-abc"}
+                    {:type :session-status :session-id "s1" :status "running" :age-seconds 100}
+                    {:type :bead-status :bead-id "proj-abc" :status "closed"}]
+                   (:givens first-scenario))
+          (should= [{:type :check-zombies}] (:whens first-scenario))
+          (should= [{:type :assert-zombie :session-id "s1" :reason "bead-closed"}]
+                   (:thens first-scenario)))
         ;; Last two are @wip
         (should-be-nil (:wip (nth (:scenarios result) 4)))
         (should= true (:wip (nth (:scenarios result) 5)))
@@ -147,7 +201,10 @@
     (it "writes parsed feature to .edn file"
       (let [ir {:source "test.feature"
                 :feature "Test"
-                :scenarios [{:scenario "S1" :givens ["a"] :whens ["b"] :thens ["c"]}]}
+                :scenarios [{:scenario "S1"
+                             :givens [{:type :unrecognized :text "a"}]
+                             :whens [{:type :unrecognized :text "b"}]
+                             :thens [{:type :unrecognized :text "c"}]}]}
             tmp-file (str "/tmp/test-gherkin-" (System/currentTimeMillis) ".edn")]
         (gherkin/write-edn tmp-file ir)
         (let [content (slurp tmp-file)
