@@ -1,10 +1,9 @@
 {:deps {speclj/speclj {:mvn/version "3.12.0"}}
  :paths ["src" "spec"]
- :tasks {test {:doc "Run all specs"
-               :requires ([babashka.fs :as fs]
-                          [speclj.main :as speclj])
+ :tasks {test {:doc "Run unit specs"
+               :requires ([speclj.main :as speclj])
                :task (apply speclj/-main "-c"
-                       "spec"
+                       "spec/braids"
                        "-s" "src"
                        *command-line-args*)}
          test:runner {:doc "Run gherkin example features"
@@ -13,16 +12,29 @@
                               (runner/run-features
                                 "spec/features/examples"
                                 "spec/step_defs/examples"))}
-          parse:features {:doc "Parse .feature files to .edn IR"
-                          :requires ([braids.gherkin :as gherkin])
-                          :task (let [source (or (first *command-line-args*) "spec/features")
-                                      output (or (second *command-line-args*) "spec/features/edn")]
-                                  (gherkin/parse-features! source output))}
-          generate:features {:doc "Generate speclj specs from .edn IR"
-                             :requires ([braids.gherkin-generator :as gen])
-                             :task (let [edn-dir (or (first *command-line-args*) "spec/features/edn")
-                                         output (or (second *command-line-args*) "spec/features/generated")]
-                                     (gen/generate-features! edn-dir output))}
-           braids {:doc "Run the braids CLI"
+         parse:features {:doc "Parse .feature files to .edn IR"
+                         :requires ([braids.gherkin :as gherkin])
+                         :task (let [source (or (first *command-line-args*) "spec/features")
+                                     output (or (second *command-line-args*) "spec/features/edn")]
+                                 (gherkin/parse-features! source output))}
+         generate:features {:doc "Generate speclj specs from .edn IR"
+                            :requires ([braids.gherkin-generator :as gen])
+                            :task (let [edn-dir (or (first *command-line-args*) "spec/features/edn")
+                                        output (or (second *command-line-args*) "spec/features/generated")]
+                                    (gen/generate-features! edn-dir output))}
+         test:features {:doc "Parse, generate, and run feature specs"
+                        :requires ([braids.gherkin-pipeline :as pipeline]
+                                   [speclj.main :as speclj])
+                        :task (do
+                                (pipeline/run-pipeline!)
+                                (apply speclj/-main "-c"
+                                  "spec/features/generated"
+                                  "-s" "src"
+                                  *command-line-args*))}
+         test:all {:doc "Run unit specs + feature specs"
+                   :task (do
+                           (shell "bb test")
+                           (shell "bb test:features"))}
+         braids {:doc "Run the braids CLI"
                  :requires ([braids.core :as braids])
                  :task (System/exit (braids/run *command-line-args*))}}}
