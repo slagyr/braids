@@ -235,12 +235,12 @@
   (describe "parse-feature-file"
 
     (it "includes source filename in the result"
-      (let [result (gherkin/parse-feature-file "spec/features/orch_spawning.feature")]
+      (let [result (gherkin/parse-feature-file "features/orch_spawning.feature")]
         (should= "orch_spawning.feature" (:source result))
         (should= "Orchestrator spawning behavior" (:feature result))))
 
     (it "parses orch_spawning.feature correctly"
-      (let [result (gherkin/parse-feature-file "spec/features/orch_spawning.feature")]
+      (let [result (gherkin/parse-feature-file "features/orch_spawning.feature")]
         (should= {:givens [{:type :project-config :slug "alpha" :max-workers 2}
                            {:type :active-iteration :slug "alpha" :iteration "003"}]}
                  (:background result))
@@ -256,7 +256,7 @@
                    (:thens first-scenario)))))
 
     (it "parses worker_session_tracking.feature with typed IR and @wip tags"
-      (let [result (gherkin/parse-feature-file "spec/features/worker_session_tracking.feature")]
+      (let [result (gherkin/parse-feature-file "features/worker_session_tracking.feature")]
         (should= "Worker session tracking" (:feature result))
         (should-be-nil (:background result))
         (should= 6 (count (:scenarios result)))
@@ -279,7 +279,7 @@
         (should= true (:wip (nth (:scenarios result) 5)))))
 
     (it "parses zombie_detection.feature with background and @wip"
-      (let [result (gherkin/parse-feature-file "spec/features/zombie_detection.feature")]
+      (let [result (gherkin/parse-feature-file "features/zombie_detection.feature")]
         (should= "Zombie detection" (:feature result))
         (should= {:givens [{:type :project-config :slug "proj" :worker-timeout 3600}]}
                  (:background result))
@@ -299,14 +299,14 @@
         (should= true (:wip (nth (:scenarios result) 6)))))
 
     (it "preserves feature description text from files"
-      (let [result (gherkin/parse-feature-file "spec/features/orch_spawning.feature")]
+      (let [result (gherkin/parse-feature-file "features/orch_spawning.feature")]
         (should= "The orchestrator tick examines project state and decides whether\nto spawn workers or remain idle. It respects max-workers capacity,\nrequires active iterations, and reports idle reasons."
                  (:description result)))))
 
   (describe "parse-features-dir"
 
     (it "parses all .feature files in a directory"
-      (let [results (gherkin/parse-features-dir "spec/features")]
+      (let [results (gherkin/parse-features-dir "features")]
         (should= 3 (count results))
         (should (every? :source results))
         (should (every? :feature results))

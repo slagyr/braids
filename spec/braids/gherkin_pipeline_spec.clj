@@ -51,6 +51,6 @@
 
     (it "returns a map with default directory paths"
       (let [dirs (pipeline/default-dirs)]
-        (should= "spec/features" (:features-dir dirs))
-        (should= "spec/features/edn" (:edn-dir dirs))
-        (should= "spec/features/generated" (:generated-dir dirs))))))
+        (should= "features" (:features-dir dirs))
+        (should= "features/edn" (:edn-dir dirs))
+        (should= "features/generated" (:generated-dir dirs))))))

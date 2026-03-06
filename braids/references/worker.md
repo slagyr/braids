@@ -49,20 +49,47 @@ This check catches race conditions where a bead was ready when the orchestrator 
 
 **Transitive dependencies:** You only need to check direct dependencies. `bd ready` already handles transitive chains — if a direct dependency is open because *its* dependency is unresolved, the direct dependency won't be closed, which is sufficient.
 
-### 4. Do the Work
+### 4. Check Bead Tags (File Access Rules)
+
+Run `bd show <bead-id>` and check the bead's **labels**. Tags determine which files you are allowed to modify:
+
+#### `spec` — Specification beads (planner role)
+
+You are writing feature specifications that define behavior.
+
+- **CAN modify:** `features/*.feature`
+- **CANNOT modify:** `src/`, `spec/`, or any production/test code
+- Feature files are the source of truth for acceptance criteria. They are **immutable to all other beads**.
+
+#### `implement` — Implementation beads (worker role)
+
+You are writing production code and tests that make feature specs pass.
+
+- **CAN modify:** `src/`, `spec/`
+- **CANNOT modify:** `features/*.feature`
+- The generated specs in `features/generated/` are disposable (regenerated every `bb test:features` run). Do not write implementations there. Instead, enhance the parser, generator, and harness so the pipeline produces executable specs.
+
+#### Untagged beads
+
+If a bead has no `spec` or `implement` tag, follow the description. When in doubt, do not modify `features/*.feature`.
+
+**This is a hard constraint.** If completing your bead would require modifying files outside your tag's allowed paths, mark the bead as blocked and notify the Channel.
+
+### 5. Do the Work
 
 Execute the work described in the bead. Respect:
 - **Autonomy** field in config.edn (full = do it, ask-first = ask via Channel)
 - **Guardrails** in AGENTS.md are hard constraints
+- **Bead tag file access rules** (step 4) — do not modify files outside your allowed paths
 
 #### Channel Discipline
 
 **Only send messages to the Channel for defined notification events.** These are:
 - `bead-start` — when you claim the bead (step 2)
-- `bead-complete` — when you close the bead (step 6)
+- `bead-complete` — when you close the bead (step 7)
 - `blocker` — when you hit a blocker and stop work
 - `question` — when you need customer input
-- `iteration-complete` — when the iteration finishes (step 7)
+- `iteration-complete` — when the iteration finishes (step 8)
 - `no-ready-beads` — when no unblocked beads remain
 
 **Do NOT post any other messages to the Channel.** Specifically:
@@ -75,19 +102,19 @@ If a message isn't one of the notification events above, **do not send it**. Wor
 
 To enforce this discipline and prevent channel spam, worker sessions must respond with ONLY: NO_REPLY for all their output, and only use the message tool to send notifications to the channel for the defined events.
 
-### 5. Write Deliverable
+### 6. Write Deliverable
 
 Write output to `.braids/iterations/<N>/<id-suffix>-<descriptive-name>.md`
 (e.g., `uu0-orchestrator-refactor.md`)
 
-### 6. Close the Bead
+### 7. Close the Bead
 
 1. `bd update <bead-id> -s closed`
 2. `git add -A && git commit -m "<summary> (<bead-id>)"`
 
 If notifications `bead-complete` is `on`, send a message to the Channel with a summary.
 
-### 7. Check Iteration Completion
+### 8. Check Iteration Completion
 
 Run `bd ready` in the project directory. If no open beads remain for the iteration, and all iteration stories are closed:
 

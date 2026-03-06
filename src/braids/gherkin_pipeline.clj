@@ -2,9 +2,9 @@
   (:require [braids.gherkin :as parser]
             [braids.gherkin-generator :as generator]))
 
-(def default-features-dir "spec/features")
-(def default-edn-dir "spec/features/edn")
-(def default-generated-dir "spec/features/generated")
+(def default-features-dir "features")
+(def default-edn-dir "features/edn")
+(def default-generated-dir "features/generated")
 
 (defn default-dirs
   "Return a map of default directory paths for the pipeline."

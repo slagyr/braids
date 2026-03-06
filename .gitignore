@@ -1,4 +1,4 @@
 .cpcache/
 .idea/
-spec/features/edn/
-spec/features/generated/
+features/edn/
+features/generated/

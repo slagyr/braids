@@ -447,7 +447,7 @@
     ;; with the new typed IR format.
 
     (it "generates spec from orch_spawning IR with all executable scenarios"
-      (let [ir (read-string (slurp "spec/features/edn/orch_spawning.edn"))
+      (let [ir (read-string (slurp "features/edn/orch_spawning.edn"))
             output (gen/generate-spec ir)]
         (should-contain "(ns braids.features.orch-spawning-spec" output)
         (should-contain "(describe \"Orchestrator spawning behavior\"" output)
@@ -461,7 +461,7 @@
         (should-contain "[braids.features.harness :as h]" output)))
 
     (it "generates spec from worker_session_tracking IR with all executable scenarios"
-      (let [ir (read-string (slurp "spec/features/edn/worker_session_tracking.edn"))
+      (let [ir (read-string (slurp "features/edn/worker_session_tracking.edn"))
             output (gen/generate-spec ir)]
         ;; 6 total scenarios, 2 are @wip, so 4 should be generated
         (should= 4 (count (re-seq #"\(context " output)))
@@ -475,7 +475,7 @@
         (should-contain "[braids.features.harness :as h]" output)))
 
     (it "generates spec from zombie_detection IR with executable code"
-      (let [ir (read-string (slurp "spec/features/edn/zombie_detection.edn"))
+      (let [ir (read-string (slurp "features/edn/zombie_detection.edn"))
             output (gen/generate-spec ir)]
         ;; 7 total scenarios, 2 are @wip, so 5 should be generated
         (should= 5 (count (re-seq #"\(context " output)))
@@ -491,7 +491,7 @@
 
     (it "writes generated spec files to output directory"
       (let [tmp-dir (str "/tmp/gen-test-" (System/currentTimeMillis))
-            edn-dir "spec/features/edn"]
+            edn-dir "features/edn"]
         (gen/generate-features! edn-dir tmp-dir)
         (let [files (->> (io/file tmp-dir) .listFiles (map #(.getName %)) sort vec)]
           (should= ["orch_spawning_spec.clj"

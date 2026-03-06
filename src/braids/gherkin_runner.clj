@@ -117,7 +117,7 @@
 ;; --- Public API ---
 
 (defn run-features
-  ([] (run-features "spec/features" "spec/step_defs"))
+  ([] (run-features "features" "spec/step_defs"))
   ([feature-dir-path step-dir-path]
    (let [feature-dir (io/file feature-dir-path)
          step-defs (load-step-defs step-dir-path)]

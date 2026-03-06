@@ -5,7 +5,7 @@
   (:require [speclj.core :refer :all]
             [braids.gherkin-runner :as runner]))
 
-(def examples-features "spec/features/examples")
+(def examples-features "features/examples")
 (def examples-step-defs "spec/step_defs/examples")
 
 (defn- run-example-feature
