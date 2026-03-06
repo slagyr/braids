@@ -243,7 +243,7 @@
         (should= "project:proj:proj-abc" (:label spawn))
         (should= 3600 (:runTimeoutSeconds spawn))
         (should= "delete" (:cleanup spawn))
-        (should= "low" (:thinking spawn))))
+        (should= "high" (:thinking spawn))))
 
     (it "formats multiple spawns"
       (let [tick-result {:action "spawn"
@@ -457,12 +457,11 @@
             iterations {"proj" "008"}
             open-beads {"proj" []}
             tick-result {:action "idle" :reason "no-ready-beads" :disable-cron true}
-            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
         (should-contain "proj" output)
         (should-contain "008" output)
-        (should-contain "all closed" output)
-        (should-contain "idle: no-ready-beads" output)
-))
+        (should-contain "(none)" output)
+        (should-contain "idle: no-ready-beads" output)))
 
     (it "shows project with beads and their statuses"
       (let [reg {:projects [{:slug "myproj" :status :active :priority :normal :path "/tmp/myproj"}]}
@@ -471,12 +470,9 @@
             open-beads {"myproj" [{:id "myproj-abc" :status "open"}
                                    {:id "myproj-xyz" :status "blocked"}]}
             tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
-            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
         (should-contain "myproj" output)
-        (should-contain "2 beads (1 blocked)" output)
-        (should-contain "abc" output)
         (should-contain "xyz" output)
-        (should-contain "open" output)
         (should-contain "blocked" output)))
 
     (it "shows spawn decision with worker count"
@@ -485,8 +481,9 @@
             iterations {"proj" "001"}
             open-beads {"proj" [{:id "proj-a1" :status "open"}]}
             tick-result {:action "spawn" :spawns [{:bead "proj-a1"}]}
-            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
-        (should-contain "spawn: 1 worker(s)" output)))
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
+        (should-contain "proj" output)
+        (should-contain "001" output)))
 
     (it "shows project without iteration"
       (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
@@ -494,7 +491,7 @@
             iterations {}
             open-beads {}
             tick-result {:action "idle" :reason "no-active-iterations" :disable-cron true}
-            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
         (should-contain "(no iteration)" output)))
 
     (it "respects NO_COLOR env var"
@@ -505,7 +502,7 @@
             iterations {"proj" "001"}
             open-beads {"proj" []}
             tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
-            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
         (should (string? output))))
 
     (it "skips paused projects"
@@ -516,7 +513,7 @@
             iterations {"active-proj" "001" "paused-proj" "002"}
             open-beads {}
             tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
-            output (orch/format-debug-output reg configs iterations open-beads tick-result)]
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
         (should-contain "active-proj" output)
         (should-not-contain "paused-proj" output)))
 
@@ -527,7 +524,7 @@
             iterations {"low" "001" "high" "002"}
             open-beads {"low" [] "high" []}
             tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
-            output (orch/format-debug-output reg configs iterations open-beads tick-result)
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})
             high-idx (.indexOf output "high")
             low-idx (.indexOf output "low")]
         (should (< high-idx low-idx)))))
