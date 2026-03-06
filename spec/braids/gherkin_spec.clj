@@ -40,7 +40,65 @@
 
     (it "returns unrecognized for unknown step text"
       (should= {:type :unrecognized :text "something totally unknown"}
-               (gherkin/classify-step "something totally unknown"))))
+               (gherkin/classify-step "something totally unknown")))
+
+    ;; --- Orch spawning step patterns ---
+
+    (it "classifies project config with max-workers"
+      (should= {:type :project-config :slug "alpha" :max-workers 2}
+               (gherkin/classify-step "a project \"alpha\" with max-workers 2")))
+
+    (it "classifies active iteration"
+      (should= {:type :active-iteration :slug "alpha" :iteration "003"}
+               (gherkin/classify-step "project \"alpha\" has an active iteration \"003\"")))
+
+    (it "classifies no active iteration"
+      (should= {:type :no-active-iteration :slug "beta"}
+               (gherkin/classify-step "project \"beta\" has no active iteration")))
+
+    (it "classifies ready beads with count"
+      (should= {:type :ready-beads :slug "alpha" :count 3}
+               (gherkin/classify-step "project \"alpha\" has 3 ready beads")))
+
+    (it "classifies ready bead singular"
+      (should= {:type :ready-beads :slug "alpha" :count 1}
+               (gherkin/classify-step "project \"alpha\" has 1 ready bead")))
+
+    (it "classifies ready bead with specific id"
+      (should= {:type :ready-bead-with-id :slug "alpha" :bead-id "alpha-abc"}
+               (gherkin/classify-step "project \"alpha\" has 1 ready bead with id \"alpha-abc\"")))
+
+    (it "classifies active workers"
+      (should= {:type :active-workers :slug "alpha" :count 0}
+               (gherkin/classify-step "project \"alpha\" has 0 active workers")))
+
+    (it "classifies orch tick"
+      (should= {:type :orch-tick}
+               (gherkin/classify-step "the orchestrator ticks")))
+
+    (it "classifies orch tick for specific project"
+      (should= {:type :orch-tick-project :slug "beta"}
+               (gherkin/classify-step "the orchestrator ticks for project \"beta\" only")))
+
+    (it "classifies assert action"
+      (should= {:type :assert-action :expected "spawn"}
+               (gherkin/classify-step "the action should be \"spawn\"")))
+
+    (it "classifies assert spawn count"
+      (should= {:type :assert-spawn-count :count 2}
+               (gherkin/classify-step "2 workers should be spawned")))
+
+    (it "classifies assert spawn count singular"
+      (should= {:type :assert-spawn-count :count 1}
+               (gherkin/classify-step "1 worker should be spawned")))
+
+    (it "classifies assert idle reason"
+      (should= {:type :assert-idle-reason :expected "no-ready-beads"}
+               (gherkin/classify-step "the idle reason should be \"no-ready-beads\"")))
+
+    (it "classifies assert spawn label"
+      (should= {:type :assert-spawn-label :expected "project:alpha:alpha-abc"}
+               (gherkin/classify-step "the spawn label should be \"project:alpha:alpha-abc\""))))
 
   (describe "parse-feature"
 
@@ -137,18 +195,18 @@
 
     (it "parses orch_spawning.feature correctly"
       (let [result (gherkin/parse-feature-file "spec/features/orch_spawning.feature")]
-        (should= {:givens [{:type :unrecognized :text "a project \"alpha\" with max-workers 2"}
-                           {:type :unrecognized :text "project \"alpha\" has an active iteration \"003\""}]}
+        (should= {:givens [{:type :project-config :slug "alpha" :max-workers 2}
+                           {:type :active-iteration :slug "alpha" :iteration "003"}]}
                  (:background result))
         (should= 7 (count (:scenarios result)))
         (let [first-scenario (first (:scenarios result))]
           (should= "Spawn workers when beads ready and capacity available" (:scenario first-scenario))
-          (should= [{:type :unrecognized :text "project \"alpha\" has 3 ready beads"}
-                    {:type :unrecognized :text "project \"alpha\" has 0 active workers"}]
+          (should= [{:type :ready-beads :slug "alpha" :count 3}
+                    {:type :active-workers :slug "alpha" :count 0}]
                    (:givens first-scenario))
-          (should= [{:type :unrecognized :text "the orchestrator ticks"}] (:whens first-scenario))
-          (should= [{:type :unrecognized :text "the action should be \"spawn\""}
-                    {:type :unrecognized :text "2 workers should be spawned"}]
+          (should= [{:type :orch-tick}] (:whens first-scenario))
+          (should= [{:type :assert-action :expected "spawn"}
+                    {:type :assert-spawn-count :count 2}]
                    (:thens first-scenario)))))
 
     (it "parses worker_session_tracking.feature with @wip tags"

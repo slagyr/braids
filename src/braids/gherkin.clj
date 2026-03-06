@@ -35,7 +35,56 @@
       {:type :assert-zombie :session-id session-id :reason reason})]
 
    [#"^no zombies should be detected$"
-    (fn [_] {:type :assert-no-zombies})]])
+    (fn [_] {:type :assert-no-zombies})]
+
+   ;; --- Orch spawning patterns ---
+
+   [#"^a project \"([^\"]+)\" with max-workers (\d+)$"
+    (fn [[_ slug max-w]]
+      {:type :project-config :slug slug :max-workers (parse-long max-w)})]
+
+   [#"^project \"([^\"]+)\" has an active iteration \"([^\"]+)\"$"
+    (fn [[_ slug iteration]]
+      {:type :active-iteration :slug slug :iteration iteration})]
+
+   [#"^project \"([^\"]+)\" has no active iteration$"
+    (fn [[_ slug]]
+      {:type :no-active-iteration :slug slug})]
+
+   [#"^project \"([^\"]+)\" has (\d+) ready beads? with id \"([^\"]+)\"$"
+    (fn [[_ slug _count bead-id]]
+      {:type :ready-bead-with-id :slug slug :bead-id bead-id})]
+
+   [#"^project \"([^\"]+)\" has (\d+) ready beads?$"
+    (fn [[_ slug count]]
+      {:type :ready-beads :slug slug :count (parse-long count)})]
+
+   [#"^project \"([^\"]+)\" has (\d+) active workers?$"
+    (fn [[_ slug count]]
+      {:type :active-workers :slug slug :count (parse-long count)})]
+
+   [#"^the orchestrator ticks$"
+    (fn [_] {:type :orch-tick})]
+
+   [#"^the orchestrator ticks for project \"([^\"]+)\" only$"
+    (fn [[_ slug]]
+      {:type :orch-tick-project :slug slug})]
+
+   [#"^the action should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:type :assert-action :expected expected})]
+
+   [#"^(\d+) workers? should be spawned$"
+    (fn [[_ count]]
+      {:type :assert-spawn-count :count (parse-long count)})]
+
+   [#"^the idle reason should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:type :assert-idle-reason :expected expected})]
+
+   [#"^the spawn label should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:type :assert-spawn-label :expected expected})]])
 
 (defn classify-step
   "Pattern-match step text into a typed IR node map, or {:type :unrecognized :text text}."

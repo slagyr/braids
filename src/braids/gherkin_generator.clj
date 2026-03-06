@@ -18,15 +18,31 @@
   "Convert a typed IR node to a human-readable step text string."
   [{:keys [type] :as node}]
   (case type
-    :unrecognized     (:text node)
-    :project-config   (str "a project \"" (:slug node) "\" with worker-timeout " (:worker-timeout node))
-    :session          (str "a session \"" (:session-id node) "\" with label \"" (:label node) "\"")
-    :session-status   (str "session \"" (:session-id node) "\" has status \"" (:status node) "\" and age " (:age-seconds node) " seconds")
-    :bead-status      (str "bead \"" (:bead-id node) "\" has status \"" (:status node) "\"")
-    :bead-no-status   (str "bead \"" (:bead-id node) "\" has no recorded status")
-    :check-zombies    "checking for zombies"
-    :assert-zombie    (str "session \"" (:session-id node) "\" should be a zombie with reason \"" (:reason node) "\"")
-    :assert-no-zombies "no zombies should be detected"
+    :unrecognized       (:text node)
+    ;; Zombie detection
+    :session            (str "a session \"" (:session-id node) "\" with label \"" (:label node) "\"")
+    :session-status     (str "session \"" (:session-id node) "\" has status \"" (:status node) "\" and age " (:age-seconds node) " seconds")
+    :bead-status        (str "bead \"" (:bead-id node) "\" has status \"" (:status node) "\"")
+    :bead-no-status     (str "bead \"" (:bead-id node) "\" has no recorded status")
+    :check-zombies      "checking for zombies"
+    :assert-zombie      (str "session \"" (:session-id node) "\" should be a zombie with reason \"" (:reason node) "\"")
+    :assert-no-zombies  "no zombies should be detected"
+    ;; Orch spawning (shared :project-config handles both worker-timeout and max-workers)
+    :project-config     (cond
+                          (:worker-timeout node) (str "a project \"" (:slug node) "\" with worker-timeout " (:worker-timeout node))
+                          (:max-workers node)    (str "a project \"" (:slug node) "\" with max-workers " (:max-workers node))
+                          :else                  (str "a project \"" (:slug node) "\""))
+    :active-iteration   (str "project \"" (:slug node) "\" has an active iteration \"" (:iteration node) "\"")
+    :no-active-iteration (str "project \"" (:slug node) "\" has no active iteration")
+    :ready-beads        (str "project \"" (:slug node) "\" has " (:count node) " ready beads")
+    :ready-bead-with-id (str "project \"" (:slug node) "\" has 1 ready bead with id \"" (:bead-id node) "\"")
+    :active-workers     (str "project \"" (:slug node) "\" has " (:count node) " active workers")
+    :orch-tick          "the orchestrator ticks"
+    :orch-tick-project  (str "the orchestrator ticks for project \"" (:slug node) "\" only")
+    :assert-action      (str "the action should be \"" (:expected node) "\"")
+    :assert-spawn-count (str (:count node) " workers should be spawned")
+    :assert-idle-reason (str "the idle reason should be \"" (:expected node) "\"")
+    :assert-spawn-label (str "the spawn label should be \"" (:expected node) "\"")
     (str node)))
 
 ;; --- Code generation: emit executable Clojure code per step type ---
@@ -36,15 +52,31 @@
    Returns nil for types that require no action (e.g., :bead-no-status)."
   [{:keys [type] :as node}]
   (case type
-    :project-config   (str "(h/add-project-config \"" (:slug node) "\" {:worker-timeout " (:worker-timeout node) "})")
-    :session          (str "(h/add-session \"" (:session-id node) "\" {:label \"" (:label node) "\"})")
-    :session-status   (str "(h/set-session-status \"" (:session-id node) "\" \"" (:status node) "\" " (:age-seconds node) ")")
-    :bead-status      (str "(h/set-bead-status \"" (:bead-id node) "\" \"" (:status node) "\")")
-    :bead-no-status   nil  ;; no setup needed — bead defaults to open
-    :check-zombies    "(h/check-zombies!)"
-    :assert-zombie    (str "(should (h/zombie? \"" (:session-id node) "\"))\n"
-                           "(should= \"" (:reason node) "\" (h/zombie-reason \"" (:session-id node) "\"))")
-    :assert-no-zombies "(should= [] (h/zombies))"
+    ;; Zombie detection
+    :session            (str "(h/add-session \"" (:session-id node) "\" {:label \"" (:label node) "\"})")
+    :session-status     (str "(h/set-session-status \"" (:session-id node) "\" \"" (:status node) "\" " (:age-seconds node) ")")
+    :bead-status        (str "(h/set-bead-status \"" (:bead-id node) "\" \"" (:status node) "\")")
+    :bead-no-status     nil
+    :check-zombies      "(h/check-zombies!)"
+    :assert-zombie      (str "(should (h/zombie? \"" (:session-id node) "\"))\n"
+                             "(should= \"" (:reason node) "\" (h/zombie-reason \"" (:session-id node) "\"))")
+    :assert-no-zombies  "(should= [] (h/zombies))"
+    ;; Orch spawning (shared :project-config handles both domains)
+    :project-config     (cond
+                          (:worker-timeout node) (str "(h/add-project-config \"" (:slug node) "\" {:worker-timeout " (:worker-timeout node) "})")
+                          (:max-workers node)    (str "(h/add-project \"" (:slug node) "\" {:max-workers " (:max-workers node) "})")
+                          :else                  nil)
+    :active-iteration   (str "(h/set-active-iteration \"" (:slug node) "\" \"" (:iteration node) "\")")
+    :no-active-iteration (str "(h/remove-iteration \"" (:slug node) "\")")
+    :ready-beads        (str "(h/set-ready-beads \"" (:slug node) "\" " (:count node) ")")
+    :ready-bead-with-id (str "(h/set-ready-bead-with-id \"" (:slug node) "\" \"" (:bead-id node) "\")")
+    :active-workers     (str "(h/set-active-workers \"" (:slug node) "\" " (:count node) ")")
+    :orch-tick          "(h/orch-tick!)"
+    :orch-tick-project  (str "(h/orch-tick-project! \"" (:slug node) "\")")
+    :assert-action      (str "(should= \"" (:expected node) "\" (h/tick-action))")
+    :assert-spawn-count (str "(should= " (:count node) " (h/spawn-count))")
+    :assert-idle-reason (str "(should= \"" (:expected node) "\" (h/idle-reason))")
+    :assert-spawn-label (str "(should= \"" (:expected node) "\" (h/spawn-label))")
     nil))
 
 (defn- all-recognized?
