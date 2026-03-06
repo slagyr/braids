@@ -29,20 +29,20 @@
   (describe "run-pipeline!"
 
     (it "parses .feature files to .edn"
-      (pipeline/run-pipeline! features-dir edn-dir generated-dir)
+      (with-out-str (pipeline/run-pipeline! features-dir edn-dir generated-dir))
       (should (.exists (io/file (str edn-dir "/simple.edn")))))
 
     (it "generates spec files from .edn"
-      (pipeline/run-pipeline! features-dir edn-dir generated-dir)
+      (with-out-str (pipeline/run-pipeline! features-dir edn-dir generated-dir))
       (should (.exists (io/file (str generated-dir "/simple_spec.clj")))))
 
     (it "generated spec contains correct namespace"
-      (pipeline/run-pipeline! features-dir edn-dir generated-dir)
+      (with-out-str (pipeline/run-pipeline! features-dir edn-dir generated-dir))
       (let [content (slurp (str generated-dir "/simple_spec.clj"))]
         (should-contain "(ns braids.features.simple-spec" content)))
 
     (it "generated spec contains the scenario"
-      (pipeline/run-pipeline! features-dir edn-dir generated-dir)
+      (with-out-str (pipeline/run-pipeline! features-dir edn-dir generated-dir))
       (let [content (slurp (str generated-dir "/simple_spec.clj"))]
         (should-contain "(context \"It works\"" content)
         (should-contain "(pending \"not yet implemented\")" content))))

@@ -32,8 +32,9 @@
   (describe "run-features integration"
 
     (it "returns exit code 0 when all example features pass"
-      (let [exit (runner/run-features examples-features examples-step-defs)]
-        (should= 0 exit))))
+      (let [exit (atom nil)]
+        (with-out-str (reset! exit (runner/run-features examples-features examples-step-defs)))
+        (should= 0 @exit))))
 
   (describe "basic.feature"
 

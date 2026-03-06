@@ -492,7 +492,7 @@
     (it "writes generated spec files to output directory"
       (let [tmp-dir (str "/tmp/gen-test-" (System/currentTimeMillis))
             edn-dir "features/edn"]
-        (gen/generate-features! edn-dir tmp-dir)
+        (with-out-str (gen/generate-features! edn-dir tmp-dir))
         (let [files (->> (io/file tmp-dir) .listFiles (map #(.getName %)) sort vec)]
           (should= ["orch_spawning_spec.clj"
                     "worker_session_tracking_spec.clj"
