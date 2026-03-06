@@ -43,6 +43,17 @@
     :assert-spawn-count (str (:count node) " workers should be spawned")
     :assert-idle-reason (str "the idle reason should be \"" (:expected node) "\"")
     :assert-spawn-label (str "the spawn label should be \"" (:expected node) "\"")
+    ;; Worker session tracking
+    :bead                  (str "a bead with id \"" (:bead-id node) "\"")
+    :session-id-literal    (str "a session ID \"" (:session-id node) "\"")
+    :generate-session-id   "generating the session ID"
+    :generate-session-id-twice "generating the session ID twice"
+    :generate-session-ids-both "generating session IDs for both"
+    :parse-session-id      "parsing the session ID"
+    :assert-session-id     (str "the session ID should be \"" (:expected node) "\"")
+    :assert-ids-identical  "both session IDs should be identical"
+    :assert-ids-different  "the session IDs should be different"
+    :assert-bead-id        (str "the extracted bead ID should be \"" (:expected node) "\"")
     (str node)))
 
 ;; --- Code generation: emit executable Clojure code per step type ---
@@ -77,6 +88,17 @@
     :assert-spawn-count (str "(should= " (:count node) " (h/spawn-count))")
     :assert-idle-reason (str "(should= \"" (:expected node) "\" (h/idle-reason))")
     :assert-spawn-label (str "(should= \"" (:expected node) "\" (h/spawn-label))")
+    ;; Worker session tracking
+    :bead                  (str "(h/set-bead-id \"" (:bead-id node) "\")")
+    :session-id-literal    (str "(h/set-session-id-literal \"" (:session-id node) "\")")
+    :generate-session-id   "(h/generate-session-id!)"
+    :generate-session-id-twice "(h/generate-session-id-twice!)"
+    :generate-session-ids-both "(h/generate-session-ids-both!)"
+    :parse-session-id      "(h/parse-session-id!)"
+    :assert-session-id     (str "(should= \"" (:expected node) "\" (h/session-id-result))")
+    :assert-ids-identical  "(should (h/session-ids-identical?))"
+    :assert-ids-different  "(should (h/session-ids-different?))"
+    :assert-bead-id        (str "(should= \"" (:expected node) "\" (h/parsed-bead-id))")
     nil))
 
 (defn- all-recognized?

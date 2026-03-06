@@ -84,7 +84,47 @@
 
    [#"^the spawn label should be \"([^\"]+)\"$"
     (fn [[_ expected]]
-      {:type :assert-spawn-label :expected expected})]])
+      {:type :assert-spawn-label :expected expected})]
+
+   ;; --- Worker session tracking patterns ---
+
+   [#"^a bead with id \"([^\"]+)\"$"
+    (fn [[_ bead-id]]
+      {:type :bead :bead-id bead-id})]
+
+   [#"^another bead with id \"([^\"]+)\"$"
+    (fn [[_ bead-id]]
+      {:type :bead :bead-id bead-id})]
+
+   [#"^a session ID \"([^\"]+)\"$"
+    (fn [[_ session-id]]
+      {:type :session-id-literal :session-id session-id})]
+
+   [#"^generating the session ID twice$"
+    (fn [_] {:type :generate-session-id-twice})]
+
+   [#"^generating the session ID$"
+    (fn [_] {:type :generate-session-id})]
+
+   [#"^generating session IDs for both$"
+    (fn [_] {:type :generate-session-ids-both})]
+
+   [#"^parsing the session ID$"
+    (fn [_] {:type :parse-session-id})]
+
+   [#"^the session ID should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:type :assert-session-id :expected expected})]
+
+   [#"^both session IDs should be identical$"
+    (fn [_] {:type :assert-ids-identical})]
+
+   [#"^the session IDs should be different$"
+    (fn [_] {:type :assert-ids-different})]
+
+   [#"^the extracted bead ID should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:type :assert-bead-id :expected expected})]])
 
 (defn classify-step
   "Pattern-match step text into a typed IR node map, or {:type :unrecognized :text text}."

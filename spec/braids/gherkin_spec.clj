@@ -98,7 +98,53 @@
 
     (it "classifies assert spawn label"
       (should= {:type :assert-spawn-label :expected "project:alpha:alpha-abc"}
-               (gherkin/classify-step "the spawn label should be \"project:alpha:alpha-abc\""))))
+               (gherkin/classify-step "the spawn label should be \"project:alpha:alpha-abc\"")))
+
+    ;; --- Worker session tracking step patterns ---
+
+    (it "classifies bead with id"
+      (should= {:type :bead :bead-id "proj-abc"}
+               (gherkin/classify-step "a bead with id \"proj-abc\"")))
+
+    (it "classifies another bead with id"
+      (should= {:type :bead :bead-id "proj-bbb"}
+               (gherkin/classify-step "another bead with id \"proj-bbb\"")))
+
+    (it "classifies session ID literal"
+      (should= {:type :session-id-literal :session-id "braids-proj-abc-worker"}
+               (gherkin/classify-step "a session ID \"braids-proj-abc-worker\"")))
+
+    (it "classifies generating the session ID"
+      (should= {:type :generate-session-id}
+               (gherkin/classify-step "generating the session ID")))
+
+    (it "classifies generating the session ID twice"
+      (should= {:type :generate-session-id-twice}
+               (gherkin/classify-step "generating the session ID twice")))
+
+    (it "classifies generating session IDs for both"
+      (should= {:type :generate-session-ids-both}
+               (gherkin/classify-step "generating session IDs for both")))
+
+    (it "classifies parsing the session ID"
+      (should= {:type :parse-session-id}
+               (gherkin/classify-step "parsing the session ID")))
+
+    (it "classifies assert session ID"
+      (should= {:type :assert-session-id :expected "braids-proj-abc-worker"}
+               (gherkin/classify-step "the session ID should be \"braids-proj-abc-worker\"")))
+
+    (it "classifies assert both session IDs identical"
+      (should= {:type :assert-ids-identical}
+               (gherkin/classify-step "both session IDs should be identical")))
+
+    (it "classifies assert session IDs different"
+      (should= {:type :assert-ids-different}
+               (gherkin/classify-step "the session IDs should be different")))
+
+    (it "classifies assert extracted bead ID"
+      (should= {:type :assert-bead-id :expected "proj-abc"}
+               (gherkin/classify-step "the extracted bead ID should be \"proj-abc\""))))
 
   (describe "parse-feature"
 
@@ -209,11 +255,23 @@
                     {:type :assert-spawn-count :count 2}]
                    (:thens first-scenario)))))
 
-    (it "parses worker_session_tracking.feature with @wip tags"
+    (it "parses worker_session_tracking.feature with typed IR and @wip tags"
       (let [result (gherkin/parse-feature-file "spec/features/worker_session_tracking.feature")]
         (should= "Worker session tracking" (:feature result))
         (should-be-nil (:background result))
         (should= 6 (count (:scenarios result)))
+        ;; First scenario: Generate deterministic session ID from bead ID
+        (let [s (first (:scenarios result))]
+          (should= "Generate deterministic session ID from bead ID" (:scenario s))
+          (should= [{:type :bead :bead-id "proj-abc"}] (:givens s))
+          (should= [{:type :generate-session-id}] (:whens s))
+          (should= [{:type :assert-session-id :expected "braids-proj-abc-worker"}] (:thens s)))
+        ;; Fourth scenario: Session ID can be parsed back to bead ID
+        (let [s (nth (:scenarios result) 3)]
+          (should= "Session ID can be parsed back to bead ID" (:scenario s))
+          (should= [{:type :session-id-literal :session-id "braids-proj-abc-worker"}] (:givens s))
+          (should= [{:type :parse-session-id}] (:whens s))
+          (should= [{:type :assert-bead-id :expected "proj-abc"}] (:thens s)))
         ;; The last two scenarios have @wip tags
         (should-be-nil (:wip (nth (:scenarios result) 0)))
         (should-be-nil (:wip (nth (:scenarios result) 3)))

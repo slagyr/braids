@@ -198,5 +198,73 @@
       (h/set-active-iteration "proj" "001")
       (h/set-ready-bead-with-id "proj" "proj-abc")
       (h/orch-tick!)
-      (should= "project:proj:proj-abc" (h/spawn-label)))))
+      (should= "project:proj:proj-abc" (h/spawn-label))))
+
+  ;; --- Worker session tracking harness ---
+
+  (describe "set-bead-id"
+
+    (it "stores a bead id for session generation"
+      (h/set-bead-id "proj-abc")
+      (h/generate-session-id!)
+      (should= "braids-proj-abc-worker" (h/session-id-result))))
+
+  (describe "set-session-id-literal"
+
+    (it "stores a literal session ID string"
+      (h/set-session-id-literal "braids-proj-abc-worker")
+      (h/parse-session-id!)
+      (should= "proj-abc" (h/parsed-bead-id))))
+
+  (describe "generate-session-id!"
+
+    (it "generates session ID from stored bead id"
+      (h/set-bead-id "proj-xyz")
+      (h/generate-session-id!)
+      (should= "braids-proj-xyz-worker" (h/session-id-result))))
+
+  (describe "generate-session-id-twice!"
+
+    (it "generates session ID twice and stores both results"
+      (h/set-bead-id "proj-xyz")
+      (h/generate-session-id-twice!)
+      (should (h/session-ids-identical?))))
+
+  (describe "generate-session-ids-both!"
+
+    (it "generates session IDs for two bead ids"
+      (h/set-bead-id "proj-aaa")
+      (h/set-bead-id "proj-bbb")
+      (h/generate-session-ids-both!)
+      (should (h/session-ids-different?))))
+
+  (describe "parse-session-id!"
+
+    (it "parses stored session ID to extract bead id"
+      (h/set-session-id-literal "braids-proj-abc-worker")
+      (h/parse-session-id!)
+      (should= "proj-abc" (h/parsed-bead-id))))
+
+  (describe "session tracking result accessors"
+
+    (it "session-id-result returns the generated session ID"
+      (h/set-bead-id "proj-abc")
+      (h/generate-session-id!)
+      (should= "braids-proj-abc-worker" (h/session-id-result)))
+
+    (it "session-ids-identical? returns true for same bead"
+      (h/set-bead-id "proj-xyz")
+      (h/generate-session-id-twice!)
+      (should (h/session-ids-identical?)))
+
+    (it "session-ids-different? returns true for different beads"
+      (h/set-bead-id "proj-aaa")
+      (h/set-bead-id "proj-bbb")
+      (h/generate-session-ids-both!)
+      (should (h/session-ids-different?)))
+
+    (it "parsed-bead-id returns the extracted bead id"
+      (h/set-session-id-literal "braids-proj-abc-worker")
+      (h/parse-session-id!)
+      (should= "proj-abc" (h/parsed-bead-id)))))
 

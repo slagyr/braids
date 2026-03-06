@@ -18,7 +18,12 @@
                                :iterations {}
                                :beads {}
                                :workers {}
-                               :tick-result nil}))
+                               :tick-result nil
+                               :bead-ids []
+                               :session-id-literal nil
+                               :session-id-result nil
+                               :session-ids []
+                               :parsed-bead-id nil}))
 
 ;; --- State accessors ---
 
@@ -152,3 +157,67 @@
   "Returns the label of the first spawn from the last tick result."
   []
   (:label (first (:spawns (:tick-result @state)))))
+
+;; --- Worker session tracking helpers ---
+
+(defn set-bead-id
+  "Store a bead id. Accumulates into a vector for multi-bead scenarios."
+  [bead-id]
+  (swap! state update :bead-ids conj bead-id))
+
+(defn set-session-id-literal
+  "Store a literal session ID string for parsing."
+  [session-id]
+  (swap! state assoc :session-id-literal session-id))
+
+(defn generate-session-id!
+  "Generate session ID from the first stored bead id."
+  []
+  (let [bead-id (first (:bead-ids @state))
+        result (orch/worker-session-id bead-id)]
+    (swap! state assoc :session-id-result result)))
+
+(defn generate-session-id-twice!
+  "Generate session ID twice from the first stored bead id, store both."
+  []
+  (let [bead-id (first (:bead-ids @state))
+        id1 (orch/worker-session-id bead-id)
+        id2 (orch/worker-session-id bead-id)]
+    (swap! state assoc :session-ids [id1 id2])))
+
+(defn generate-session-ids-both!
+  "Generate session IDs for all stored bead ids."
+  []
+  (let [ids (mapv orch/worker-session-id (:bead-ids @state))]
+    (swap! state assoc :session-ids ids)))
+
+(defn parse-session-id!
+  "Parse the stored session ID literal to extract bead id."
+  []
+  (let [session-id (:session-id-literal @state)
+        result (orch/parse-worker-session-id session-id)]
+    (swap! state assoc :parsed-bead-id result)))
+
+;; --- Session tracking result accessors ---
+
+(defn session-id-result
+  "Returns the generated session ID."
+  []
+  (:session-id-result @state))
+
+(defn session-ids-identical?
+  "Returns true if the two generated session IDs are identical."
+  []
+  (let [[id1 id2] (:session-ids @state)]
+    (= id1 id2)))
+
+(defn session-ids-different?
+  "Returns true if the generated session IDs are all different."
+  []
+  (let [ids (:session-ids @state)]
+    (apply distinct? ids)))
+
+(defn parsed-bead-id
+  "Returns the parsed bead id from the last parse-session-id! call."
+  []
+  (:parsed-bead-id @state))

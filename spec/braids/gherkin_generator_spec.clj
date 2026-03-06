@@ -104,7 +104,49 @@
 
     (it "formats assert-spawn-label step"
       (should= "the spawn label should be \"project:alpha:alpha-abc\""
-               (gen/step-text {:type :assert-spawn-label :expected "project:alpha:alpha-abc"}))))
+               (gen/step-text {:type :assert-spawn-label :expected "project:alpha:alpha-abc"})))
+
+    ;; --- Worker session tracking step-text ---
+
+    (it "formats bead step"
+      (should= "a bead with id \"proj-abc\""
+               (gen/step-text {:type :bead :bead-id "proj-abc"})))
+
+    (it "formats session-id-literal step"
+      (should= "a session ID \"braids-proj-abc-worker\""
+               (gen/step-text {:type :session-id-literal :session-id "braids-proj-abc-worker"})))
+
+    (it "formats generate-session-id step"
+      (should= "generating the session ID"
+               (gen/step-text {:type :generate-session-id})))
+
+    (it "formats generate-session-id-twice step"
+      (should= "generating the session ID twice"
+               (gen/step-text {:type :generate-session-id-twice})))
+
+    (it "formats generate-session-ids-both step"
+      (should= "generating session IDs for both"
+               (gen/step-text {:type :generate-session-ids-both})))
+
+    (it "formats parse-session-id step"
+      (should= "parsing the session ID"
+               (gen/step-text {:type :parse-session-id})))
+
+    (it "formats assert-session-id step"
+      (should= "the session ID should be \"braids-proj-abc-worker\""
+               (gen/step-text {:type :assert-session-id :expected "braids-proj-abc-worker"})))
+
+    (it "formats assert-ids-identical step"
+      (should= "both session IDs should be identical"
+               (gen/step-text {:type :assert-ids-identical})))
+
+    (it "formats assert-ids-different step"
+      (should= "the session IDs should be different"
+               (gen/step-text {:type :assert-ids-different})))
+
+    (it "formats assert-bead-id step"
+      (should= "the extracted bead ID should be \"proj-abc\""
+               (gen/step-text {:type :assert-bead-id :expected "proj-abc"}))))
 
   (describe "generate-step-comments"
 
@@ -276,6 +318,53 @@
         (should-contain "(h/set-ready-bead-with-id \"alpha\" \"alpha-abc\")" output)
         (should-contain "(should= \"project:alpha:alpha-abc\" (h/spawn-label))" output)))
 
+    (it "generates executable code for session ID generation scenario"
+      (let [scenario {:scenario "Generate deterministic session ID"
+                      :givens [{:type :bead :bead-id "proj-abc"}]
+                      :whens [{:type :generate-session-id}]
+                      :thens [{:type :assert-session-id :expected "braids-proj-abc-worker"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/reset!)" output)
+        (should-contain "(h/set-bead-id \"proj-abc\")" output)
+        (should-contain "(h/generate-session-id!)" output)
+        (should-contain "(should= \"braids-proj-abc-worker\" (h/session-id-result))" output)))
+
+    (it "generates executable code for session ID identical scenario"
+      (let [scenario {:scenario "Same bead same ID"
+                      :givens [{:type :bead :bead-id "proj-xyz"}]
+                      :whens [{:type :generate-session-id-twice}]
+                      :thens [{:type :assert-ids-identical}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-bead-id \"proj-xyz\")" output)
+        (should-contain "(h/generate-session-id-twice!)" output)
+        (should-contain "(should (h/session-ids-identical?))" output)))
+
+    (it "generates executable code for different session IDs scenario"
+      (let [scenario {:scenario "Different beads different IDs"
+                      :givens [{:type :bead :bead-id "proj-aaa"}
+                               {:type :bead :bead-id "proj-bbb"}]
+                      :whens [{:type :generate-session-ids-both}]
+                      :thens [{:type :assert-ids-different}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-bead-id \"proj-aaa\")" output)
+        (should-contain "(h/set-bead-id \"proj-bbb\")" output)
+        (should-contain "(h/generate-session-ids-both!)" output)
+        (should-contain "(should (h/session-ids-different?))" output)))
+
+    (it "generates executable code for parse session ID scenario"
+      (let [scenario {:scenario "Parse session ID"
+                      :givens [{:type :session-id-literal :session-id "braids-proj-abc-worker"}]
+                      :whens [{:type :parse-session-id}]
+                      :thens [{:type :assert-bead-id :expected "proj-abc"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-session-id-literal \"braids-proj-abc-worker\")" output)
+        (should-contain "(h/parse-session-id!)" output)
+        (should-contain "(should= \"proj-abc\" (h/parsed-bead-id))" output)))
+
     (it "generates executable code for bead-no-status"
       (let [scenario {:scenario "No bead status"
                       :givens [{:type :session :session-id "s5" :label "project:proj:proj-mno"}
@@ -371,13 +460,19 @@
         (should-contain "(h/orch-tick!)" output)
         (should-contain "[braids.features.harness :as h]" output)))
 
-    (it "generates spec from worker_session_tracking IR skipping wip"
+    (it "generates spec from worker_session_tracking IR with all executable scenarios"
       (let [ir (read-string (slurp "spec/features/edn/worker_session_tracking.edn"))
             output (gen/generate-spec ir)]
         ;; 6 total scenarios, 2 are @wip, so 4 should be generated
         (should= 4 (count (re-seq #"\(context " output)))
         (should-not-contain "Prevent duplicate spawning" output)
-        (should-not-contain "Session with missing bead data" output)))
+        (should-not-contain "Session with missing bead data" output)
+        ;; All 4 session tracking steps are now recognized — no pending
+        (should-not-contain "pending" output)
+        ;; Should have harness calls
+        (should-contain "(h/reset!)" output)
+        (should-contain "(h/generate-session-id!)" output)
+        (should-contain "[braids.features.harness :as h]" output)))
 
     (it "generates spec from zombie_detection IR with executable code"
       (let [ir (read-string (slurp "spec/features/edn/zombie_detection.edn"))
