@@ -7,6 +7,12 @@
                        "spec"
                        "-s" "src"
                        *command-line-args*)}
+         test:runner {:doc "Run gherkin example features"
+                      :requires ([braids.gherkin-runner :as runner])
+                      :task (System/exit
+                              (runner/run-features
+                                "spec/features/examples"
+                                "spec/step_defs/examples"))}
          braids {:doc "Run the braids CLI"
                  :requires ([braids.core :as braids])
                  :task (System/exit (braids/run *command-line-args*))}}}
