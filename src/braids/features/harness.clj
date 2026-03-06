@@ -393,3 +393,93 @@
   "Returns the built project config."
   []
   (:project-config-result @state))
+
+;; --- Project listing helpers ---
+
+(defn- table-row->project
+  "Convert a table row (vector of strings) to a project map using headers."
+  [headers row]
+  (let [m (zipmap headers row)
+        slug (get m "slug")
+        status (get m "status")
+        priority (get m "priority")
+        iteration-num (get m "iteration")
+        closed (get m "closed")
+        total (get m "total")
+        percent (get m "percent")
+        workers-str (get m "workers")
+        max-workers-str (get m "max-workers")
+        path (get m "path")]
+    (cond->
+      {:slug slug
+       :status (when (seq status) (keyword status))
+       :priority (when (seq priority) (keyword priority))
+       :path path
+       :workers (when (seq workers-str) (parse-long workers-str))
+       :max-workers (when (seq max-workers-str) (parse-long max-workers-str))}
+      (seq iteration-num)
+      (assoc :iteration
+             (cond-> {:number iteration-num}
+               (seq closed)
+               (assoc :stats {:closed (parse-long closed)
+                              :total (parse-long total)
+                              :percent (parse-long percent)}))))))
+
+(defn set-project-list-from-table
+  "Build project list from table headers and rows."
+  [headers rows]
+  (let [projects (mapv #(table-row->project headers %) rows)]
+    (swap! state assoc :list-projects projects)))
+
+(defn set-empty-project-list
+  "Set an empty project list."
+  []
+  (swap! state assoc :list-projects []))
+
+(defn format-list!
+  "Format the project list using list/format-list."
+  []
+  (let [projects (:list-projects @state)
+        output (list/format-list {:projects projects})]
+    (swap! state assoc :list-output output)))
+
+(defn format-list-json!
+  "Format the project list as JSON using list/format-list-json."
+  []
+  (let [projects (:list-projects @state)
+        output (list/format-list-json {:projects projects})]
+    (swap! state assoc :list-json-output output)))
+
+(defn list-output
+  "Returns the formatted list output."
+  []
+  (or (:list-output @state) (:list-json-output @state)))
+
+(defn line-contains-dash?
+  "Returns true if the line for the given slug contains a dash placeholder."
+  [slug]
+  (when-let [output (:list-output @state)]
+    (let [lines (str/split-lines output)]
+      (some (fn [line]
+              (and (str/includes? line slug)
+                   (str/includes? line "—")))
+            lines))))
+
+(defn colorized?
+  "Returns true if the output contains the given text wrapped in the expected ANSI color."
+  [output text color]
+  (let [color-code (case color
+                     "red" "\033[31m"
+                     "green" "\033[32m"
+                     "yellow" "\033[33m"
+                     nil)]
+    (and color-code
+         (str/includes? output (str color-code))
+         (str/includes? output text))))
+
+(defn json-project
+  "Find a project by slug in the JSON list output. Returns parsed map or nil."
+  [slug]
+  (when-let [output (:list-json-output @state)]
+    (let [parsed (json/parse-string output)]
+      (first (filter #(= slug (get % "slug")) parsed)))))
