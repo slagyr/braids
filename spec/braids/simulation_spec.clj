@@ -1,4 +1,4 @@
-(ns simulation-spec
+(ns braids.simulation-spec
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
             [babashka.process :as proc]

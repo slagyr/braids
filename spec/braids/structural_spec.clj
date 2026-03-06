@@ -1,4 +1,4 @@
-(ns structural-spec
+(ns braids.structural-spec
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
             [clojure.string :as str]))

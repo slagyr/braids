@@ -1,4 +1,4 @@
-(ns contracts-spec
+(ns braids.contracts-spec
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
             [clojure.string :as str]))

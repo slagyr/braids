@@ -1,4 +1,4 @@
-(ns orch-shell-spec
+(ns braids.orch-shell-spec
   "Tests for the braids orch CLI command.
    Tests both pure functions and subprocess integration."
   (:require [speclj.core :refer :all]

@@ -1,4 +1,4 @@
-(ns integration-smoke-spec
+(ns braids.integration-smoke-spec
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
             [clojure.string :as str]

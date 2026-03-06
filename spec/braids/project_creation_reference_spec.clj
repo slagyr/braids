@@ -1,4 +1,4 @@
-(ns project-creation-reference-spec
+(ns braids.project-creation-reference-spec
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
             [clojure.string :as str]))

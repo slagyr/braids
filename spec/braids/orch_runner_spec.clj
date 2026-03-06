@@ -1,4 +1,4 @@
-(ns orch-runner-spec
+(ns braids.orch-runner-spec
   (:require [speclj.core :refer :all]
             [braids.orch-runner :as runner]
             [clojure.string :as str]))

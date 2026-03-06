@@ -1,4 +1,4 @@
-(ns init-reference-spec
+(ns braids.init-reference-spec
   (:require [speclj.core :refer :all]
             [babashka.fs :as fs]
             [clojure.string :as str]))
