@@ -11,8 +11,7 @@ skills from `.skills/{name}/SKILL.md` when their descriptions match the
 task at hand.
 
 - [tdd](https://raw.githubusercontent.com/slagyr/agent-skills/main/tdd/SKILL.md)
-- [solid](https://raw.githubusercontent.com/slagyr/agent-skills/main/solid/SKILL.md)
-- [braids](https://raw.githubusercontent.com/slagyr/braids/main/braids/SKILL.md)
+- [crap4clj](https://raw.githubusercontent.com/unclebob/crap4clj/master/SKILL.md)
 
 ## Development Process
 
