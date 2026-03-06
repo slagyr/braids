@@ -18,6 +18,11 @@
                           :task (let [source (or (first *command-line-args*) "spec/features")
                                       output (or (second *command-line-args*) "spec/features/edn")]
                                   (gherkin/parse-features! source output))}
-          braids {:doc "Run the braids CLI"
+          generate:features {:doc "Generate speclj specs from .edn IR"
+                             :requires ([braids.gherkin-generator :as gen])
+                             :task (let [edn-dir (or (first *command-line-args*) "spec/features/edn")
+                                         output (or (second *command-line-args*) "spec/features/generated")]
+                                     (gen/generate-features! edn-dir output))}
+           braids {:doc "Run the braids CLI"
                  :requires ([braids.core :as braids])
                  :task (System/exit (braids/run *command-line-args*))}}}
