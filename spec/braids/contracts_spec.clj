@@ -54,8 +54,8 @@
       (should (re-find #"(?i)zombie" content)))
     (it "session label convention"
       (should-contain "project:<slug>:<bead-id>" content))
-    (it "self-disable on idle documented"
-      (should (re-find #"(?i)self-disable|disable.cron" content))))
+    (it "frequency scaling on idle documented"
+      (should (re-find #"(?i)frequency.scaling|idle" content))))
 
   (context "Worker Invariants"
     (it "claim before work"

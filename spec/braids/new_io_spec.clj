@@ -2,8 +2,14 @@
   (:require [speclj.core :refer :all]
             [braids.new-io :as new-io]
             [babashka.fs :as fs]
-            [babashka.process :as proc]
             [clojure.edn :as edn]))
+
+(defn stub-shell
+  "No-op shell stub that creates .git dir for git init calls."
+  [opts & args]
+  (when (and (= "git" (first args)) (= "init" (second args)))
+    (fs/create-dirs (str (:dir opts) "/.git")))
+  nil)
 
 (describe "braids.new-io"
 
@@ -39,7 +45,7 @@
       (spit @reg-file (pr-str {:projects []})))
 
     (after-all
-      (proc/shell {:continue true} "rm" "-rf" @tmp-dir))
+      (fs/delete-tree @tmp-dir))
 
     (it "rejects missing required params"
       (let [result (new-io/run-new ["--braids-home" @tmp-dir] {:registry-file @reg-file})]
@@ -53,25 +59,26 @@
         (should-contain "Name is required" (:message result))))
 
     (it "creates a project successfully"
-      (let [result (new-io/run-new ["test-new-proj" "--name" "Test New" "--goal" "Test goal"
-                                     "--braids-home" @tmp-dir]
-                                    {:registry-file @reg-file})
-            project-dir (str @tmp-dir "/test-new-proj")]
-        (should= 0 (:exit result))
-        (should (fs/exists? (str project-dir "/.braids/config.edn")))
-        (should (fs/exists? (str project-dir "/.braids/iterations/001/iteration.edn")))
-        (should (fs/exists? (str project-dir "/AGENTS.md")))
-        (should (fs/exists? (str project-dir "/.git")))
-        ;; Verify config.edn content
-        (let [config (edn/read-string (slurp (str project-dir "/.braids/config.edn")))]
-          (should= "Test New" (:name config))
-          (should-not-contain :goal config)
-          (should= :active (:status config))
-          (should= :full (:autonomy config)))
-        ;; Verify registry was updated
-        (let [reg (edn/read-string (slurp @reg-file))]
-          (should= 1 (count (:projects reg)))
-          (should= "test-new-proj" (:slug (first (:projects reg)))))))
+      (with-redefs [babashka.process/shell stub-shell]
+        (let [result (new-io/run-new ["test-new-proj" "--name" "Test New" "--goal" "Test goal"
+                                       "--braids-home" @tmp-dir]
+                                      {:registry-file @reg-file})
+              project-dir (str @tmp-dir "/test-new-proj")]
+          (should= 0 (:exit result))
+          (should (fs/exists? (str project-dir "/.braids/config.edn")))
+          (should (fs/exists? (str project-dir "/.braids/iterations/001/iteration.edn")))
+          (should (fs/exists? (str project-dir "/AGENTS.md")))
+          (should (fs/exists? (str project-dir "/.git")))
+          ;; Verify config.edn content
+          (let [config (edn/read-string (slurp (str project-dir "/.braids/config.edn")))]
+            (should= "Test New" (:name config))
+            (should-not-contain :goal config)
+            (should= :active (:status config))
+            (should= :full (:autonomy config)))
+          ;; Verify registry was updated
+          (let [reg (edn/read-string (slurp @reg-file))]
+            (should= 1 (count (:projects reg)))
+            (should= "test-new-proj" (:slug (first (:projects reg))))))))
 
     (it "rejects duplicate directory"
       (fs/create-dirs (str @tmp-dir "/existing-proj"))

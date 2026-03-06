@@ -65,15 +65,15 @@
                        (edn-format {:number 1 :status :planning :stories [] :notes []}))
                  ;; Write AGENTS.md
                  (spit (str project-dir "/AGENTS.md") agents-md)
-                 ;; Init git
-                 (proc/shell {:dir project-dir} "git" "init" "-q")
-                 ;; Init bd
-                 (proc/shell {:dir project-dir} "bd" "init" "-q")
-                 ;; Save registry
-                 (spit reg-path (edn-format new-registry))
-                 ;; Initial commit
-                 (proc/shell {:dir project-dir} "git" "add" "-A")
-                 (proc/shell {:dir project-dir} "git" "commit" "-q" "-m" (str "Initialize project: " slug))
+                  ;; Init git
+                  (proc/shell {:dir project-dir :out :string :err :string} "git" "init" "-q")
+                  ;; Init bd (close stdin to prevent interactive prompts)
+                  (proc/shell {:dir project-dir :out :string :err :string :in ""} "bd" "init" "-q")
+                  ;; Save registry
+                  (spit reg-path (edn-format new-registry))
+                  ;; Initial commit
+                  (proc/shell {:dir project-dir :out :string :err :string} "git" "add" "-A")
+                  (proc/shell {:dir project-dir :out :string :err :string} "git" "commit" "-q" "-m" (str "Initialize project: " slug))
                  {:exit 0
                   :message (str "✓ Created project: " slug "\n"
                                 "  Path: " project-dir "\n"

@@ -20,8 +20,8 @@
   (it "references project-creation.md"
     (should-contain "project-creation.md" (slurp init-ref)))
 
-  (it "references orchestrator.md"
-    (should-contain "orchestrator.md" (slurp init-ref)))
+  (it "references orchestrator cron setup"
+    (should-contain "Orchestrator Cron" (slurp init-ref)))
 
   (it "references registry.edn (not registry.md)"
     (let [content (slurp init-ref)]

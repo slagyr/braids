@@ -1,120 +1,13 @@
 (ns braids.integration-spec
-  "Comprehensive integration tests that create real projects, iterations, and beads,
-   then run all CLI commands to verify end-to-end workflows."
   (:require [speclj.core :refer :all]
-            [babashka.fs :as fs]
-            [babashka.process :as proc]
             [clojure.string :as str]
-            [clojure.edn :as edn]
-            [cheshire.core :as json]
             [braids.core :as core]
             [braids.new :as new]
-            [braids.new-io :as new-io]
             [braids.config :as config]
-            [braids.config-io :as config-io]
-            [braids.init :as init]
             [braids.ready :as ready]
             [braids.list :as list]
             [braids.iteration :as iter]
-            [braids.orch :as orch]
-            [braids.edn-format :refer [edn-format]]
-            [braids.registry :as registry]))
-
-;; ── Helpers ──
-
-(def ^:dynamic *test-dir* nil)
-
-(defn temp-dir
-  "Create a temporary directory for testing."
-  [prefix]
-  (str (fs/create-temp-dir {:prefix prefix})))
-
-(defn setup-test-env
-  "Create isolated test environment with its own registry, config, and braids-home."
-  []
-  (let [root (temp-dir "braids-integration-")
-        braids-home (str root "/projects")
-        state-dir (str root "/state")
-        registry-path (str state-dir "/registry.edn")
-        config-path (str state-dir "/config.edn")]
-    (fs/create-dirs braids-home)
-    (fs/create-dirs state-dir)
-    (spit config-path (edn-format {:braids-home braids-home}))
-    (spit registry-path (edn-format {:projects []}))
-    {:root root
-     :braids-home braids-home
-     :state-dir state-dir
-     :registry-path registry-path
-     :config-path config-path}))
-
-(defn create-test-project
-  "Create a project using new-io/run-new with isolated paths."
-  [env slug & {:keys [name goal priority] :or {name nil goal nil priority "normal"}}]
-  (let [project-name (or name (str "Test " slug))
-        project-goal (or goal (str "Goal for " slug))]
-    (new-io/run-new
-      [slug
-       "--name" project-name
-       "--goal" project-goal
-       "--priority" priority
-       "--braids-home" (:braids-home env)]
-      {:registry-file (:registry-path env)})))
-
-(defn project-dir [env slug]
-  (str (:braids-home env) "/" slug))
-
-(defn read-registry [env]
-  (registry/parse-registry (slurp (:registry-path env))))
-
-(defn read-project-config [env slug]
-  (edn/read-string (slurp (str (project-dir env slug) "/.braids/config.edn"))))
-
-(defn read-iteration-edn [env slug iter-num]
-  (let [padded (format "%03d" iter-num)]
-    (edn/read-string (slurp (str (project-dir env slug) "/.braids/iterations/" padded "/iteration.edn")))))
-
-(defn cleanup-test-env [env]
-  (when (:root env)
-    (proc/shell {:continue true} "rm" "-rf" (:root env))))
-
-;; ── Integration tests that shell out to `bd` ──
-;; NOTE: These tests are PENDING — they shell out to `bd` (beads CLI) which
-;; can hang or be slow, blocking `bb test` from completing quickly.
-;; Move to a separate `bb test:integration` task when ready.
-;; See: braids-kog
-
-(describe "Integration: Project Creation"
-  (xit "creates a new project with correct structure")
-  (xit "creates project config with correct values")
-  (xit "adds project to registry")
-  (xit "creates initial iteration in planning status")
-  (xit "creates initial git commit")
-  (xit "rejects duplicate project slug")
-  (xit "creates a high-priority project"))
-
-
-(describe "Integration: Bead CRUD Workflow"
-  (xit "creates beads with bd q")
-  (xit "shows bead details with bd show")
-  (xit "lists beads with bd list --json")
-  (xit "shows ready beads with bd ready --json")
-  (xit "closes a bead with bd close")
-  (xit "claims a bead with bd update --claim"))
-
-
-(describe "Integration: Dependency Management"
-  (xit "adds and lists dependencies")
-  (xit "dependent bead is not ready until dependency is closed"))
-
-
-(describe "Integration: Iteration Lifecycle"
-  (xit "starts with iteration 001 in planning status")
-  (xit "can activate an iteration by updating iteration.edn")
-  (xit "can complete an iteration after closing all beads")
-  (xit "can create a second iteration"))
-
-
-;; ── Fast tests that don't shell out ──
+            [braids.orch :as orch]))
 
 (describe "Integration: braids CLI dispatch"
 
@@ -213,10 +106,4 @@
       (should= "/new" (:braids-home updated)))))
 
 
-(describe "Integration: End-to-End Worker Workflow"
-  (xit "simulates a full worker cycle: create -> claim -> work -> close -> commit"))
 
-
-(describe "Integration: Multi-Project Registry"
-  (xit "manages multiple projects in registry")
-  (xit "preserves priority ordering in registry"))
