@@ -73,9 +73,11 @@
         (should-contain "braids" output)))
 
     (it "prints error for unknown command and returns 1"
-      (let [result (core/run ["nonexistent"])]
-        (should= 1 result)))
+      (let [result (atom nil)]
+        (with-out-str (reset! result (core/run ["nonexistent"])))
+        (should= 1 @result)))
 
     (it "spawn-msg is removed (unknown command)"
-      (let [result (core/run ["spawn-msg"])]
-        (should= 1 result)))))
+      (let [result (atom nil)]
+        (with-out-str (reset! result (core/run ["spawn-msg"])))
+        (should= 1 @result)))))

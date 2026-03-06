@@ -119,16 +119,24 @@
 (describe "Integration: braids CLI dispatch"
 
   (it "help command returns 0"
-    (should= 0 (core/run ["help"])))
+    (let [result (atom nil)]
+      (with-out-str (reset! result (core/run ["help"])))
+      (should= 0 @result)))
 
   (it "unknown command returns 1"
-    (should= 1 (core/run ["nonexistent"])))
+    (let [result (atom nil)]
+      (with-out-str (reset! result (core/run ["nonexistent"])))
+      (should= 1 @result)))
 
   (it "--help flag returns 0"
-    (should= 0 (core/run ["--help"])))
+    (let [result (atom nil)]
+      (with-out-str (reset! result (core/run ["--help"])))
+      (should= 0 @result)))
 
   (it "no args returns 0 (shows help)"
-    (should= 0 (core/run nil))))
+    (let [result (atom nil)]
+      (with-out-str (reset! result (core/run nil)))
+      (should= 0 @result))))
 
 
 (describe "Integration: Pure function contracts"

@@ -55,12 +55,12 @@
   (describe "config set"
     (it "sets a key value"
       (spit @config-path (pr-str {:braids-home "~/Projects"}))
-      (core/run ["config" "set" "braids-home" "/new/path"])
+      (with-out-str (core/run ["config" "set" "braids-home" "/new/path"]))
       (should= "/new/path" (:braids-home (config-io/load-config @config-path))))
 
     (it "adds a new key"
       (spit @config-path (pr-str {:braids-home "~/Projects"}))
-      (core/run ["config" "set" "custom-key" "custom-val"])
+      (with-out-str (core/run ["config" "set" "custom-key" "custom-val"]))
       (should= "custom-val" (:custom-key (config-io/load-config @config-path))))
 
     (it "prints usage when missing args"
