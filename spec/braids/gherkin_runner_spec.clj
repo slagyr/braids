@@ -18,7 +18,7 @@
 
 (describe "Gherkin Runner (example features)"
 
-  (describe "load-step-defs from examples"
+  (context "load-step-defs from examples"
 
     (it "loads step defs from examples directory"
       (let [defs (runner/load-step-defs examples-step-defs)]
@@ -29,35 +29,35 @@
       (let [defs (runner/load-step-defs examples-step-defs)]
         (should (every? #(instance? java.util.regex.Pattern %) (keys defs))))))
 
-  (describe "run-features integration"
+  (context "run-features integration"
 
     (it "returns exit code 0 when all example features pass"
       (let [exit (atom nil)]
         (with-out-str (reset! exit (runner/run-features examples-features examples-step-defs)))
         (should= 0 @exit))))
 
-  (describe "basic.feature"
+  (context "basic.feature"
 
     (it "passes a simple scenario"
       (let [results (run-example-feature "basic.feature")]
         (should= 1 (count results))
         (should= :passed (:status (first results))))))
 
-  (describe "background_steps.feature"
+  (context "background_steps.feature"
 
     (it "runs background before each scenario"
       (let [results (run-example-feature "background_steps.feature")]
         (should= 2 (count results))
         (should (every? #(= :passed (:status %)) results)))))
 
-  (describe "capture_groups.feature"
+  (context "capture_groups.feature"
 
     (it "passes with numeric and string capture groups"
       (let [results (run-example-feature "capture_groups.feature")]
         (should= 2 (count results))
         (should (every? #(= :passed (:status %)) results)))))
 
-  (describe "and_but_keywords.feature"
+  (context "and_but_keywords.feature"
 
     (it "handles And and But keywords in steps"
       (let [results (run-example-feature "and_but_keywords.feature")]

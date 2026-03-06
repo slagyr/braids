@@ -19,7 +19,7 @@ For non-Mac users or if you prefer a manual setup:
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/slagyr/braids/main/install.sh)
 ```
-
+clj -
 This clones the repo to `~/.openclaw/braids-skill` and symlinks the skill into OpenClaw. To install to a custom location, set `BRAIDS_INSTALL_DIR` first:
 
 ```bash

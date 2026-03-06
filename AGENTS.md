@@ -21,15 +21,18 @@ task at hand.
 
 ## How to Work on This Project
 
+**First:** Read `braids/references/worker.md` — it contains the full worker workflow (8 steps: load context, claim bead, verify deps, check tags, do work, write deliverable, close bead, check iteration). Follow it precisely.
+
 **If you were spawned by the orchestrator** (your task message includes a bead id):
-→ Load the `braids` skill and follow its `references/worker.md`
+→ Read `braids/references/worker.md` and follow it from Step 1
 
 **If you're here on your own** (manual session, human asked you to help, etc.):
-1. Read `.braids/config.edn` — understand the project settings
-2. Read this file (AGENTS.md) — for goals, guardrails, and conventions
-3. Find the active iteration: look in `.braids/iterations/*/iteration.edn` for `:status :active`
-4. Run `bd ready` to see available work
-5. Pick a bead, then load the `braids` skill and follow its `references/worker.md`
+1. Read `braids/references/worker.md` — understand the worker workflow
+2. Read `.braids/config.edn` — understand the project settings
+3. Read this file (AGENTS.md) — for goals, guardrails, and conventions
+4. Find the active iteration: look in `.braids/iterations/*/iteration.edn` for `:status :active`
+5. Run `bd ready` to see available work
+6. Pick a bead, then follow `braids/references/worker.md` from Step 2
 
 ## Quick Reference
 

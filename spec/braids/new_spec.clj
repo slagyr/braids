@@ -4,7 +4,7 @@
 
 (describe "braids.new"
 
-  (describe "validate-slug"
+  (context "validate-slug"
 
     (it "accepts valid slugs"
       (should= [] (new/validate-slug "my-project"))
@@ -27,7 +27,7 @@
     (it "rejects slugs ending with hyphen"
       (should-not= [] (new/validate-slug "foo-"))))
 
-  (describe "validate-new-params"
+  (context "validate-new-params"
 
     (it "validates complete params"
       (should= [] (new/validate-new-params
@@ -49,7 +49,7 @@
       (should-not= [] (new/validate-new-params
                         {:slug "Bad Slug" :name "My Project" :goal "Build something"}))))
 
-  (describe "build-project-config"
+  (context "build-project-config"
 
     (it "builds config with defaults"
       (let [config (new/build-project-config
@@ -82,7 +82,7 @@
         (should-not-contain :goal config)
         (should-not-contain :guardrails config))))
 
-  (describe "build-registry-entry"
+  (context "build-registry-entry"
 
     (it "builds a registry entry from params"
       (let [entry (new/build-registry-entry {:slug "my-project" :priority :high} "/home/user/Projects/my-project")]
@@ -95,7 +95,7 @@
       (let [entry (new/build-registry-entry {:slug "foo"} "/path")]
         (should= :normal (:priority entry)))))
 
-  (describe "build-iteration-content"
+  (context "build-iteration-content"
 
     (it "generates iteration 001 EDN"
       (let [iter (new/build-iteration-content)]
@@ -103,7 +103,7 @@
         (should= :planning (:status iter))
         (should= [] (:stories iter)))))
 
-  (describe "build-agents-md"
+  (context "build-agents-md"
 
     (it "generates AGENTS.md content"
       (let [content (new/build-agents-md)]
@@ -111,7 +111,7 @@
         (should-contain "config.edn" content)
         (should-not-contain "PROJECT.md" content))))
 
-  (describe "add-to-registry"
+  (context "add-to-registry"
 
     (it "adds a project to an existing registry"
       (let [registry {:projects [{:slug "existing" :status :active :priority :normal :path "/p/existing"}]}

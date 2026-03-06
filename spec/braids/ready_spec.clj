@@ -4,7 +4,7 @@
 
 (describe "braids.ready"
 
-  (describe "ready-beads (pure logic)"
+  (context "ready-beads (pure logic)"
 
     (it "returns empty when no projects"
       (should= [] (ready/ready-beads {:projects []} {} {} {})))
@@ -79,7 +79,7 @@
         (should= "norm" (:project (second (ready/ready-beads registry configs beads workers))))
         (should= "low" (:project (nth (ready/ready-beads registry configs beads workers) 2))))))
 
-  (describe "format-ready-output"
+  (context "format-ready-output"
 
     (it "returns 'No ready beads.' when empty"
       (should= "No ready beads." (ready/format-ready-output [])))

@@ -4,7 +4,7 @@
 
 (describe "braids.config"
 
-  (describe "parse-config"
+  (context "parse-config"
     (it "parses a config EDN string"
       (should= {:braids-home "/custom/path" :orchestrator-channel nil
                 :env-path nil :bd-bin "bd" :openclaw-bin "openclaw"}
@@ -20,7 +20,7 @@
                 :env-path nil :bd-bin "bd" :openclaw-bin "openclaw" :extra "val"}
                (config/parse-config "{:extra \"val\"}"))))
 
-  (describe "serialize-config"
+  (context "serialize-config"
     (it "round-trips through parse"
       (let [cfg {:braids-home "/foo/bar" :orchestrator-channel nil
                  :env-path nil :bd-bin "bd" :openclaw-bin "openclaw"}]

@@ -10,7 +10,7 @@
 
 (describe "braids.orch-runner (pure functions)"
 
-  (describe "parse-cli-args"
+  (context "parse-cli-args"
 
     (it "returns defaults for empty args (dry-run=true)"
       (should= {:dry-run true :verbose false} (runner/parse-cli-args [])))
@@ -29,7 +29,7 @@
         (should-contain :error result)
         (should (str/includes? (:error result) "--bogus")))))
 
-  (describe "build-worker-task"
+  (context "build-worker-task"
 
     (it "includes worker.md reference"
       (let [task (runner/build-worker-task
@@ -44,7 +44,7 @@
         (should (str/includes? task "001"))
         (should (str/includes? task "12345")))))
 
-  (describe "build-worker-args"
+  (context "build-worker-args"
 
     (it "includes required openclaw agent args"
       (let [args (runner/build-worker-args {}
@@ -81,7 +81,7 @@
         (should= sid1 sid2)
         (should= "braids-b-worker" sid1))))
 
-  (describe "log-line"
+  (context "log-line"
 
     (it "returns message without timestamp"
       (should= "test" (runner/log-line "test")))
@@ -89,7 +89,7 @@
     (it "includes the message"
       (should= "hello world" (runner/log-line "hello world"))))
 
-  (describe "format-spawn-log"
+  (context "format-spawn-log"
 
     (it "shows worker count"
       (let [lines (runner/format-spawn-log {:action "spawn" :spawns [{:bead "b1"} {:bead "b2"}]})]
@@ -99,7 +99,7 @@
       (let [lines (runner/format-spawn-log {:action "spawn" :spawns [{:bead "my-bead-abc"}]})]
         (should (some #(str/includes? % "my-bead-abc") lines)))))
 
-  (describe "format-idle-log"
+  (context "format-idle-log"
 
     (it "includes reason"
       (let [lines (runner/format-idle-log {:reason "all-at-capacity"})]
@@ -109,7 +109,7 @@
       (let [lines (runner/format-idle-log {:reason "no-ready-beads"})]
         (should (some #(str/includes? % "Idle") lines)))))
 
-  (describe "format-zombie-log"
+  (context "format-zombie-log"
 
     (it "returns nil for empty zombies"
       (should-be-nil (runner/format-zombie-log [])))

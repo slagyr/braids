@@ -8,7 +8,7 @@
 
   (with-all tmp-dir (str (fs/create-temp-dir {:prefix "braids-config-test"})))
 
-  (describe "load-config"
+  (context "load-config"
     (it "returns defaults when file doesn't exist"
       (should= config/defaults
                (config-io/load-config (str @tmp-dir "/nonexistent.edn"))))
@@ -20,7 +20,7 @@
                   :env-path nil :bd-bin "bd" :openclaw-bin "openclaw"}
                  (config-io/load-config path)))))
 
-  (describe "save-config!"
+  (context "save-config!"
     (it "writes config to file"
       (let [path (str @tmp-dir "/save-test.edn")
             cfg {:braids-home "/my/projects" :orchestrator-channel nil
@@ -29,7 +29,7 @@
         (should (fs/exists? path))
         (should= cfg (config-io/load-config path)))))
 
-  (describe "resolve-braids-home"
+  (context "resolve-braids-home"
     (it "resolves from config file"
       (let [path (str @tmp-dir "/resolve-test.edn")]
         (spit path "{:braids-home \"/absolute/path\"}")

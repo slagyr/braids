@@ -4,7 +4,7 @@
 
 (describe "braids.init"
 
-  (describe "check-prerequisites"
+  (context "check-prerequisites"
     (it "returns no errors when all prerequisites are met"
       (let [result (init/check-prerequisites {:braids-dir-exists? false
                                                :registry-exists? false
@@ -30,7 +30,7 @@
                                                :force? true})]
         (should= [] result))))
 
-  (describe "plan-init"
+  (context "plan-init"
     (it "plans all actions for fresh install"
       (let [plan (init/plan-init {:braids-dir "/home/user/.openclaw/braids"
                                    :braids-home "/home/user/Projects"
@@ -64,7 +64,7 @@
         (should= "/tmp/braids/registry.edn" (:path (:create-registry actions)))
         (should= "/tmp/braids/config.edn" (:path (:save-config actions))))))
 
-  (describe "format-result"
+  (context "format-result"
     (it "formats success message"
       (let [msg (init/format-result {:success? true
                                       :braids-dir "/home/user/.openclaw/braids"

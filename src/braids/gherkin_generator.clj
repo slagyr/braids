@@ -12,94 +12,104 @@
       (->> (str "braids.features."))
       (str "-spec")))
 
-;; --- Step text: convert IR node back to readable text for comments ---
+;; --- Step registry: data-driven dispatch for text and code generation ---
+;; Each IR :type maps to {:text (fn [node] ...) :code (fn [node] ...)}
+;; :text produces human-readable step text for comments
+;; :code produces executable Clojure code (or nil to skip)
+
+(defn- project-config-text [{:keys [slug worker-timeout max-workers]}]
+  (cond
+    worker-timeout (str "a project \"" slug "\" with worker-timeout " worker-timeout)
+    max-workers    (str "a project \"" slug "\" with max-workers " max-workers)
+    :else          (str "a project \"" slug "\"")))
+
+(defn- project-config-code [{:keys [slug worker-timeout max-workers]}]
+  (cond
+    worker-timeout (str "(h/add-project-config \"" slug "\" {:worker-timeout " worker-timeout "})")
+    max-workers    (str "(h/add-project \"" slug "\" {:max-workers " max-workers "})")
+    :else          nil))
+
+(def ^:private step-registry
+  {:unrecognized       {:text :text}
+   ;; Zombie detection
+   :session            {:text (fn [{:keys [session-id label]}]       (str "a session \"" session-id "\" with label \"" label "\""))
+                        :code (fn [{:keys [session-id label]}]       (str "(h/add-session \"" session-id "\" {:label \"" label "\"})"))}
+   :session-status     {:text (fn [{:keys [session-id status age-seconds]}] (str "session \"" session-id "\" has status \"" status "\" and age " age-seconds " seconds"))
+                        :code (fn [{:keys [session-id status age-seconds]}] (str "(h/set-session-status \"" session-id "\" \"" status "\" " age-seconds ")"))}
+   :bead-status        {:text (fn [{:keys [bead-id status]}]         (str "bead \"" bead-id "\" has status \"" status "\""))
+                        :code (fn [{:keys [bead-id status]}]         (str "(h/set-bead-status \"" bead-id "\" \"" status "\")"))}
+   :bead-no-status     {:text (fn [{:keys [bead-id]}]               (str "bead \"" bead-id "\" has no recorded status"))
+                        :code (constantly nil)}
+   :check-zombies      {:text (constantly "checking for zombies")
+                        :code (constantly "(h/check-zombies!)")}
+   :assert-zombie      {:text (fn [{:keys [session-id reason]}]     (str "session \"" session-id "\" should be a zombie with reason \"" reason "\""))
+                        :code (fn [{:keys [session-id reason]}]     (str "(should (h/zombie? \"" session-id "\"))\n(should= \"" reason "\" (h/zombie-reason \"" session-id "\"))"))}
+   :assert-no-zombies  {:text (constantly "no zombies should be detected")
+                        :code (constantly "(should= [] (h/zombies))")}
+   ;; Orch spawning
+   :project-config     {:text project-config-text
+                        :code project-config-code}
+   :active-iteration   {:text (fn [{:keys [slug iteration]}]        (str "project \"" slug "\" has an active iteration \"" iteration "\""))
+                        :code (fn [{:keys [slug iteration]}]        (str "(h/set-active-iteration \"" slug "\" \"" iteration "\")"))}
+   :no-active-iteration {:text (fn [{:keys [slug]}]                 (str "project \"" slug "\" has no active iteration"))
+                         :code (fn [{:keys [slug]}]                 (str "(h/remove-iteration \"" slug "\")"))}
+   :ready-beads        {:text (fn [{:keys [slug count]}]            (str "project \"" slug "\" has " count " ready beads"))
+                        :code (fn [{:keys [slug count]}]            (str "(h/set-ready-beads \"" slug "\" " count ")"))}
+   :ready-bead-with-id {:text (fn [{:keys [slug bead-id]}]          (str "project \"" slug "\" has 1 ready bead with id \"" bead-id "\""))
+                        :code (fn [{:keys [slug bead-id]}]          (str "(h/set-ready-bead-with-id \"" slug "\" \"" bead-id "\")"))}
+   :active-workers     {:text (fn [{:keys [slug count]}]            (str "project \"" slug "\" has " count " active workers"))
+                        :code (fn [{:keys [slug count]}]            (str "(h/set-active-workers \"" slug "\" " count ")"))}
+   :orch-tick          {:text (constantly "the orchestrator ticks")
+                        :code (constantly "(h/orch-tick!)")}
+   :orch-tick-project  {:text (fn [{:keys [slug]}]                  (str "the orchestrator ticks for project \"" slug "\" only"))
+                        :code (fn [{:keys [slug]}]                  (str "(h/orch-tick-project! \"" slug "\")"))}
+   :assert-action      {:text (fn [{:keys [expected]}]              (str "the action should be \"" expected "\""))
+                        :code (fn [{:keys [expected]}]              (str "(should= \"" expected "\" (h/tick-action))"))}
+   :assert-spawn-count {:text (fn [{:keys [count]}]                 (str count " workers should be spawned"))
+                        :code (fn [{:keys [count]}]                 (str "(should= " count " (h/spawn-count))"))}
+   :assert-idle-reason {:text (fn [{:keys [expected]}]              (str "the idle reason should be \"" expected "\""))
+                        :code (fn [{:keys [expected]}]              (str "(should= \"" expected "\" (h/idle-reason))"))}
+   :assert-spawn-label {:text (fn [{:keys [expected]}]              (str "the spawn label should be \"" expected "\""))
+                        :code (fn [{:keys [expected]}]              (str "(should= \"" expected "\" (h/spawn-label))"))}
+   ;; Worker session tracking
+   :bead               {:text (fn [{:keys [bead-id]}]               (str "a bead with id \"" bead-id "\""))
+                        :code (fn [{:keys [bead-id]}]               (str "(h/set-bead-id \"" bead-id "\")"))}
+   :session-id-literal {:text (fn [{:keys [session-id]}]            (str "a session ID \"" session-id "\""))
+                        :code (fn [{:keys [session-id]}]            (str "(h/set-session-id-literal \"" session-id "\")"))}
+   :generate-session-id       {:text (constantly "generating the session ID")
+                               :code (constantly "(h/generate-session-id!)")}
+   :generate-session-id-twice {:text (constantly "generating the session ID twice")
+                               :code (constantly "(h/generate-session-id-twice!)")}
+   :generate-session-ids-both {:text (constantly "generating session IDs for both")
+                               :code (constantly "(h/generate-session-ids-both!)")}
+   :parse-session-id          {:text (constantly "parsing the session ID")
+                               :code (constantly "(h/parse-session-id!)")}
+   :assert-session-id  {:text (fn [{:keys [expected]}]              (str "the session ID should be \"" expected "\""))
+                        :code (fn [{:keys [expected]}]              (str "(should= \"" expected "\" (h/session-id-result))"))}
+   :assert-ids-identical {:text (constantly "both session IDs should be identical")
+                          :code (constantly "(should (h/session-ids-identical?))")}
+   :assert-ids-different {:text (constantly "the session IDs should be different")
+                          :code (constantly "(should (h/session-ids-different?))")}
+   :assert-bead-id     {:text (fn [{:keys [expected]}]              (str "the extracted bead ID should be \"" expected "\""))
+                        :code (fn [{:keys [expected]}]              (str "(should= \"" expected "\" (h/parsed-bead-id))"))}})
+
+;; --- Step text and code: thin dispatchers over the registry ---
 
 (defn step-text
   "Convert a typed IR node to a human-readable step text string."
   [{:keys [type] :as node}]
-  (case type
-    :unrecognized       (:text node)
-    ;; Zombie detection
-    :session            (str "a session \"" (:session-id node) "\" with label \"" (:label node) "\"")
-    :session-status     (str "session \"" (:session-id node) "\" has status \"" (:status node) "\" and age " (:age-seconds node) " seconds")
-    :bead-status        (str "bead \"" (:bead-id node) "\" has status \"" (:status node) "\"")
-    :bead-no-status     (str "bead \"" (:bead-id node) "\" has no recorded status")
-    :check-zombies      "checking for zombies"
-    :assert-zombie      (str "session \"" (:session-id node) "\" should be a zombie with reason \"" (:reason node) "\"")
-    :assert-no-zombies  "no zombies should be detected"
-    ;; Orch spawning (shared :project-config handles both worker-timeout and max-workers)
-    :project-config     (cond
-                          (:worker-timeout node) (str "a project \"" (:slug node) "\" with worker-timeout " (:worker-timeout node))
-                          (:max-workers node)    (str "a project \"" (:slug node) "\" with max-workers " (:max-workers node))
-                          :else                  (str "a project \"" (:slug node) "\""))
-    :active-iteration   (str "project \"" (:slug node) "\" has an active iteration \"" (:iteration node) "\"")
-    :no-active-iteration (str "project \"" (:slug node) "\" has no active iteration")
-    :ready-beads        (str "project \"" (:slug node) "\" has " (:count node) " ready beads")
-    :ready-bead-with-id (str "project \"" (:slug node) "\" has 1 ready bead with id \"" (:bead-id node) "\"")
-    :active-workers     (str "project \"" (:slug node) "\" has " (:count node) " active workers")
-    :orch-tick          "the orchestrator ticks"
-    :orch-tick-project  (str "the orchestrator ticks for project \"" (:slug node) "\" only")
-    :assert-action      (str "the action should be \"" (:expected node) "\"")
-    :assert-spawn-count (str (:count node) " workers should be spawned")
-    :assert-idle-reason (str "the idle reason should be \"" (:expected node) "\"")
-    :assert-spawn-label (str "the spawn label should be \"" (:expected node) "\"")
-    ;; Worker session tracking
-    :bead                  (str "a bead with id \"" (:bead-id node) "\"")
-    :session-id-literal    (str "a session ID \"" (:session-id node) "\"")
-    :generate-session-id   "generating the session ID"
-    :generate-session-id-twice "generating the session ID twice"
-    :generate-session-ids-both "generating session IDs for both"
-    :parse-session-id      "parsing the session ID"
-    :assert-session-id     (str "the session ID should be \"" (:expected node) "\"")
-    :assert-ids-identical  "both session IDs should be identical"
-    :assert-ids-different  "the session IDs should be different"
-    :assert-bead-id        (str "the extracted bead ID should be \"" (:expected node) "\"")
-    (str node)))
-
-;; --- Code generation: emit executable Clojure code per step type ---
+  (let [entry (get step-registry type)
+        text-fn (:text entry)]
+    (cond
+      (nil? entry)    (str node)
+      (= :text text-fn) (get node :text)
+      :else           (text-fn node))))
 
 (defn- generate-step-code
-  "Generate a single line of executable Clojure code for a typed IR step.
-   Returns nil for types that require no action (e.g., :bead-no-status)."
+  "Generate executable Clojure code for a typed IR step, or nil to skip."
   [{:keys [type] :as node}]
-  (case type
-    ;; Zombie detection
-    :session            (str "(h/add-session \"" (:session-id node) "\" {:label \"" (:label node) "\"})")
-    :session-status     (str "(h/set-session-status \"" (:session-id node) "\" \"" (:status node) "\" " (:age-seconds node) ")")
-    :bead-status        (str "(h/set-bead-status \"" (:bead-id node) "\" \"" (:status node) "\")")
-    :bead-no-status     nil
-    :check-zombies      "(h/check-zombies!)"
-    :assert-zombie      (str "(should (h/zombie? \"" (:session-id node) "\"))\n"
-                             "(should= \"" (:reason node) "\" (h/zombie-reason \"" (:session-id node) "\"))")
-    :assert-no-zombies  "(should= [] (h/zombies))"
-    ;; Orch spawning (shared :project-config handles both domains)
-    :project-config     (cond
-                          (:worker-timeout node) (str "(h/add-project-config \"" (:slug node) "\" {:worker-timeout " (:worker-timeout node) "})")
-                          (:max-workers node)    (str "(h/add-project \"" (:slug node) "\" {:max-workers " (:max-workers node) "})")
-                          :else                  nil)
-    :active-iteration   (str "(h/set-active-iteration \"" (:slug node) "\" \"" (:iteration node) "\")")
-    :no-active-iteration (str "(h/remove-iteration \"" (:slug node) "\")")
-    :ready-beads        (str "(h/set-ready-beads \"" (:slug node) "\" " (:count node) ")")
-    :ready-bead-with-id (str "(h/set-ready-bead-with-id \"" (:slug node) "\" \"" (:bead-id node) "\")")
-    :active-workers     (str "(h/set-active-workers \"" (:slug node) "\" " (:count node) ")")
-    :orch-tick          "(h/orch-tick!)"
-    :orch-tick-project  (str "(h/orch-tick-project! \"" (:slug node) "\")")
-    :assert-action      (str "(should= \"" (:expected node) "\" (h/tick-action))")
-    :assert-spawn-count (str "(should= " (:count node) " (h/spawn-count))")
-    :assert-idle-reason (str "(should= \"" (:expected node) "\" (h/idle-reason))")
-    :assert-spawn-label (str "(should= \"" (:expected node) "\" (h/spawn-label))")
-    ;; Worker session tracking
-    :bead                  (str "(h/set-bead-id \"" (:bead-id node) "\")")
-    :session-id-literal    (str "(h/set-session-id-literal \"" (:session-id node) "\")")
-    :generate-session-id   "(h/generate-session-id!)"
-    :generate-session-id-twice "(h/generate-session-id-twice!)"
-    :generate-session-ids-both "(h/generate-session-ids-both!)"
-    :parse-session-id      "(h/parse-session-id!)"
-    :assert-session-id     (str "(should= \"" (:expected node) "\" (h/session-id-result))")
-    :assert-ids-identical  "(should (h/session-ids-identical?))"
-    :assert-ids-different  "(should (h/session-ids-different?))"
-    :assert-bead-id        (str "(should= \"" (:expected node) "\" (h/parsed-bead-id))")
-    nil))
+  (when-let [code-fn (:code (get step-registry type))]
+    (code-fn node)))
 
 (defn- all-recognized?
   "Returns true if all steps in a scenario (and optional background) are recognized types."

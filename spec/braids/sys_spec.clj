@@ -4,7 +4,7 @@
 
 (describe "braids.sys"
 
-  (describe "subprocess-env"
+  (context "subprocess-env"
     (it "returns PATH with env-path prepended when set"
       (let [env (sys/subprocess-env {:env-path "/custom/bin"})]
         (should (clojure.string/starts-with? (get env "PATH") "/custom/bin:"))
@@ -20,7 +20,7 @@
             current (or (System/getenv "PATH") "/usr/bin:/bin")]
         (should= {"PATH" current} env))))
 
-  (describe "bd-bin"
+  (context "bd-bin"
     (it "returns configured value"
       (should= "/usr/local/bin/bd" (sys/bd-bin {:bd-bin "/usr/local/bin/bd"})))
 
@@ -30,7 +30,7 @@
     (it "defaults to bd when absent"
       (should= "bd" (sys/bd-bin {}))))
 
-  (describe "openclaw-bin"
+  (context "openclaw-bin"
     (it "returns configured value"
       (should= "/custom/openclaw" (sys/openclaw-bin {:openclaw-bin "/custom/openclaw"})))
 

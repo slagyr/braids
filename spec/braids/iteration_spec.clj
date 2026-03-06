@@ -4,7 +4,7 @@
 
 (describe "braids.iteration"
 
-  (describe "parse-iteration-edn"
+  (context "parse-iteration-edn"
 
     (it "parses a valid iteration.edn string"
       (let [edn-str (pr-str {:number "009" :status :active
@@ -25,7 +25,7 @@
         (should= [] (:guardrails parsed))
         (should= [] (:notes parsed)))))
 
-  (describe "validate-iteration"
+  (context "validate-iteration"
 
     (it "returns empty errors for valid iteration"
       (should= [] (iter/validate-iteration {:number "001" :status :active :stories []})))
@@ -46,7 +46,7 @@
       (should-contain "Missing or invalid :stories"
         (iter/validate-iteration {:number "001" :status :active}))))
 
-  (describe "iteration->edn-string"
+  (context "iteration->edn-string"
 
     (it "round-trips through parse"
       (let [iter-map {:number "003" :status :active
@@ -58,7 +58,7 @@
         (should= :active (:status parsed))
         (should= [{:id "abc" :title "Thing"}] (:stories parsed)))))
 
-  (describe "story-ids"
+  (context "story-ids"
 
     (it "extracts ids from map stories"
       (should= ["abc" "def"]
@@ -68,7 +68,7 @@
       (should= ["abc" "def"]
                (iter/story-ids {:stories ["abc" "def"]}))))
 
-  (describe "annotate-stories"
+  (context "annotate-stories"
 
     (it "annotates stories with bead status info"
       (let [stories [{:id "proj-abc" :title "Do thing"}
@@ -105,7 +105,7 @@
         (should= "proj-abc" (:id (first result)))
         (should= "unknown" (:status (first result))))))
 
-  (describe "completion-stats"
+  (context "completion-stats"
 
     (it "calculates completion percentage"
       (let [stories [{:id "a" :status "closed"}
@@ -119,7 +119,7 @@
       (should= {:total 0 :closed 0 :percent 0}
                (iter/completion-stats []))))
 
-  (describe "format-iteration"
+  (context "format-iteration"
 
     (it "formats iteration for human-readable output"
       (let [data {:number "009"

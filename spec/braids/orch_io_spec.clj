@@ -15,7 +15,7 @@
 
 (describe "braids.orch-io"
 
-  (describe "find-active-iteration"
+  (context "find-active-iteration"
 
     (it "finds active iteration"
       (let [project (str test-tmp "/proj1")]

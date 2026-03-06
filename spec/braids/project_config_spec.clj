@@ -4,7 +4,7 @@
 
 (describe "braids.project-config"
 
-  (describe "parse-project-config"
+  (context "parse-project-config"
 
     (it "parses a valid config.edn"
       (let [edn-str (pr-str {:name "My Project"
@@ -51,7 +51,7 @@
         (should-not-contain :goal result)
         (should-not-contain :guardrails result))))
 
-  (describe "notification-mentions"
+  (context "notification-mentions"
 
     (it "supports multiple mentions per event as vectors"
       (let [edn-str (pr-str {:name "Test"
@@ -78,7 +78,7 @@
             result (pc/parse-project-config edn-str)]
         (should= nil (:notification-mentions result)))))
 
-  (describe "validate-project-config"
+  (context "validate-project-config"
 
     (it "validates a correct config"
       (let [cfg {:name "Test" :status :active :priority :normal :autonomy :full}]
@@ -100,7 +100,7 @@
       (let [cfg {:status :active :priority :normal :autonomy :full}]
         (should-not= [] (pc/validate-project-config cfg)))))
 
-  (describe "project-config->edn-string"
+  (context "project-config->edn-string"
 
     (it "round-trips through parse"
       (let [cfg {:name "Test"

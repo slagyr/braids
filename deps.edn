@@ -6,7 +6,7 @@
  :aliases
  {:spec {:main-opts ["-m" "speclj.main" "-c" "spec/braids" "-s" "src"]}
   :cov  {:extra-deps {cloverage/cloverage {:mvn/version "1.2.4"}}
-         :main-opts ["-m" "speclj.cloverage" "--" "-p" "src" "-s" "spec"]}
+         :main-opts ["-m" "speclj.cloverage" "--" "-p" "src" "-s" "spec" "--lcov"]}
   :crap {:extra-deps {io.github.unclebob/crap4clj
                        {:git/url "https://github.com/unclebob/crap4clj"
                         :git/sha "9f12da1b09bc1177f8f058108cf22a73bc9a97a0"}}

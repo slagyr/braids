@@ -28,7 +28,7 @@
 
 (describe "braids.status"
 
-  (describe "build-dashboard"
+  (context "build-dashboard"
 
     (it "includes all projects from registry"
       (let [dash (status/build-dashboard sample-registry sample-configs sample-iterations sample-workers)]
@@ -57,7 +57,7 @@
       (let [dash (status/build-dashboard {:projects []} {} {} {})]
         (should= [] (:projects dash)))))
 
-  (describe "format-dashboard"
+  (context "format-dashboard"
 
     (it "shows project names and status"
       (let [dash (status/build-dashboard sample-registry sample-configs sample-iterations sample-workers)
@@ -87,7 +87,7 @@
             output (status/format-dashboard dash)]
         (should-contain "paused" output))))
 
-  (describe "format-dashboard-json"
+  (context "format-dashboard-json"
 
     (it "returns valid JSON"
       (let [dash (status/build-dashboard sample-registry sample-configs sample-iterations sample-workers)
@@ -102,7 +102,7 @@
             alpha (first (filter #(= "alpha" (:slug %)) (:projects parsed)))]
         (should= 33 (get-in alpha [:iteration :stats :percent])))))
 
-  (describe "format-project-detail"
+  (context "format-project-detail"
 
     (it "shows detailed view for a single project"
       (let [dash (status/build-dashboard sample-registry sample-configs sample-iterations sample-workers)

@@ -18,7 +18,7 @@
 
 (describe "braids.list"
 
-  (describe "format-list"
+  (context "format-list"
 
     (it "returns 'No projects registered.' for empty projects"
       (should= "No projects registered." (list/format-list {:projects []})))
@@ -95,7 +95,7 @@
         ;; gamma has 100% progress - should be green
         (should-contain "\033[32m" output))))
 
-  (describe "format-list-json"
+  (context "format-list-json"
 
     (it "returns JSON array of projects"
       (let [output (list/format-list-json {:projects sample-projects})]

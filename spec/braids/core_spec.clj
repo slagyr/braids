@@ -4,7 +4,7 @@
 
 (describe "braids.core"
 
-  (describe "dispatch"
+  (context "dispatch"
 
     (it "returns help text with no args"
       (let [result (core/dispatch [])]
@@ -36,7 +36,7 @@
         (should= :ready (:command result))
         (should= ["--verbose"] (:args result)))))
 
-  (describe "help-text"
+  (context "help-text"
 
     (it "includes braids in the output"
       (should-contain "braids" (core/help-text)))
@@ -66,7 +66,7 @@
     (it "resets color after each colored segment"
       (should-contain "\033[0m" (core/help-text))))
 
-  (describe "run"
+  (context "run"
 
     (it "prints help and returns 0 for help command"
       (let [output (with-out-str (core/run []))]

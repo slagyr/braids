@@ -26,7 +26,7 @@
         (.delete (io/file dir))))
     (.delete (io/file tmp-root)))
 
-  (describe "run-pipeline!"
+  (context "run-pipeline!"
 
     (it "parses .feature files to .edn"
       (with-out-str (pipeline/run-pipeline! features-dir edn-dir generated-dir))
@@ -47,7 +47,7 @@
         (should-contain "(context \"It works\"" content)
         (should-contain "(pending \"not yet implemented\")" content))))
 
-  (describe "default-dirs"
+  (context "default-dirs"
 
     (it "returns a map with default directory paths"
       (let [dirs (pipeline/default-dirs)]

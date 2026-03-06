@@ -14,7 +14,7 @@
     (with-redefs [config-io/default-config-path @config-path]
       (it)))
 
-  (describe "config list"
+  (context "config list"
     (it "lists all config keys and values"
       (spit @config-path (pr-str {:braids-home "/my/projects"}))
       (should-contain "braids-home"
@@ -26,7 +26,7 @@
         (should-contain "braids-home" output)
         (should-contain "~/Projects" output))))
 
-  (describe "config get"
+  (context "config get"
     (it "gets a specific key"
       (spit @config-path (pr-str {:braids-home "/custom/path"}))
       (should-contain "/custom/path"
@@ -52,7 +52,7 @@
       (should-contain "Usage"
                       (with-out-str (core/run ["config" "get"])))))
 
-  (describe "config set"
+  (context "config set"
     (it "sets a key value"
       (spit @config-path (pr-str {:braids-home "~/Projects"}))
       (with-out-str (core/run ["config" "set" "braids-home" "/new/path"]))
@@ -67,7 +67,7 @@
       (should-contain "Usage"
                       (with-out-str (core/run ["config" "set"])))))
 
-  (describe "config (no subcommand)"
+  (context "config (no subcommand)"
     (it "shows config help"
       (should-contain "config get"
                       (with-out-str (core/run ["config"]))))))

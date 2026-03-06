@@ -13,7 +13,7 @@
 
 (describe "braids.new-io"
 
-  (describe "parse-new-args"
+  (context "parse-new-args"
 
     (it "parses slug as first positional arg"
       (let [result (new-io/parse-new-args ["my-project" "--name" "My Project" "--goal" "Build it"])]
@@ -36,7 +36,7 @@
                                             "--guardrails" "TDD always"])]
         (should= ["No breaking changes" "TDD always"] (:guardrails result)))))
 
-  (describe "run-new"
+  (context "run-new"
 
     (with-all tmp-dir (str (fs/create-temp-dir {:prefix "braids-new-test"})))
     (with-all reg-file (str @tmp-dir "/registry.edn"))

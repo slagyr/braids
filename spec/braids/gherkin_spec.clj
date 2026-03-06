@@ -4,7 +4,7 @@
 
 (describe "Gherkin Parser"
 
-  (describe "classify-step"
+  (context "classify-step"
 
     (it "classifies project config with worker-timeout"
       (should= {:type :project-config :slug "proj" :worker-timeout 3600}
@@ -146,7 +146,7 @@
       (should= {:type :assert-bead-id :expected "proj-abc"}
                (gherkin/classify-step "the extracted bead ID should be \"proj-abc\""))))
 
-  (describe "parse-feature"
+  (context "parse-feature"
 
     (it "parses a minimal feature with one scenario"
       (let [text "Feature: Simple feature\n\n  Scenario: Basic test\n    Given a step\n    When another step\n    Then final step"
@@ -232,7 +232,7 @@
             result (gherkin/parse-feature text)]
         (should-not-contain :background result))))
 
-  (describe "parse-feature-file"
+  (context "parse-feature-file"
 
     (it "includes source filename in the result"
       (let [result (gherkin/parse-feature-file "features/orch_spawning.feature")]
@@ -303,7 +303,7 @@
         (should= "The orchestrator tick examines project state and decides whether\nto spawn workers or remain idle. It respects max-workers capacity,\nrequires active iterations, and reports idle reasons."
                  (:description result)))))
 
-  (describe "parse-features-dir"
+  (context "parse-features-dir"
 
     (it "parses all .feature files in a directory"
       (let [results (gherkin/parse-features-dir "features")]
@@ -312,7 +312,7 @@
         (should (every? :feature results))
         (should (every? :scenarios results)))))
 
-  (describe "write-edn"
+  (context "write-edn"
 
     (it "writes parsed feature to .edn file"
       (let [ir {:source "test.feature"

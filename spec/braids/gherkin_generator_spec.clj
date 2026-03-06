@@ -6,7 +6,7 @@
 
 (describe "Gherkin Generator"
 
-  (describe "source->ns-name"
+  (context "source->ns-name"
 
     (it "converts feature filename to spec namespace"
       (should= "braids.features.orch-spawning-spec"
@@ -20,14 +20,14 @@
       (should= "braids.features.zombie-detection-spec"
                (gen/source->ns-name "zombie_detection.edn"))))
 
-  (describe "generate-ns-form"
+  (context "generate-ns-form"
 
     (it "generates a valid ns declaration"
       (let [ns-form (gen/generate-ns-form "orch_spawning.feature")]
         (should-contain "(ns braids.features.orch-spawning-spec" ns-form)
         (should-contain "[speclj.core :refer :all]" ns-form))))
 
-  (describe "step-text"
+  (context "step-text"
 
     (it "returns :text for unrecognized steps"
       (should= "a step" (gen/step-text {:type :unrecognized :text "a step"})))
@@ -148,7 +148,7 @@
       (should= "the extracted bead ID should be \"proj-abc\""
                (gen/step-text {:type :assert-bead-id :expected "proj-abc"}))))
 
-  (describe "generate-step-comments"
+  (context "generate-step-comments"
 
     (it "generates Given comments from IR nodes"
       (let [comments (gen/generate-step-comments
@@ -188,7 +188,7 @@
         (should (< (str/index-of comments "Background:")
                    (str/index-of comments "scenario step"))))))
 
-  (describe "generate-scenario"
+  (context "generate-scenario"
 
     (it "generates a context with pending it block for unrecognized steps"
       (let [scenario {:scenario "Simple test"
@@ -378,7 +378,7 @@
         (should-not-contain "bead-status" output)
         (should-not-contain "pending" output))))
 
-  (describe "generate-spec"
+  (context "generate-spec"
 
     (it "generates a complete spec file with pending for unrecognized steps"
       (let [ir {:source "test_feature.feature"
@@ -441,7 +441,7 @@
         (should-not-throw
           (read-string (str "[" output "]"))))))
 
-  (describe "generate-spec with real IR"
+  (context "generate-spec with real IR"
 
     ;; Note: These tests require running bb parse:features first to generate the .edn IR files
     ;; with the new typed IR format.
@@ -487,7 +487,7 @@
         (should-contain "(h/reset!)" output)
         (should-contain "(h/check-zombies!)" output))))
 
-  (describe "generate-features!"
+  (context "generate-features!"
 
     (it "writes generated spec files to output directory"
       (let [tmp-dir (str "/tmp/gen-test-" (System/currentTimeMillis))

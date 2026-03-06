@@ -6,7 +6,7 @@
 
 (describe "braids.init-io"
 
-  (describe "parse-init-args"
+  (context "parse-init-args"
     (it "parses no args"
       (should= {} (init-io/parse-init-args [])))
 
@@ -16,7 +16,7 @@
     (it "parses --braids-home"
       (should= {:braids-home "/tmp/p"} (init-io/parse-init-args ["--braids-home" "/tmp/p"]))))
 
-  (describe "run-init (filesystem integration)"
+  (context "run-init (filesystem integration)"
     (with-all tmp-dir (str (fs/create-temp-dir {:prefix "braids-init-test"})))
     (with-all braids-dir (str @tmp-dir "/braids"))
     (with-all braids-home (str @tmp-dir "/projects"))

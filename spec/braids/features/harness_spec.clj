@@ -6,7 +6,7 @@
 
   (before (h/reset!))
 
-  (describe "state management"
+  (context "state management"
 
     (it "starts with empty state after reset"
       (should= {} (h/sessions))
@@ -14,19 +14,19 @@
       (should= {} (h/bead-statuses))
       (should= [] (h/zombies))))
 
-  (describe "add-project-config"
+  (context "add-project-config"
 
     (it "adds a project config with worker-timeout"
       (h/add-project-config "proj" {:worker-timeout 3600})
       (should= {:worker-timeout 3600} (get (h/configs) "proj"))))
 
-  (describe "add-session"
+  (context "add-session"
 
     (it "adds a session with label"
       (h/add-session "s1" {:label "project:proj:proj-abc"})
       (should= {:label "project:proj:proj-abc"} (get (h/sessions) "s1"))))
 
-  (describe "set-session-status"
+  (context "set-session-status"
 
     (it "sets session status and age"
       (h/add-session "s1" {:label "project:proj:proj-abc"})
@@ -35,13 +35,13 @@
         (should= "running" (:status session))
         (should= 100 (:age-seconds session)))))
 
-  (describe "set-bead-status"
+  (context "set-bead-status"
 
     (it "sets bead status"
       (h/set-bead-status "proj-abc" "closed")
       (should= "closed" (get (h/bead-statuses) "proj-abc"))))
 
-  (describe "check-zombies!"
+  (context "check-zombies!"
 
     (it "detects zombie when bead is closed"
       (h/add-project-config "proj" {:worker-timeout 3600})
@@ -59,7 +59,7 @@
       (h/check-zombies!)
       (should= [] (h/zombies))))
 
-  (describe "zombie?"
+  (context "zombie?"
 
     (it "returns true when session is a zombie"
       (h/add-project-config "proj" {:worker-timeout 3600})
@@ -77,7 +77,7 @@
       (h/check-zombies!)
       (should-not (h/zombie? "s1"))))
 
-  (describe "zombie-reason"
+  (context "zombie-reason"
 
     (it "returns the zombie reason for a session"
       (h/add-project-config "proj" {:worker-timeout 3600})
@@ -89,7 +89,7 @@
 
   ;; --- Orch spawning harness ---
 
-  (describe "add-project"
+  (context "add-project"
 
     (it "adds a project to registry with active status and sets config"
       (h/add-project "alpha" {:max-workers 2})
@@ -100,7 +100,7 @@
                           (h/orch-tick!)
                           (h/tick-action)))))
 
-  (describe "set-active-iteration"
+  (context "set-active-iteration"
 
     (it "sets an active iteration for a project"
       (h/add-project "alpha" {:max-workers 1})
@@ -109,7 +109,7 @@
       (h/orch-tick!)
       (should= "spawn" (h/tick-action))))
 
-  (describe "remove-iteration"
+  (context "remove-iteration"
 
     (it "removes iteration for a project"
       (h/add-project "alpha" {:max-workers 1})
@@ -118,7 +118,7 @@
       (h/orch-tick!)
       (should= "idle" (h/tick-action))))
 
-  (describe "set-ready-beads"
+  (context "set-ready-beads"
 
     (it "sets ready beads count for a project"
       (h/add-project "alpha" {:max-workers 2})
@@ -128,7 +128,7 @@
       (h/orch-tick!)
       (should= 2 (h/spawn-count))))
 
-  (describe "set-ready-bead-with-id"
+  (context "set-ready-bead-with-id"
 
     (it "sets a specific ready bead by id"
       (h/add-project "alpha" {:max-workers 2})
@@ -138,7 +138,7 @@
       (h/orch-tick!)
       (should= "project:alpha:alpha-abc" (h/spawn-label))))
 
-  (describe "set-active-workers"
+  (context "set-active-workers"
 
     (it "sets the active worker count"
       (h/add-project "alpha" {:max-workers 1})
@@ -149,7 +149,7 @@
       (should= "idle" (h/tick-action))
       (should= "all-at-capacity" (h/idle-reason))))
 
-  (describe "orch-tick!"
+  (context "orch-tick!"
 
     (it "runs orch/tick with accumulated state"
       (h/add-project "proj" {:max-workers 1})
@@ -158,7 +158,7 @@
       (h/orch-tick!)
       (should= "spawn" (h/tick-action))))
 
-  (describe "orch-tick-project!"
+  (context "orch-tick-project!"
 
     (it "runs orch/tick for a single project only"
       (h/add-project "alpha" {:max-workers 1})
@@ -170,7 +170,7 @@
       (should= "idle" (h/tick-action))
       (should= "no-active-iterations" (h/idle-reason))))
 
-  (describe "result accessors"
+  (context "result accessors"
 
     (it "tick-action returns the action from tick result"
       (h/add-project "proj" {:max-workers 1})
@@ -202,35 +202,35 @@
 
   ;; --- Worker session tracking harness ---
 
-  (describe "set-bead-id"
+  (context "set-bead-id"
 
     (it "stores a bead id for session generation"
       (h/set-bead-id "proj-abc")
       (h/generate-session-id!)
       (should= "braids-proj-abc-worker" (h/session-id-result))))
 
-  (describe "set-session-id-literal"
+  (context "set-session-id-literal"
 
     (it "stores a literal session ID string"
       (h/set-session-id-literal "braids-proj-abc-worker")
       (h/parse-session-id!)
       (should= "proj-abc" (h/parsed-bead-id))))
 
-  (describe "generate-session-id!"
+  (context "generate-session-id!"
 
     (it "generates session ID from stored bead id"
       (h/set-bead-id "proj-xyz")
       (h/generate-session-id!)
       (should= "braids-proj-xyz-worker" (h/session-id-result))))
 
-  (describe "generate-session-id-twice!"
+  (context "generate-session-id-twice!"
 
     (it "generates session ID twice and stores both results"
       (h/set-bead-id "proj-xyz")
       (h/generate-session-id-twice!)
       (should (h/session-ids-identical?))))
 
-  (describe "generate-session-ids-both!"
+  (context "generate-session-ids-both!"
 
     (it "generates session IDs for two bead ids"
       (h/set-bead-id "proj-aaa")
@@ -238,14 +238,14 @@
       (h/generate-session-ids-both!)
       (should (h/session-ids-different?))))
 
-  (describe "parse-session-id!"
+  (context "parse-session-id!"
 
     (it "parses stored session ID to extract bead id"
       (h/set-session-id-literal "braids-proj-abc-worker")
       (h/parse-session-id!)
       (should= "proj-abc" (h/parsed-bead-id))))
 
-  (describe "session tracking result accessors"
+  (context "session tracking result accessors"
 
     (it "session-id-result returns the generated session ID"
       (h/set-bead-id "proj-abc")

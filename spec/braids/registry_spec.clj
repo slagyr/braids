@@ -4,7 +4,7 @@
 
 (describe "braids.registry"
 
-  (describe "parse-registry"
+  (context "parse-registry"
 
     (it "parses a valid registry.edn"
       (let [edn-str (pr-str {:projects [{:slug "my-project"
@@ -26,7 +26,7 @@
       (let [result (registry/parse-registry (pr-str {:projects []}))]
         (should= [] (:projects result)))))
 
-  (describe "validate-registry"
+  (context "validate-registry"
 
     (it "validates a correct registry"
       (let [reg {:projects [{:slug "test" :status :active :priority :normal :path "~/Projects/test"}]}]
@@ -49,7 +49,7 @@
                              {:slug "test" :status :paused :priority :low :path "~/Projects/test2"}]}]
         (should-not= [] (registry/validate-registry reg)))))
 
-  (describe "registry->edn-string"
+  (context "registry->edn-string"
 
     (it "round-trips through parse"
       (let [reg {:projects [{:slug "test" :status :active :priority :normal :path "~/Projects/test"}]}

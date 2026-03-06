@@ -5,7 +5,7 @@
 
 (describe "braids.orch"
 
-  (describe "tick (pure logic)"
+  (context "tick (pure logic)"
 
     (it "returns idle with no-active-iterations when no projects"
       (let [result (orch/tick {:projects []} {} {} {} {} {})]
@@ -191,7 +191,7 @@
             result (orch/tick registry configs iterations beads workers notifications)]
         (should= "spawn" (:action result)))))
 
-  (describe "format-tick-json"
+  (context "format-tick-json"
 
     (it "formats spawn result as JSON"
       (let [result {:action "spawn"
@@ -209,7 +209,7 @@
         (should-contain "\"action\":\"idle\"" json-str)
         (should-contain "no-ready-beads" json-str))))
 
-  (describe "format-orch-tick-json"
+  (context "format-orch-tick-json"
 
     (it "formats idle result with reason"
       (let [tick-result {:action "idle" :reason "no-ready-beads" :disable-cron true}
@@ -259,7 +259,7 @@
         (should= "project:a:a-1" (:label (first (:spawns parsed))))
         (should= "project:b:b-2" (:label (second (:spawns parsed)))))))
 
-  (describe "no-ready-beads-projects"
+  (context "no-ready-beads-projects"
 
     (it "identifies projects with active iterations but no ready beads"
       (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
@@ -270,7 +270,7 @@
             workers {}]
         (should= ["proj"] (orch/no-ready-beads-projects registry configs iterations beads workers)))))
 
-  (describe "detect-zombies"
+  (context "detect-zombies"
 
     (it "returns empty when no sessions"
       (should= [] (orch/detect-zombies [] {} {})))
@@ -337,7 +337,7 @@
             bead-statuses {"proj-abc" "open"}
             result (orch/detect-zombies sessions configs bead-statuses)]
         (should-not-contain :session-id (first result)))))
-  (describe "worker-session-id"
+  (context "worker-session-id"
 
     (it "constructs deterministic session ID from bead-id"
       (should= "braids-proj-abc-worker" (orch/worker-session-id "proj-abc")))
@@ -345,7 +345,7 @@
     (it "handles bead-ids with hyphens"
       (should= "braids-my-proj-x1-worker" (orch/worker-session-id "my-proj-x1"))))
 
-  (describe "parse-worker-session-id"
+  (context "parse-worker-session-id"
 
     (it "extracts bead-id from valid session ID"
       (should= "proj-abc" (orch/parse-worker-session-id "braids-proj-abc-worker")))
@@ -368,7 +368,7 @@
     (it "returns nil for empty bead-id"
       (should-be-nil (orch/parse-worker-session-id "braids--worker"))))
 
-  (describe "parse-session-labels-string"
+  (context "parse-session-labels-string"
 
     (it "parses space-separated labels into list"
       (should= ["project:proj:abc" "project:proj:def"]
@@ -388,7 +388,7 @@
       (should= ["project:proj:abc"]
                (orch/parse-session-labels-string "other:thing project:proj:abc random"))))
 
-  (describe "detect-zombies-from-labels"
+  (context "detect-zombies-from-labels"
 
     (it "detects zombie when bead is closed"
       (let [labels ["project:proj:proj-abc"]
@@ -415,7 +415,7 @@
             result (orch/detect-zombies-from-labels labels bead-statuses)]
         (should= 0 (count result)))))
 
-  (describe "format-orch-tick-json with zombies"
+  (context "format-orch-tick-json with zombies"
 
     (it "includes zombies array in spawn output"
       (let [tick-result {:action "spawn"
@@ -449,7 +449,7 @@
             parsed (json/parse-string json-str true)]
         (should-not-contain :sessionId (first (:zombies parsed))))))
 
-  (describe "build-worker-spawn"
+  (context "build-worker-spawn"
 
     (it "includes agent-id, model, and thinking in spawn data"
       (let [cfg {:worker-agent "scrapper"
@@ -471,7 +471,7 @@
         (should= nil (:model spawn))
         (should= :high (:thinking spawn)))))
 
-  (describe "format-debug-output"
+  (context "format-debug-output"
 
     (it "shows project with no beads and active iteration as all closed"
       (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}

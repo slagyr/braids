@@ -5,7 +5,7 @@
 
 (describe "braids.ready-io"
 
-  (describe "count-workers"
+  (context "count-workers"
 
     (it "returns empty map for no labels"
       (should= {} (rio/count-workers [])))
@@ -26,13 +26,13 @@
       (should= {"proj" 1}
                (rio/count-workers ["project:proj"]))))
 
-  (describe "resolve-state-home"
+  (context "resolve-state-home"
 
     (it "returns ~/.openclaw/braids by default"
       (should= (str (fs/expand-home "~/.openclaw/braids"))
                (rio/resolve-state-home))))
 
-  (describe "load-registry uses state-home"
+  (context "load-registry uses state-home"
 
     (it "loads registry from state-home not braids-home"
       (let [state-home (str (fs/create-temp-dir {:prefix "state-home-test"}))

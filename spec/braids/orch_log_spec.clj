@@ -4,7 +4,7 @@
 
 (describe "orch-log"
 
-  (describe "format-log-lines"
+  (context "format-log-lines"
 
     (it "includes start header with timestamp"
       (let [lines (log/format-log-lines
@@ -112,7 +112,7 @@
         (should-contain "proj1" text)
         (should-contain "no active iteration" text))))
 
-  (describe "write-log!"
+  (context "write-log!"
 
     (it "appends to the specified log file"
       (let [log-file (str "/tmp/braids-test-" (System/currentTimeMillis) ".log")]
