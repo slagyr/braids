@@ -1,2 +1,23 @@
-{:deps {speclj/speclj {:mvn/version "3.12.0"}}
- :paths ["src" "spec"]}
+{:deps {speclj/speclj {:mvn/version "3.12.0"}
+        babashka/fs {:mvn/version "0.5.25"}
+        babashka/process {:mvn/version "0.5.22"}
+        cheshire/cheshire {:mvn/version "5.13.0"}}
+ :paths ["src" "spec"]
+ :aliases
+ {:spec {:main-opts ["-m" "speclj.main" "-c" "spec/braids" "-s" "src"]}
+  :cov  {:extra-deps {cloverage/cloverage {:mvn/version "1.2.4"}}
+         :main-opts ["-m" "speclj.cloverage" "--" "-p" "src" "-s" "spec"]}
+  :crap {:extra-deps {io.github.unclebob/crap4clj
+                       {:git/url "https://github.com/unclebob/crap4clj"
+                        :git/sha "9f12da1b09bc1177f8f058108cf22a73bc9a97a0"}}
+         :main-opts ["-m" "crap4clj.core"]}
+  :mutate {:extra-deps {io.github.unclebob/clj-mutate
+                         {:git/url "https://github.com/unclebob/clj-mutate"
+                          :git/sha "223da6c1a814265d0a714417def997ce7878a8da"}
+                        org.clojure/tools.reader {:mvn/version "1.4.2"}}
+           :extra-paths ["spec"]
+           :main-opts ["-m" "clj-mutate.core"]}
+  :spec-structure-check {:extra-deps {io.github.unclebob/speclj-structure-check
+                                       {:git/url "https://github.com/unclebob/speclj-structure-check"
+                                        :git/sha "7cc804c4e99b3482ca1d8a26b735ed41751a03ab"}}
+                         :main-opts ["-m" "speclj-structure-check.core"]}}}
