@@ -1,5 +1,5 @@
 {:deps {speclj/speclj {:mvn/version "3.12.0"}}
- :paths ["src" "spec" "test"]
+ :paths ["src" "spec" "spec-gherkin" "test"]
  :tasks {test {:doc "Run all specs"
                :requires ([babashka.fs :as fs]
                           [speclj.main :as speclj])
@@ -7,6 +7,12 @@
                        "spec"
                        "-s" "src"
                        *command-line-args*)}
+         test:gherkin {:doc "Run gherkin specs"
+                       :requires ([speclj.main :as speclj])
+                       :task (apply speclj/-main "-c"
+                               "spec-gherkin"
+                               "-s" "src"
+                               *command-line-args*)}
          braids {:doc "Run the braids CLI"
                  :requires ([braids.core :as braids])
                  :task (System/exit (braids/run *command-line-args*))}}}
