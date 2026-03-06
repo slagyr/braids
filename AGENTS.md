@@ -12,6 +12,7 @@ task at hand.
 
 - [tdd](https://raw.githubusercontent.com/slagyr/agent-skills/main/tdd/SKILL.md)
 - [crap4clj](https://raw.githubusercontent.com/unclebob/crap4clj/master/SKILL.md)
+- [using-clj-mutate](https://raw.githubusercontent.com/unclebob/clj-mutate/master/skills/using-clj-mutate/SKILL.md)
 
 ## Development Process
 
