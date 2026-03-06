@@ -12,21 +12,18 @@
            {:id "braids-asw" :title "Fix gherkin_spec.clj file path — move to spec/braids/ to match namespace"}
            {:id "braids-dyf" :title "Move orphan top-level spec files into spec/braids/ with proper namespaces"}
            {:id "braids-zxq" :title "Rename orch_runner_test.clj to orch_runner_spec.clj — consistent naming"}
-           ;; Gherkin spec cleanup
            {:id "braids-z69q" :title "Move gherkin specs back into spec/ — they are unit tests, not feature tests"}
-           ;; Gherkin runner fixes (Phase 1)
-           {:id "braids-kk9u" :title "Fix gherkin runner core — load-step-defs and match-step"}
-           {:id "braids-2t6z" :title "Fix gherkin parser — execute background steps in each scenario"}
-           {:id "braids-kzkv" :title "Gherkin runner test suite with example features"}
-           ;; Real step definitions (Phase 3)
-           {:id "braids-jq7o" :title "Implement real step definitions for orch_spawning.feature"}
-           {:id "braids-5eb1" :title "Implement real step definitions for zombie_detection.feature"}
-           {:id "braids-tysu" :title "Implement real step definitions for worker_session_tracking.feature"}
-           ;; Wire up (Phase 4)
-           {:id "braids-jxls" :title "Add bb test:features and bb test:all tasks"}]
+           ;; Gherkin pipeline — new architecture (parse -> generate -> run)
+           {:id "braids-m3xs" :title "Gherkin parser — .feature to .edn IR"}
+           {:id "braids-b6gb" :title "Speclj generator — .edn IR to speclj spec files"}
+           {:id "braids-87vw" :title "Wire up bb test:features pipeline — parse, generate, run"}
+           {:id "braids-5mun" :title "Implement orch_spawning feature specs"}
+           {:id "braids-bmte" :title "Implement zombie_detection feature specs"}
+           {:id "braids-awh6" :title "Implement worker_session_tracking feature specs"}]
  :notes ["Theme: Clean, fast, passing test suite + gherkin feature suite"
          "Phase 0: Test suite health — all closed"
-         "Phase 1: Fix gherkin runner (kk9u + 2t6z parallel, then kzkv)"
-         "Phase 2: Feature files rewritten by planner (committed to disk)"
-         "Phase 3: Real step defs (jq7o + 5eb1 + tysu parallel, after kzkv)"
-         "Phase 4: Wire up bb test:features and bb test:all (jxls, after phase 3)"]}
+         "Phase 1: Feature files written by planner (committed to disk)"
+         "Phase 2: Gherkin parser (m3xs) -> Generator (b6gb) -> Wire up (87vw)"
+         "Phase 3: Implement feature specs (5mun + bmte + awh6 parallel)"
+         "Old step-def approach abandoned — beads kk9u/2t6z/kzkv/jq7o/5eb1/tysu/jxls closed"
+         "New approach: .feature -> .edn IR -> generated speclj specs -> workers fill in"]}

@@ -3,7 +3,6 @@
    These are the runner's own acceptance tests — they prove the runner works
    before we trust it with real project features."
   (:require [speclj.core :refer :all]
-            [braids.gherkin :as gherkin]
             [braids.gherkin-runner :as runner]))
 
 (def examples-features "spec/features/examples")
@@ -13,9 +12,9 @@
   "Parse and run a single example feature file against example step defs."
   [filename]
   (let [text (slurp (str examples-features "/" filename))
-        feature (gherkin/parse-feature text)
+        feature (runner/parse-feature-legacy text)
         step-defs (runner/load-step-defs examples-step-defs)]
-    (gherkin/run-feature feature step-defs)))
+    (runner/run-feature feature step-defs)))
 
 (describe "Gherkin Runner (example features)"
 

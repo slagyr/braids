@@ -1,104 +1,164 @@
 (ns braids.gherkin
-  (:require [clojure.string :as str]))
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]))
 
-(defn parse-steps [lines]
-  (for [line lines
-        :let [trimmed (str/trim line)]
-        :when (and (seq trimmed)
-                   (not (str/starts-with? trimmed "Scenario:"))
-                   (not (str/starts-with? trimmed "Background:"))
-                   (not (str/starts-with? trimmed "Feature:")))]
-    (let [[keyword & text-parts] (str/split trimmed #" " 2)
-          text (str/join " " text-parts)]
-      {:keyword keyword :text text})))
+(def ^:private step-keywords #{"Given" "When" "Then" "And" "But"})
 
-(defn- split-scenarios [lines]
-  (let [scenario-lines (drop-while #(not (str/starts-with? (str/trim %) "Scenario:")) lines)]
-    (when (seq scenario-lines)
-      (let [groups (reduce (fn [acc line]
-                             (if (str/starts-with? (str/trim line) "Scenario:")
-                               (conj acc [line])
-                               (update acc (dec (count acc)) conj line)))
-                           [] scenario-lines)]
-        (for [[scenario-line & step-lines] groups]
-          {:title (str/trim (subs (str/trim scenario-line) 9))
-           :steps (parse-steps (or step-lines []))})))))
+(defn- step-keyword? [trimmed]
+  (some #(str/starts-with? trimmed (str % " ")) step-keywords))
 
-(defn parse-feature [text]
+(defn- strip-keyword [trimmed]
+  (let [space-idx (str/index-of trimmed " ")]
+    (when space-idx
+      (subs trimmed (inc space-idx)))))
+
+(defn- phase-for-keyword [trimmed]
+  (cond
+    (str/starts-with? trimmed "Given ") :givens
+    (str/starts-with? trimmed "When ")  :whens
+    (str/starts-with? trimmed "Then ")  :thens
+    :else                               nil))
+
+(defn- add-step [scenario phase text]
+  (update scenario phase (fnil conj []) text))
+
+(defn- process-step [state trimmed]
+  (let [phase (phase-for-keyword trimmed)]
+    (if phase
+      (-> state
+          (assoc :current-phase phase)
+          (update :scenario add-step phase (strip-keyword trimmed)))
+      ;; And/But — append to current phase
+      (let [text (strip-keyword trimmed)]
+        (update state :scenario add-step (:current-phase state) text)))))
+
+(defn- parse-scenario-lines [lines]
+  (let [result (reduce process-step
+                       {:scenario {:givens [] :whens [] :thens []}
+                        :current-phase nil}
+                       lines)]
+    (:scenario result)))
+
+(defn- tag-line? [trimmed]
+  (str/starts-with? trimmed "@"))
+
+(defn- has-wip-tag? [trimmed]
+  (some #(= "@wip" %) (str/split trimmed #"\s+")))
+
+(defn- parse-sections
+  "Splits feature lines into sections: feature line, description, background, and scenarios."
+  [lines]
+  (loop [lines lines
+         state :start
+         wip-pending false
+         result {:feature-line nil
+                 :description-lines []
+                 :background-lines []
+                 :scenarios []}]
+    (if (empty? lines)
+      ;; Finalize
+      result
+      (let [line (first lines)
+            trimmed (str/trim line)
+            rest-lines (rest lines)]
+        (cond
+          ;; Feature line
+          (and (= state :start) (str/starts-with? trimmed "Feature:"))
+          (recur rest-lines :description false
+                 (assoc result :feature-line trimmed))
+
+          ;; Skip blank lines in description
+          (and (= state :description) (str/blank? trimmed))
+          (recur rest-lines :description false result)
+
+          ;; Background section start
+          (str/starts-with? trimmed "Background:")
+          (recur rest-lines :background false result)
+
+          ;; Tag line — set wip flag for next scenario
+          (tag-line? trimmed)
+          (recur rest-lines state (has-wip-tag? trimmed) result)
+
+          ;; Scenario start
+          (str/starts-with? trimmed "Scenario:")
+          (let [title (str/trim (subs trimmed 9))
+                scenario-entry {:title title :lines [] :wip wip-pending}]
+            (recur rest-lines :scenario false
+                   (update result :scenarios conj scenario-entry)))
+
+          ;; Step line in background
+          (and (= state :background) (step-keyword? trimmed))
+          (recur rest-lines :background false
+                 (update result :background-lines conj trimmed))
+
+          ;; Step line in scenario
+          (and (= state :scenario) (step-keyword? trimmed))
+          (let [scenarios (:scenarios result)
+                current (peek scenarios)
+                updated (update current :lines conj trimmed)]
+            (recur rest-lines :scenario false
+                   (assoc result :scenarios
+                          (conj (pop scenarios) updated))))
+
+          ;; Description text (non-blank, non-keyword lines before Background/Scenario)
+          (and (= state :description) (seq trimmed))
+          (recur rest-lines :description false
+                 (update result :description-lines conj trimmed))
+
+          ;; Skip anything else
+          :else
+          (recur rest-lines state wip-pending result))))))
+
+(defn parse-feature
+  "Parse a Gherkin feature string into an EDN IR map."
+  [text]
   (let [lines (str/split-lines text)
-        feature-line (first (filter #(str/starts-with? (str/trim %) "Feature:") lines))
-        feature (str/trim (subs (str/trim feature-line) 8))
-        has-background? (some #(str/starts-with? (str/trim %) "Background:") lines)
-        background-lines (when has-background?
-                           (take-while #(not (str/starts-with? (str/trim %) "Scenario:"))
-                                       (rest (drop-while #(not (str/starts-with? (str/trim %) "Background:")) lines))))
-        background-steps (when has-background? (vec (parse-steps (or background-lines []))))
-        scenarios (vec (or (split-scenarios lines) []))]
-    (cond-> {:feature feature :scenarios scenarios}
-      has-background? (assoc :background background-steps))))
+        sections (parse-sections lines)
+        feature-name (str/trim (subs (:feature-line sections) 8))
+        description-lines (:description-lines sections)
+        background-lines (:background-lines sections)
+        scenarios (mapv (fn [{:keys [title lines wip]}]
+                          (let [parsed (parse-scenario-lines lines)]
+                            (cond-> (assoc parsed :scenario title)
+                              wip (assoc :wip true))))
+                        (:scenarios sections))]
+    (cond-> {:feature feature-name
+             :scenarios scenarios}
+      (seq description-lines)
+      (assoc :description (str/join "\n" description-lines))
 
-;; Bug 2: Compile string keys to regex Patterns for cucumber-style step defs.
-;; String keys like "Given (\\d+) beads" are compiled to Pattern.
-;; Pattern keys pass through unchanged.
+      (seq background-lines)
+      (assoc :background {:givens (mapv strip-keyword background-lines)}))))
 
-(defn compile-step-defs
-  "Compile step definition keys: strings become regex Patterns, Patterns pass through."
-  [step-defs]
-  (into {}
-    (map (fn [[k v]]
-           (if (instance? java.util.regex.Pattern k)
-             [k v]
-             [(re-pattern k) v]))
-         step-defs)))
+(defn parse-feature-file
+  "Parse a .feature file into an EDN IR map with :source."
+  [path]
+  (let [content (slurp path)
+        filename (last (str/split path #"/"))]
+    (assoc (parse-feature content) :source filename)))
 
-(defn match-step
-  "Match a parsed step against step definitions.
-   Tries exact string match first, then regex Pattern match.
-   For Pattern matches, capture groups are passed as args to the step fn."
-  [step step-defs]
-  (let [full-text (str (:keyword step) " " (:text step))]
-    (if-let [f (get step-defs full-text)]
-      f
-      (first (for [[pattern f] step-defs
-                   :when (instance? java.util.regex.Pattern pattern)
-                   :let [m (re-matches pattern full-text)]
-                   :when m]
-               (let [groups (if (string? m) [] (vec (rest m)))]
-                 (fn [] (apply f groups))))))))
+(defn parse-features-dir
+  "Parse all .feature files in a directory. Returns a seq of IR maps."
+  [dir-path]
+  (let [dir (io/file dir-path)]
+    (->> (.listFiles dir)
+         (filter #(str/ends-with? (.getName %) ".feature"))
+         (sort-by #(.getName %))
+         (mapv #(parse-feature-file (.getPath %))))))
 
-(defn- execute-step
-  "Execute a single step. Returns {:step name :status :passed/:failed}."
-  [step step-defs]
-  (let [step-name (str (:keyword step) " " (:text step))]
-    (if-let [step-fn (match-step step step-defs)]
-      (try
-        (step-fn)
-        {:step step-name :status :passed}
-        (catch Exception e
-          {:step step-name :status :failed :error (.getMessage e)}))
-      {:step step-name :status :failed :error (str "No step definition for: " step-name)})))
+(defn write-edn
+  "Write an IR map to an .edn file."
+  [path data]
+  (spit path (pr-str data)))
 
-(defn- run-steps
-  "Run a sequence of steps, recording pass/fail for each.
-   Stops on first failure. Returns {:status :passed/:failed, :steps [...]}."
-  [steps step-defs]
-  (let [result (reduce (fn [results step]
-                         (let [step-result (execute-step step step-defs)]
-                           (if (= :failed (:status step-result))
-                             (reduced (conj results step-result))
-                             (conj results step-result))))
-                       [] steps)
-        failed? (= :failed (:status (peek result)))]
-    {:status (if failed? :failed :passed)
-     :steps result}))
-
-(defn run-feature
-  "Run all scenarios in a feature against step definitions.
-   Prepends background steps to each scenario. Returns a vector of result maps."
-  [feature step-defs]
-  (let [bg-steps (or (:background feature) [])]
-    (mapv (fn [scenario]
-            (let [all-steps (into (vec bg-steps) (:steps scenario))
-                  result (run-steps all-steps step-defs)]
-              (assoc result :scenario (:title scenario))))
-          (:scenarios feature))))
+(defn parse-features!
+  "Parse all .feature files in source-dir and write .edn files to output-dir."
+  [source-dir output-dir]
+  (let [results (parse-features-dir source-dir)]
+    (io/make-parents (io/file output-dir "dummy"))
+    (doseq [result results]
+      (let [base-name (str/replace (:source result) #"\.feature$" ".edn")
+            edn-path (str output-dir "/" base-name)]
+        (println (str "Parsing " (:source result) " -> " edn-path))
+        (write-edn edn-path result)
+        (println (str "  " (count (:scenarios result)) " scenarios parsed"))))))
