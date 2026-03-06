@@ -7,12 +7,18 @@
                        "spec"
                        "-s" "src"
                        *command-line-args*)}
-         test:gherkin {:doc "Run gherkin specs"
-                       :requires ([speclj.main :as speclj])
-                       :task (apply speclj/-main "-c"
-                               "spec-gherkin"
-                               "-s" "src"
-                               *command-line-args*)}
+          test:gherkin {:doc "Run gherkin specs"
+                        :requires ([speclj.main :as speclj])
+                        :task (apply speclj/-main "-c"
+                                "spec-gherkin"
+                                "-s" "src"
+                                *command-line-args*)}
+          test:all {:doc "Run all specs (unit + gherkin)"
+                    :requires ([speclj.main :as speclj])
+                    :task (apply speclj/-main "-c"
+                            "spec" "spec-gherkin"
+                            "-s" "src"
+                            *command-line-args*)}
          braids {:doc "Run the braids CLI"
                  :requires ([braids.core :as braids])
                  :task (System/exit (braids/run *command-line-args*))}}}
