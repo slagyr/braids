@@ -1,7 +1,12 @@
 (ns braids.features.harness
   "Test harness for generated feature specs. Manages mutable test state
    and provides helpers that generated code calls."
-  (:require [braids.orch :as orch]))
+  (:require [braids.orch :as orch]
+            [braids.init :as init]
+            [braids.new :as new-proj]
+            [braids.list :as list]
+            [cheshire.core :as json]
+            [clojure.string :as str]))
 
 ;; --- Mutable test state ---
 
@@ -23,7 +28,21 @@
                                :session-id-literal nil
                                :session-id-result nil
                                :session-ids []
-                               :parsed-bead-id nil}))
+                               :parsed-bead-id nil
+                               ;; Project lifecycle state
+                               :prereq-opts {}
+                               :prereq-result nil
+                               :plan-opts {}
+                               :plan-result nil
+                               :new-project-params {}
+                               :validation-result nil
+                               :new-entry nil
+                               :add-registry-result nil
+                               :project-config-result nil
+                               ;; Project listing state
+                               :list-projects []
+                               :list-output nil
+                               :list-json-output nil}))
 
 ;; --- State accessors ---
 
@@ -221,3 +240,156 @@
   "Returns the parsed bead id from the last parse-session-id! call."
   []
   (:parsed-bead-id @state))
+
+;; --- Project lifecycle helpers ---
+
+;; Given step builders
+
+(defn set-bd-not-available
+  "Set bd as not available for prerequisite checks."
+  []
+  (swap! state assoc-in [:prereq-opts :bd-available?] false))
+
+(defn set-bd-available
+  "Set bd as available for prerequisite checks."
+  []
+  (swap! state assoc-in [:prereq-opts :bd-available?] true))
+
+(defn set-no-registry
+  "Set registry as not existing."
+  []
+  (swap! state assoc-in [:prereq-opts :registry-exists?] false))
+
+(defn set-registry-exists
+  "Set registry as existing."
+  []
+  (swap! state assoc-in [:prereq-opts :registry-exists?] true))
+
+(defn set-force-not-set
+  "Set force flag to false."
+  []
+  (swap! state assoc-in [:prereq-opts :force?] false))
+
+(defn set-force-set
+  "Set force flag to true."
+  []
+  (swap! state assoc-in [:prereq-opts :force?] true))
+
+(defn set-braids-dir-not-exists
+  "Set braids dir as not existing."
+  []
+  (swap! state update :plan-opts merge {:braids-dir "/tmp/braids"
+                                        :braids-dir-exists? false}))
+
+(defn set-braids-dir-exists
+  "Set braids dir as existing."
+  []
+  (swap! state update :plan-opts merge {:braids-dir "/tmp/braids"
+                                        :braids-dir-exists? true}))
+
+(defn set-braids-home-not-exists
+  "Set braids home as not existing."
+  []
+  (swap! state update :plan-opts merge {:braids-home "/tmp/projects"
+                                        :braids-home-exists? false}))
+
+(defn set-braids-home-exists
+  "Set braids home as existing."
+  []
+  (swap! state update :plan-opts merge {:braids-home "/tmp/projects"
+                                        :braids-home-exists? true}))
+
+(defn set-new-project-slug
+  "Set the slug for a new project."
+  [slug]
+  (swap! state assoc-in [:new-project-params :slug] slug))
+
+(defn set-new-project-name
+  "Set the name for a new project."
+  [name]
+  (swap! state assoc-in [:new-project-params :name] name))
+
+(defn set-new-project-goal
+  "Set the goal for a new project."
+  [goal]
+  (swap! state assoc-in [:new-project-params :goal] goal))
+
+(defn set-registry-with-project
+  "Set up a registry containing a specific project."
+  [slug]
+  (swap! state assoc :registry {:projects [{:slug slug :status :active :path (str "/projects/" slug)}]}))
+
+(defn set-new-registry-entry
+  "Create a new registry entry to be added."
+  [slug]
+  (swap! state assoc :new-entry {:slug slug :status :active :path (str "/projects/" slug)}))
+
+;; When step actions
+
+(defn check-prerequisites!
+  "Run init/check-prerequisites with accumulated state."
+  []
+  (let [opts (:prereq-opts @state)
+        result (init/check-prerequisites opts)]
+    (swap! state assoc :prereq-result result)))
+
+(defn plan-init!
+  "Run init/plan-init with accumulated state."
+  []
+  (let [opts (merge {:registry-path "/tmp/braids/registry.edn"
+                     :config-path "/tmp/braids/config.edn"}
+                    (:plan-opts @state))
+        result (init/plan-init opts)]
+    (swap! state assoc :plan-result result)))
+
+(defn validate-new-project!
+  "Run new/validate-new-params with accumulated state."
+  []
+  (let [params (:new-project-params @state)
+        result (new-proj/validate-new-params params)]
+    (swap! state assoc :validation-result result)))
+
+(defn add-to-registry!
+  "Try to add the stored entry to the registry."
+  []
+  (let [registry (:registry @state)
+        entry (:new-entry @state)]
+    (try
+      (let [result (new-proj/add-to-registry registry entry)]
+        (swap! state assoc :add-registry-result {:ok result}))
+      (catch Exception e
+        (swap! state assoc :add-registry-result {:error (.getMessage e)})))))
+
+(defn build-project-config!
+  "Run new/build-project-config with accumulated state."
+  []
+  (let [params (:new-project-params @state)
+        result (new-proj/build-project-config params)]
+    (swap! state assoc :project-config-result result)))
+
+;; Then step accessors
+
+(defn prereq-errors
+  "Returns the list of prerequisite errors."
+  []
+  (:prereq-result @state))
+
+(defn plan-actions
+  "Returns the list of planned action keywords."
+  []
+  (mapv (comp clojure.core/name :action) (:plan-result @state)))
+
+(defn validation-errors
+  "Returns the list of validation errors."
+  []
+  (:validation-result @state))
+
+(defn add-registry-error
+  "Returns the error from add-to-registry, or nil."
+  []
+  (get-in @state [:add-registry-result :error]))
+
+(defn project-config
+  "Returns the built project config."
+  []
+  (:project-config-result @state))

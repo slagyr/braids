@@ -90,8 +90,112 @@
                           :code (constantly "(should (h/session-ids-identical?))")}
    :assert-ids-different {:text (constantly "the session IDs should be different")
                           :code (constantly "(should (h/session-ids-different?))")}
-   :assert-bead-id     {:text (fn [{:keys [expected]}]              (str "the extracted bead ID should be \"" expected "\""))
-                        :code (fn [{:keys [expected]}]              (str "(should= \"" expected "\" (h/parsed-bead-id))"))}})
+    :assert-bead-id     {:text (fn [{:keys [expected]}]              (str "the extracted bead ID should be \"" expected "\""))
+                        :code (fn [{:keys [expected]}]              (str "(should= \"" expected "\" (h/parsed-bead-id))"))}
+   ;; Project lifecycle
+   :bd-not-available      {:text (constantly "bd is not available")
+                           :code (constantly "(h/set-bd-not-available)")}
+   :bd-available          {:text (constantly "bd is available")
+                           :code (constantly "(h/set-bd-available)")}
+   :no-registry           {:text (constantly "no registry exists")
+                           :code (constantly "(h/set-no-registry)")}
+   :registry-exists       {:text (constantly "a registry already exists")
+                           :code (constantly "(h/set-registry-exists)")}
+   :force-not-set         {:text (constantly "force is not set")
+                           :code (constantly "(h/set-force-not-set)")}
+   :force-set             {:text (constantly "force is set")
+                           :code (constantly "(h/set-force-set)")}
+   :braids-dir-not-exists {:text (constantly "braids dir does not exist")
+                           :code (constantly "(h/set-braids-dir-not-exists)")}
+   :braids-dir-exists     {:text (constantly "braids dir already exists")
+                           :code (constantly "(h/set-braids-dir-exists)")}
+   :braids-home-not-exists {:text (constantly "braids home does not exist")
+                            :code (constantly "(h/set-braids-home-not-exists)")}
+   :braids-home-exists    {:text (constantly "braids home already exists")
+                           :code (constantly "(h/set-braids-home-exists)")}
+   :check-prerequisites   {:text (constantly "checking prerequisites")
+                           :code (constantly "(h/check-prerequisites!)")}
+   :plan-init             {:text (constantly "planning init")
+                           :code (constantly "(h/plan-init!)")}
+   :assert-prereq-fail    {:text (fn [{:keys [expected]}]              (str "prerequisites should fail with \"" expected "\""))
+                           :code (fn [{:keys [expected]}]              (str "(should-not (empty? (h/prereq-errors)))\n(should (some #(clojure.string/includes? % \"" expected "\") (h/prereq-errors)))"))}
+   :assert-prereq-pass    {:text (constantly "prerequisites should pass")
+                           :code (constantly "(should (empty? (h/prereq-errors)))")}
+   :assert-plan-include   {:text (fn [{:keys [action]}]               (str "the plan should include \"" action "\""))
+                           :code (fn [{:keys [action]}]               (str "(should (some #{\"" action "\"} (h/plan-actions)))"))}
+   :assert-plan-not-include {:text (fn [{:keys [action]}]             (str "the plan should not include \"" action "\""))
+                             :code (fn [{:keys [action]}]             (str "(should-not (some #{\"" action "\"} (h/plan-actions)))"))}
+   :new-project-slug      {:text (fn [{:keys [slug]}]                (str "a new project with slug \"" slug "\""))
+                           :code (fn [{:keys [slug]}]                (str "(h/set-new-project-slug \"" slug "\")"))}
+   :new-project-name      {:text (fn [{:keys [name]}]                (str "a new project with name \"" name "\""))
+                           :code (fn [{:keys [name]}]                (str "(h/set-new-project-name \"" name "\")"))}
+   :set-name              {:text (fn [{:keys [name]}]                (str "name \"" name "\""))
+                           :code (fn [{:keys [name]}]                (str "(h/set-new-project-name \"" name "\")"))}
+   :set-goal              {:text (fn [{:keys [goal]}]                (str "goal \"" goal "\""))
+                           :code (fn [{:keys [goal]}]                (str "(h/set-new-project-goal \"" goal "\")"))}
+   :registry-with-project {:text (fn [{:keys [slug]}]                (str "a registry with project \"" slug "\""))
+                           :code (fn [{:keys [slug]}]                (str "(h/set-registry-with-project \"" slug "\")"))}
+   :new-registry-entry    {:text (fn [{:keys [slug]}]                (str "a new registry entry with slug \"" slug "\""))
+                           :code (fn [{:keys [slug]}]                (str "(h/set-new-registry-entry \"" slug "\")"))}
+   :validate-new-project  {:text (constantly "validating new project params")
+                           :code (constantly "(h/validate-new-project!)")}
+   :add-to-registry       {:text (constantly "adding the entry to the registry")
+                           :code (constantly "(h/add-to-registry!)")}
+   :build-project-config  {:text (constantly "building the project config")
+                           :code (constantly "(h/build-project-config!)")}
+   :assert-validation-fail {:text (fn [{:keys [expected]}]            (str "validation should fail with \"" expected "\""))
+                            :code (fn [{:keys [expected]}]            (str "(should-not (empty? (h/validation-errors)))\n(should (some #(clojure.string/includes? % \"" expected "\") (h/validation-errors)))"))}
+   :assert-should-fail    {:text (fn [{:keys [expected]}]             (str "it should fail with \"" expected "\""))
+                           :code (fn [{:keys [expected]}]             (str "(should (clojure.string/includes? (or (h/add-registry-error) \"\") \"" expected "\"))"))}
+   :assert-config-value   {:text (fn [{:keys [key expected]}]         (str "the config " key " should be \"" expected "\""))
+                           :code (fn [{:keys [key expected]}]         (str "(should= " (if (re-matches #"^:.*" expected) expected (str ":" expected)) " (:" key " (h/project-config)))"))}
+   :assert-config-number  {:text (fn [{:keys [key expected]}]         (str "the config " key " should be " expected))
+                            :code (fn [{:keys [key expected]}]         (str "(should= " expected " (:" key " (h/project-config)))"))}
+   ;; Project listing
+   :project-list-with-table {:text (constantly "a project list with the following projects:")
+                             :code (fn [{:keys [table]}]
+                                     (when table
+                                       (let [{:keys [headers rows]} table]
+                                         (str "(h/set-project-list-from-table\n"
+                                              "  " (pr-str headers) "\n"
+                                              "  " (pr-str rows) ")"))))}
+   :empty-project-list    {:text (constantly "an empty project list")
+                           :code (constantly "(h/set-empty-project-list)")}
+   :format-list           {:text (constantly "formatting the project list")
+                           :code (constantly "(h/format-list!)")}
+   :format-list-json      {:text (constantly "formatting the project list as JSON")
+                           :code (constantly "(h/format-list-json!)")}
+   :assert-column-headers {:text (fn [{:keys [headers]}]              (str "the output should contain column headers"))
+                           :code (fn [{:keys [headers]}]
+                                   (let [header-strs (mapv second headers)]
+                                     (str/join "\n" (map #(str "(should (clojure.string/includes? (h/list-output) \"" % "\"))") header-strs))))}
+   :assert-output-contains-slug {:text (fn [{:keys [slug]}]           (str "the output should contain slug \"" slug "\""))
+                                 :code (fn [{:keys [slug]}]           (str "(should (clojure.string/includes? (h/list-output) \"" slug "\"))"))}
+   :assert-output-contains-iteration {:text (fn [{:keys [iteration]}] (str "the output should contain iteration \"" iteration "\""))
+                                      :code (fn [{:keys [iteration]}] (str "(should (clojure.string/includes? (h/list-output) \"" iteration "\"))"))}
+   :assert-output-contains-progress {:text (fn [{:keys [progress]}]   (str "the output should contain progress \"" progress "\""))
+                                     :code (fn [{:keys [progress]}]   (str "(should (clojure.string/includes? (h/list-output) \"" progress "\"))"))}
+   :assert-output-contains-workers {:text (fn [{:keys [workers]}]     (str "the output should contain workers \"" workers "\""))
+                                    :code (fn [{:keys [workers]}]     (str "(should (clojure.string/includes? (h/list-output) \"" workers "\"))"))}
+   :assert-dash-placeholder {:text (fn [{:keys [slug field]}]         (str "the line for \"" slug "\" should contain a dash for " field))
+                             :code (fn [{:keys [slug]}]               (str "(should (h/line-contains-dash? \"" slug "\"))"))}
+   :assert-output-equals  {:text (fn [{:keys [expected]}]             (str "the output should be \"" expected "\""))
+                           :code (fn [{:keys [expected]}]             (str "(should= \"" expected "\" (h/list-output))"))}
+   :assert-status-color   {:text (fn [{:keys [status color]}]        (str "\"" status "\" status should be colorized " color))
+                           :code (fn [{:keys [status color]}]        (str "(should (h/colorized? (h/list-output) \"" status "\" \"" color "\"))"))}
+   :assert-priority-color {:text (fn [{:keys [priority color]}]      (str "\"" priority "\" priority should be colorized " color))
+                           :code (fn [{:keys [priority color]}]      (str "(should (h/colorized? (h/list-output) \"" priority "\" \"" color "\"))"))}
+   :assert-progress-color {:text (fn [{:keys [percent color]}]       (str percent " percent progress should be colorized " color))
+                           :code (fn [{:keys [percent color]}]       (str "(should (h/colorized? (h/list-output) \"" percent "%\" \"" color "\"))"))}
+   :assert-json-project-exists {:text (fn [{:keys [slug]}]           (str "the JSON output should contain a project with slug \"" slug "\""))
+                                :code (fn [{:keys [slug]}]           (str "(should (h/json-project \"" slug "\"))"))}
+   :assert-json-project-string {:text (fn [{:keys [slug key expected]}] (str "the JSON project \"" slug "\" should have " key " \"" expected "\""))
+                                :code (fn [{:keys [slug key expected]}] (str "(should= \"" expected "\" (get (h/json-project \"" slug "\") \"" key "\"))"))}
+   :assert-json-project-number {:text (fn [{:keys [slug key expected]}] (str "the JSON project \"" slug "\" should have " key " " expected))
+                                :code (fn [{:keys [slug key expected]}] (str "(should= " expected " (get (h/json-project \"" slug "\") \"" key "\"))"))}
+   :assert-json-iteration-number {:text (fn [{:keys [slug number]}]  (str "the JSON project \"" slug "\" should have iteration number \"" number "\""))
+                                  :code (fn [{:keys [slug number]}]  (str "(should= \"" number "\" (get-in (h/json-project \"" slug "\") [\"iteration\" \"number\"]))"))}
+   })
 
 ;; --- Step text and code: thin dispatchers over the registry ---
 

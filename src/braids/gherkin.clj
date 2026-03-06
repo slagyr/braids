@@ -122,9 +122,181 @@
    [#"^the session IDs should be different$"
     (fn [_] {:type :assert-ids-different})]
 
-   [#"^the extracted bead ID should be \"([^\"]+)\"$"
+    [#"^the extracted bead ID should be \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:type :assert-bead-id :expected expected})]
+
+   ;; --- Project lifecycle patterns ---
+
+   [#"^bd is not available$"
+    (fn [_] {:type :bd-not-available})]
+
+   [#"^bd is available$"
+    (fn [_] {:type :bd-available})]
+
+   [#"^no registry exists$"
+    (fn [_] {:type :no-registry})]
+
+   [#"^a registry already exists$"
+    (fn [_] {:type :registry-exists})]
+
+   [#"^force is not set$"
+    (fn [_] {:type :force-not-set})]
+
+   [#"^force is set$"
+    (fn [_] {:type :force-set})]
+
+   [#"^braids dir does not exist$"
+    (fn [_] {:type :braids-dir-not-exists})]
+
+   [#"^braids dir already exists$"
+    (fn [_] {:type :braids-dir-exists})]
+
+   [#"^braids home does not exist$"
+    (fn [_] {:type :braids-home-not-exists})]
+
+   [#"^braids home already exists$"
+    (fn [_] {:type :braids-home-exists})]
+
+   [#"^checking prerequisites$"
+    (fn [_] {:type :check-prerequisites})]
+
+   [#"^planning init$"
+    (fn [_] {:type :plan-init})]
+
+   [#"^prerequisites should fail with \"([^\"]+)\"$"
     (fn [[_ expected]]
-      {:type :assert-bead-id :expected expected})]])
+      {:type :assert-prereq-fail :expected expected})]
+
+   [#"^prerequisites should pass$"
+    (fn [_] {:type :assert-prereq-pass})]
+
+   [#"^the plan should include \"([^\"]+)\"$"
+    (fn [[_ action]]
+      {:type :assert-plan-include :action action})]
+
+   [#"^the plan should not include \"([^\"]+)\"$"
+    (fn [[_ action]]
+      {:type :assert-plan-not-include :action action})]
+
+   [#"^a new project with slug \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:type :new-project-slug :slug slug})]
+
+   [#"^a new project with name \"([^\"]+)\"$"
+    (fn [[_ name]]
+      {:type :new-project-name :name name})]
+
+   [#"^name \"([^\"]+)\"$"
+    (fn [[_ name]]
+      {:type :set-name :name name})]
+
+   [#"^goal \"([^\"]+)\"$"
+    (fn [[_ goal]]
+      {:type :set-goal :goal goal})]
+
+   [#"^a registry with project \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:type :registry-with-project :slug slug})]
+
+   [#"^a new registry entry with slug \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:type :new-registry-entry :slug slug})]
+
+   [#"^validating new project params$"
+    (fn [_] {:type :validate-new-project})]
+
+   [#"^adding the entry to the registry$"
+    (fn [_] {:type :add-to-registry})]
+
+   [#"^building the project config$"
+    (fn [_] {:type :build-project-config})]
+
+   [#"^validation should fail with \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:type :assert-validation-fail :expected expected})]
+
+   [#"^it should fail with \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:type :assert-should-fail :expected expected})]
+
+   [#"^the config (\S+) should be \"([^\"]+)\"$"
+    (fn [[_ key expected]]
+      {:type :assert-config-value :key key :expected expected})]
+
+   [#"^the config (\S+) should be (\d+)$"
+    (fn [[_ key expected]]
+      {:type :assert-config-number :key key :expected (parse-long expected)})]
+
+   ;; --- Project listing step patterns ---
+
+   [#"^a project list with the following projects:$"
+    (fn [_] {:type :project-list-with-table})]
+
+   [#"^an empty project list$"
+    (fn [_] {:type :empty-project-list})]
+
+   [#"^formatting the project list as JSON$"
+    (fn [_] {:type :format-list-json})]
+
+   [#"^formatting the project list$"
+    (fn [_] {:type :format-list})]
+
+   [#"^the output should contain column headers (.+)$"
+    (fn [[_ headers-str]]
+      {:type :assert-column-headers :headers (re-seq #"\"([^\"]+)\"" headers-str)})]
+
+   [#"^the output should contain slug \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:type :assert-output-contains-slug :slug slug})]
+
+   [#"^the output should contain iteration \"([^\"]+)\"$"
+    (fn [[_ iteration]]
+      {:type :assert-output-contains-iteration :iteration iteration})]
+
+   [#"^the output should contain progress \"([^\"]+)\"$"
+    (fn [[_ progress]]
+      {:type :assert-output-contains-progress :progress progress})]
+
+   [#"^the output should contain workers \"([^\"]+)\"$"
+    (fn [[_ workers]]
+      {:type :assert-output-contains-workers :workers workers})]
+
+   [#"^the line for \"([^\"]+)\" should contain a dash for (\S+)$"
+    (fn [[_ slug field]]
+      {:type :assert-dash-placeholder :slug slug :field field})]
+
+   [#"^the output should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:type :assert-output-equals :expected expected})]
+
+   [#"^\"([^\"]+)\" status should be colorized (\w+)$"
+    (fn [[_ status color]]
+      {:type :assert-status-color :status status :color color})]
+
+   [#"^\"([^\"]+)\" priority should be colorized (\w+)$"
+    (fn [[_ priority color]]
+      {:type :assert-priority-color :priority priority :color color})]
+
+   [#"^(\d+) percent progress should be colorized (\w+)$"
+    (fn [[_ percent color]]
+      {:type :assert-progress-color :percent (parse-long percent) :color color})]
+
+   [#"^the JSON output should contain a project with slug \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:type :assert-json-project-exists :slug slug})]
+
+   [#"^the JSON project \"([^\"]+)\" should have (\S+) \"([^\"]+)\"$"
+    (fn [[_ slug key expected]]
+      {:type :assert-json-project-string :slug slug :key key :expected expected})]
+
+   [#"^the JSON project \"([^\"]+)\" should have (\S+) (\d+)$"
+    (fn [[_ slug key expected]]
+      {:type :assert-json-project-number :slug slug :key key :expected (parse-long expected)})]
+
+   [#"^the JSON project \"([^\"]+)\" should have iteration number \"([^\"]+)\"$"
+    (fn [[_ slug number]]
+      {:type :assert-json-iteration-number :slug slug :number number})]])
 
 (defn classify-step
   "Pattern-match step text into a typed IR node map, or {:type :unrecognized :text text}."
@@ -152,25 +324,74 @@
     (str/starts-with? trimmed "Then ")  :thens
     :else                               nil))
 
+(defn- parse-table-line
+  "Parse a pipe-delimited table row into a vector of cell strings."
+  [line]
+  (->> (str/split line #"[|]" -1)
+       rest                      ;; drop leading empty from first |
+       butlast                   ;; drop trailing empty from last |
+       (mapv str/trim)))
+
+(defn- table-line? [trimmed]
+  (str/starts-with? trimmed "|"))
+
+(defn- attach-table
+  "Attach parsed table data to an IR node, if table-lines are present."
+  [ir-node table-lines]
+  (if (seq table-lines)
+    (let [parsed (mapv parse-table-line table-lines)]
+      (assoc ir-node :table {:headers (first parsed)
+                             :rows (vec (rest parsed))}))
+    ir-node))
+
 (defn- add-step [scenario phase ir-node]
   (update scenario phase (fnil conj []) ir-node))
 
-(defn- process-step [state trimmed]
-  (let [phase (phase-for-keyword trimmed)]
-    (if phase
-      (let [text (strip-keyword trimmed)]
-        (-> state
-            (assoc :current-phase phase)
-            (update :scenario add-step phase (classify-step text))))
-      ;; And/But — append to current phase
-      (let [text (strip-keyword trimmed)]
-        (update state :scenario add-step (:current-phase state) (classify-step text))))))
+(defn- process-step-entry [state entry]
+  (if (table-line? entry)
+    ;; Accumulate table lines for the most recent step
+    (update state :pending-table (fnil conj []) entry)
+    ;; It's a step line — first, finalize any pending table on previous step
+    (let [state (if (and (:current-phase state) (seq (:pending-table state)))
+                  (let [phase (:current-phase state)
+                        steps (get-in state [:scenario phase])
+                        last-step (peek steps)
+                        updated-step (attach-table last-step (:pending-table state))
+                        updated-steps (conj (pop steps) updated-step)]
+                    (-> state
+                        (assoc-in [:scenario phase] updated-steps)
+                        (dissoc :pending-table)))
+                  state)
+          phase (phase-for-keyword entry)]
+      (if phase
+        (let [text (strip-keyword entry)]
+          (-> state
+              (assoc :current-phase phase)
+              (update :scenario add-step phase (classify-step text))))
+        ;; And/But — append to current phase
+        (let [text (strip-keyword entry)]
+          (update state :scenario add-step (:current-phase state) (classify-step text)))))))
+
+(defn- finalize-pending-table
+  "Attach any remaining pending table to the last step."
+  [state]
+  (if (and (:current-phase state) (seq (:pending-table state)))
+    (let [phase (:current-phase state)
+          steps (get-in state [:scenario phase])
+          last-step (peek steps)
+          updated-step (attach-table last-step (:pending-table state))
+          updated-steps (conj (pop steps) updated-step)]
+      (-> state
+          (assoc-in [:scenario phase] updated-steps)
+          (dissoc :pending-table)))
+    state))
 
 (defn- parse-scenario-lines [lines]
-  (let [result (reduce process-step
-                       {:scenario {:givens [] :whens [] :thens []}
-                        :current-phase nil}
-                       lines)]
+  (let [result (-> (reduce process-step-entry
+                           {:scenario {:givens [] :whens [] :thens []}
+                            :current-phase nil}
+                           lines)
+                   finalize-pending-table)]
     (:scenario result)))
 
 (defn- tag-line? [trimmed]
@@ -227,6 +448,15 @@
 
           ;; Step line in scenario
           (and (= state :scenario) (step-keyword? trimmed))
+          (let [scenarios (:scenarios result)
+                current (peek scenarios)
+                updated (update current :lines conj trimmed)]
+            (recur rest-lines :scenario false
+                   (assoc result :scenarios
+                          (conj (pop scenarios) updated))))
+
+          ;; Table line in scenario (pipe-delimited row)
+          (and (= state :scenario) (table-line? trimmed))
           (let [scenarios (:scenarios result)
                 current (peek scenarios)
                 updated (update current :lines conj trimmed)]

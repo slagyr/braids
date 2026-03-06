@@ -494,7 +494,14 @@
             edn-dir "features/edn"]
         (with-out-str (gen/generate-features! edn-dir tmp-dir))
         (let [files (->> (io/file tmp-dir) .listFiles (map #(.getName %)) sort vec)]
-          (should= ["orch_spawning_spec.clj"
+          (should= ["configuration_spec.clj"
+                    "iteration_management_spec.clj"
+                    "orch_runner_spec.clj"
+                    "orch_spawning_spec.clj"
+                    "project_lifecycle_spec.clj"
+                    "project_listing_spec.clj"
+                    "project_status_spec.clj"
+                    "ready_beads_spec.clj"
                     "worker_session_tracking_spec.clj"
                     "zombie_detection_spec.clj"]
                    files))

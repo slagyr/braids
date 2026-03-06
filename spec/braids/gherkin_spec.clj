@@ -144,7 +144,175 @@
 
     (it "classifies assert extracted bead ID"
       (should= {:type :assert-bead-id :expected "proj-abc"}
-               (gherkin/classify-step "the extracted bead ID should be \"proj-abc\""))))
+               (gherkin/classify-step "the extracted bead ID should be \"proj-abc\"")))
+
+    ;; --- Project lifecycle step patterns ---
+
+    (it "classifies bd-not-available"
+      (should= {:type :bd-not-available}
+               (gherkin/classify-step "bd is not available")))
+
+    (it "classifies bd-available"
+      (should= {:type :bd-available}
+               (gherkin/classify-step "bd is available")))
+
+    (it "classifies no-registry"
+      (should= {:type :no-registry}
+               (gherkin/classify-step "no registry exists")))
+
+    (it "classifies registry-exists"
+      (should= {:type :registry-exists}
+               (gherkin/classify-step "a registry already exists")))
+
+    (it "classifies force-not-set"
+      (should= {:type :force-not-set}
+               (gherkin/classify-step "force is not set")))
+
+    (it "classifies force-set"
+      (should= {:type :force-set}
+               (gherkin/classify-step "force is set")))
+
+    (it "classifies braids-dir-not-exists"
+      (should= {:type :braids-dir-not-exists}
+               (gherkin/classify-step "braids dir does not exist")))
+
+    (it "classifies braids-dir-exists"
+      (should= {:type :braids-dir-exists}
+               (gherkin/classify-step "braids dir already exists")))
+
+    (it "classifies braids-home-not-exists"
+      (should= {:type :braids-home-not-exists}
+               (gherkin/classify-step "braids home does not exist")))
+
+    (it "classifies braids-home-exists"
+      (should= {:type :braids-home-exists}
+               (gherkin/classify-step "braids home already exists")))
+
+    (it "classifies checking-prerequisites"
+      (should= {:type :check-prerequisites}
+               (gherkin/classify-step "checking prerequisites")))
+
+    (it "classifies planning-init"
+      (should= {:type :plan-init}
+               (gherkin/classify-step "planning init")))
+
+    (it "classifies prereq-fail assertion"
+      (should= {:type :assert-prereq-fail :expected "bd (beads) is not installed"}
+               (gherkin/classify-step "prerequisites should fail with \"bd (beads) is not installed\"")))
+
+    (it "classifies prereq-pass assertion"
+      (should= {:type :assert-prereq-pass}
+               (gherkin/classify-step "prerequisites should pass")))
+
+    (it "classifies plan-include assertion"
+      (should= {:type :assert-plan-include :action "create-braids-dir"}
+               (gherkin/classify-step "the plan should include \"create-braids-dir\"")))
+
+    (it "classifies plan-not-include assertion"
+      (should= {:type :assert-plan-not-include :action "create-braids-dir"}
+               (gherkin/classify-step "the plan should not include \"create-braids-dir\"")))
+
+    (it "classifies new-project-with-slug"
+      (should= {:type :new-project-slug :slug "Bad Slug"}
+               (gherkin/classify-step "a new project with slug \"Bad Slug\"")))
+
+    (it "classifies new-project-with-name"
+      (should= {:type :new-project-name :name "My Project"}
+               (gherkin/classify-step "a new project with name \"My Project\"")))
+
+    (it "classifies name param"
+      (should= {:type :set-name :name "My Project"}
+               (gherkin/classify-step "name \"My Project\"")))
+
+    (it "classifies goal param"
+      (should= {:type :set-goal :goal "Build something"}
+               (gherkin/classify-step "goal \"Build something\"")))
+
+    (it "classifies registry-with-project"
+      (should= {:type :registry-with-project :slug "my-project"}
+               (gherkin/classify-step "a registry with project \"my-project\"")))
+
+    (it "classifies new-registry-entry"
+      (should= {:type :new-registry-entry :slug "my-project"}
+               (gherkin/classify-step "a new registry entry with slug \"my-project\"")))
+
+    (it "classifies validating-new-project"
+      (should= {:type :validate-new-project}
+               (gherkin/classify-step "validating new project params")))
+
+    (it "classifies adding-entry-to-registry"
+      (should= {:type :add-to-registry}
+               (gherkin/classify-step "adding the entry to the registry")))
+
+    (it "classifies building-project-config"
+      (should= {:type :build-project-config}
+               (gherkin/classify-step "building the project config")))
+
+    (it "classifies validation-fail assertion"
+      (should= {:type :assert-validation-fail :expected "Invalid slug"}
+               (gherkin/classify-step "validation should fail with \"Invalid slug\"")))
+
+    (it "classifies should-fail-with assertion"
+      (should= {:type :assert-should-fail :expected "already exists"}
+               (gherkin/classify-step "it should fail with \"already exists\"")))
+
+    (it "classifies config-string-value assertion"
+      (should= {:type :assert-config-value :key "status" :expected "active"}
+               (gherkin/classify-step "the config status should be \"active\"")))
+
+    (it "classifies config-number-value assertion"
+      (should= {:type :assert-config-number :key "max-workers" :expected 1}
+               (gherkin/classify-step "the config max-workers should be 1")))
+
+    ;; --- Project listing step patterns ---
+
+    (it "classifies project-list-with-table"
+      (should= {:type :project-list-with-table}
+               (gherkin/classify-step "a project list with the following projects:")))
+
+    (it "classifies empty-project-list"
+      (should= {:type :empty-project-list}
+               (gherkin/classify-step "an empty project list")))
+
+    (it "classifies format-list"
+      (should= {:type :format-list}
+               (gherkin/classify-step "formatting the project list")))
+
+    (it "classifies format-list-json"
+      (should= {:type :format-list-json}
+               (gherkin/classify-step "formatting the project list as JSON")))
+
+    (it "classifies assert-output-contains-slug"
+      (should= {:type :assert-output-contains-slug :slug "alpha"}
+               (gherkin/classify-step "the output should contain slug \"alpha\"")))
+
+    (it "classifies assert-dash-placeholder"
+      (should= {:type :assert-dash-placeholder :slug "beta" :field "iteration"}
+               (gherkin/classify-step "the line for \"beta\" should contain a dash for iteration")))
+
+    (it "classifies assert-output-equals"
+      (should= {:type :assert-output-equals :expected "No projects registered."}
+               (gherkin/classify-step "the output should be \"No projects registered.\"")))
+
+    (it "classifies assert-status-color"
+      (should= {:type :assert-status-color :status "active" :color "green"}
+               (gherkin/classify-step "\"active\" status should be colorized green")))
+
+    (it "classifies assert-json-project-exists"
+      (should= {:type :assert-json-project-exists :slug "alpha"}
+               (gherkin/classify-step "the JSON output should contain a project with slug \"alpha\"")))
+
+    (it "classifies assert-json-project-string"
+      (should= {:type :assert-json-project-string :slug "alpha" :key "status" :expected "active"}
+               (gherkin/classify-step "the JSON project \"alpha\" should have status \"active\"")))
+
+    (it "classifies assert-json-project-number"
+      (should= {:type :assert-json-project-number :slug "alpha" :key "workers" :expected 1}
+               (gherkin/classify-step "the JSON project \"alpha\" should have workers 1")))
+
+    (it "classifies assert-json-iteration-number"
+      (should= {:type :assert-json-iteration-number :slug "alpha" :number "009"}
+               (gherkin/classify-step "the JSON project \"alpha\" should have iteration number \"009\""))))
 
   (context "parse-feature"
 
@@ -230,7 +398,28 @@
     (it "has no background key when feature has no background"
       (let [text "Feature: No background\n\n  Scenario: Simple\n    Given a step\n    When action\n    Then result"
             result (gherkin/parse-feature text)]
-        (should-not-contain :background result))))
+        (should-not-contain :background result)))
+
+    (it "attaches data table to the preceding step"
+      (let [text (str "Feature: Table support\n\n"
+                      "  Scenario: With table\n"
+                      "    Given a list of items:\n"
+                      "      | name  | value |\n"
+                      "      | alpha | 1     |\n"
+                      "      | beta  | 2     |\n"
+                      "    When action\n"
+                      "    Then result")
+            result (gherkin/parse-feature text)
+            given (-> result :scenarios first :givens first)]
+        (should= {:headers ["name" "value"]
+                  :rows [["alpha" "1"] ["beta" "2"]]}
+                 (:table given))))
+
+    (it "step without table has no :table key"
+      (let [text "Feature: No table\n\n  Scenario: Simple\n    Given a step\n    When action\n    Then result"
+            result (gherkin/parse-feature text)
+            given (-> result :scenarios first :givens first)]
+        (should-not-contain :table given))))
 
   (context "parse-feature-file"
 
@@ -307,7 +496,7 @@
 
     (it "parses all .feature files in a directory"
       (let [results (gherkin/parse-features-dir "features")]
-        (should= 3 (count results))
+        (should= 10 (count results))
         (should (every? :source results))
         (should (every? :feature results))
         (should (every? :scenarios results)))))
