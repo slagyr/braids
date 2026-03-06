@@ -1,0 +1,12 @@
+{:number "028"
+ :status :active
+ :stories [{:id "braids-03k" :title "Fix parse-steps forward reference in gherkin.clj — bb test broken"}
+           {:id "braids-dfm" :title "Remove phantom test/ path from bb.edn"}
+           {:id "braids-asw" :title "Fix gherkin_spec.clj file path — move to spec/braids/ to match namespace"}
+           {:id "braids-dyf" :title "Move orphan top-level spec files into spec/braids/ with proper namespaces"}
+           {:id "braids-zxq" :title "Rename orch_runner_test.clj to orch_runner_spec.clj — consistent naming"}]
+ :notes ["Theme: Test suite health and spec structure cleanup"
+         "03k first — P0, bb test is completely broken without it"
+         "dfm is a trivial one-liner, can be done in parallel with 03k"
+         "asw and dyf are independent file moves, can be parallelized"
+         "zxq depends on dyf — reconcile the two orch_runner spec files after move"]}
