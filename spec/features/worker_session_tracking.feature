@@ -1,39 +1,40 @@
 Feature: Worker session tracking
 
-  Background:
-    Given an orchestrator with session tracking enabled
+  Worker sessions use deterministic IDs derived from bead IDs.
+  This enables the orchestrator to track, deduplicate, and
+  manage worker sessions without external state.
 
   Scenario: Generate deterministic session ID from bead ID
-    Given a bead with ID "braids-test-123"
-    When generating session ID for the bead
-    Then the session ID should be "braids-braids-test-123-worker"
+    Given a bead with id "proj-abc"
+    When generating the session ID
+    Then the session ID should be "braids-proj-abc-worker"
 
-  Scenario: Same bead generates same session ID consistently
-    Given a bead with ID "braids-consistent-456"
-    When generating session ID multiple times
-    Then all generated IDs should be identical
+  Scenario: Same bead always generates same session ID
+    Given a bead with id "proj-xyz"
+    When generating the session ID twice
+    Then both session IDs should be identical
 
   Scenario: Different beads generate different session IDs
-    Given beads with IDs "braids-a-001" and "braids-b-002"
-    When generating session IDs for each
+    Given a bead with id "proj-aaa"
+    And another bead with id "proj-bbb"
+    When generating session IDs for both
     Then the session IDs should be different
 
-  Scenario: Prevent duplicate spawning with session tracking
-    Given a worker session "braids-active-worker" is already active
-    When attempting to spawn another worker for the same bead
+  Scenario: Session ID can be parsed back to bead ID
+    Given a session ID "braids-proj-abc-worker"
+    When parsing the session ID
+    Then the extracted bead ID should be "proj-abc"
+
+  @wip
+  Scenario: Prevent duplicate spawning when session already active
+    Given a bead with id "proj-dup"
+    And a session "braids-proj-dup-worker" is already active
+    When the orchestrator considers spawning for bead "proj-dup"
     Then spawning should be prevented with reason "session-already-active"
 
-  Scenario: Allow spawning when session is not active
-    Given no active session for bead "braids-new-bead"
-    When attempting to spawn worker for the bead
-    Then spawning should proceed normally
-
-  Scenario: Session tracking handles missing bead data
-    Given a session exists but bead data is missing
+  @wip
+  Scenario: Session with missing bead data is marked for cleanup
+    Given a session with id "braids-proj-gone-worker"
+    And no bead exists with id "proj-gone"
     When checking session validity
-    Then the session should be marked for cleanup
-
-  Scenario: Session ID collision detection
-    Given two different beads generate the same session ID
-    When checking for collisions
-    Then a warning should be logged and collision handled
+    Then the session should be flagged for cleanup

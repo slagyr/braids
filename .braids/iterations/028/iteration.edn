@@ -1,12 +1,32 @@
 {:number "028"
  :status :active
- :stories [{:id "braids-03k" :title "Fix parse-steps forward reference in gherkin.clj — bb test broken"}
+ :stories [;; Test suite health (closed)
+           {:id "braids-03k" :title "Fix parse-steps forward reference in gherkin.clj — bb test broken"}
+           {:id "braids-pai" :title "Sideline gherkin tests — separate bb test:features task, exclude from bb test"}
+           {:id "braids-kog" :title "Sideline blocking/hanging specs — mark pending or move to integration suite"}
+           {:id "braids-ha27" :title "Fix failing unit tests in spec/braids/"}
+           {:id "braids-jj59" :title "Capture stdout/stderr in tests — wrap uncaptured core/run calls with with-out-str"}
+           {:id "braids-a2sp" :title "Fix hanging specs — remove external tool dependencies and un-pend"}
+           {:id "braids-vhxp" :title "Add bb test:all task — merged unit + feature test runner"}
            {:id "braids-dfm" :title "Remove phantom test/ path from bb.edn"}
            {:id "braids-asw" :title "Fix gherkin_spec.clj file path — move to spec/braids/ to match namespace"}
            {:id "braids-dyf" :title "Move orphan top-level spec files into spec/braids/ with proper namespaces"}
-           {:id "braids-zxq" :title "Rename orch_runner_test.clj to orch_runner_spec.clj — consistent naming"}]
- :notes ["Theme: Test suite health and spec structure cleanup"
-         "03k first — P0, bb test is completely broken without it"
-         "dfm is a trivial one-liner, can be done in parallel with 03k"
-         "asw and dyf are independent file moves, can be parallelized"
-         "zxq depends on dyf — reconcile the two orch_runner spec files after move"]}
+           {:id "braids-zxq" :title "Rename orch_runner_test.clj to orch_runner_spec.clj — consistent naming"}
+           ;; Gherkin spec cleanup
+           {:id "braids-z69q" :title "Move gherkin specs back into spec/ — they are unit tests, not feature tests"}
+           ;; Gherkin runner fixes (Phase 1)
+           {:id "braids-kk9u" :title "Fix gherkin runner core — load-step-defs and match-step"}
+           {:id "braids-2t6z" :title "Fix gherkin parser — execute background steps in each scenario"}
+           {:id "braids-kzkv" :title "Gherkin runner test suite with example features"}
+           ;; Real step definitions (Phase 3)
+           {:id "braids-jq7o" :title "Implement real step definitions for orch_spawning.feature"}
+           {:id "braids-5eb1" :title "Implement real step definitions for zombie_detection.feature"}
+           {:id "braids-tysu" :title "Implement real step definitions for worker_session_tracking.feature"}
+           ;; Wire up (Phase 4)
+           {:id "braids-jxls" :title "Add bb test:features and bb test:all tasks"}]
+ :notes ["Theme: Clean, fast, passing test suite + gherkin feature suite"
+         "Phase 0: Test suite health — all closed"
+         "Phase 1: Fix gherkin runner (kk9u + 2t6z parallel, then kzkv)"
+         "Phase 2: Feature files rewritten by planner (committed to disk)"
+         "Phase 3: Real step defs (jq7o + 5eb1 + tysu parallel, after kzkv)"
+         "Phase 4: Wire up bb test:features and bb test:all (jxls, after phase 3)"]}

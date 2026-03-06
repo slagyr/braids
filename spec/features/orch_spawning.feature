@@ -1,54 +1,64 @@
 Feature: Orchestrator spawning behavior
 
+  The orchestrator tick examines project state and decides whether
+  to spawn workers or remain idle. It respects max-workers capacity,
+  requires active iterations, and reports idle reasons.
+
   Background:
-    Given an orchestrator with max-workers set to 2
-    And worker-timeout set to 3600
+    Given a project "alpha" with max-workers 2
+    And project "alpha" has an active iteration "003"
 
-  Scenario: Tick decides to spawn when beads ready and capacity available
-    Given 3 ready beads in the project
-    And 0 active workers
+  Scenario: Spawn workers when beads ready and capacity available
+    Given project "alpha" has 3 ready beads
+    And project "alpha" has 0 active workers
     When the orchestrator ticks
-    Then it should spawn 2 workers
-    And mark the tick as spawn
+    Then the action should be "spawn"
+    And 2 workers should be spawned
 
-  Scenario: Tick decides to spawn partial capacity when fewer beads than max-workers
-    Given 1 ready bead in the project
-    And 0 active workers
+  Scenario: Spawn fewer workers when fewer beads than capacity
+    Given project "alpha" has 1 ready bead
+    And project "alpha" has 0 active workers
     When the orchestrator ticks
-    Then it should spawn 1 worker
-    And mark the tick as spawn
+    Then the action should be "spawn"
+    And 1 worker should be spawned
 
-  Scenario: Tick decides idle when no ready beads
-    Given 0 ready beads in the project
-    And 0 active workers
+  Scenario: Idle when no ready beads
+    Given project "alpha" has 0 ready beads
+    And project "alpha" has 0 active workers
     When the orchestrator ticks
-    Then it should spawn 0 workers
-    And mark the tick as idle with reason "no-ready-beads"
+    Then the action should be "idle"
+    And the idle reason should be "no-ready-beads"
 
-  Scenario: Tick decides idle when at capacity
-    Given 5 ready beads in the project
-    And 2 active workers
+  Scenario: Idle when at capacity
+    Given project "alpha" has 3 ready beads
+    And project "alpha" has 2 active workers
     When the orchestrator ticks
-    Then it should spawn 0 workers
-    And mark the tick as idle with reason "all-at-capacity"
+    Then the action should be "idle"
+    And the idle reason should be "all-at-capacity"
 
-  Scenario: Spawn conditions check project readiness
-    Given a project with active iteration
-    And notifications enabled
-    When checking spawn conditions
-    Then the project should be considered ready for spawning
+  Scenario: Idle when no active iterations
+    Given a project "beta" with max-workers 1
+    And project "beta" has no active iteration
+    And project "beta" has 3 ready beads
+    And project "beta" has 0 active workers
+    When the orchestrator ticks for project "beta" only
+    Then the action should be "idle"
+    And the idle reason should be "no-active-iterations"
 
-  Scenario: Spawn conditions reject when iteration not active
-    Given a project with planning iteration
-    When checking spawn conditions
-    Then the project should not be considered ready for spawning
+  Scenario: Spawn respects per-project capacity independently
+    Given a project "beta" with max-workers 1
+    And project "beta" has an active iteration "001"
+    And project "alpha" has 2 ready beads
+    And project "alpha" has 0 active workers
+    And project "beta" has 1 ready bead
+    And project "beta" has 0 active workers
+    When the orchestrator ticks
+    Then the action should be "spawn"
+    And 3 workers should be spawned
 
-  Scenario: Idle conditions when no action needed
-    Given no ready beads across all projects
-    When checking idle conditions
-    Then the orchestrator should report idle with reason "no-ready-beads"
-
-  Scenario: Idle conditions when all workers busy
-    Given ready beads exist but all workers at capacity
-    When checking idle conditions
-    Then the orchestrator should report idle with reason "all-at-capacity"
+  Scenario: Spawn includes correct label format
+    Given project "alpha" has 1 ready bead with id "alpha-abc"
+    And project "alpha" has 0 active workers
+    When the orchestrator ticks
+    Then the action should be "spawn"
+    And the spawn label should be "project:alpha:alpha-abc"

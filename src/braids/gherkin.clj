@@ -4,9 +4,9 @@
 (defn parse-steps [lines]
   (for [line lines
         :let [trimmed (str/trim line)]
-        :when (and (seq trimmed) 
-                   (not (str/starts-with? trimmed "Scenario:")) 
-                   (not (str/starts-with? trimmed "Background:")) 
+        :when (and (seq trimmed)
+                   (not (str/starts-with? trimmed "Scenario:"))
+                   (not (str/starts-with? trimmed "Background:"))
                    (not (str/starts-with? trimmed "Feature:")))]
     (let [[keyword & text-parts] (str/split trimmed #" " 2)
           text (str/join " " text-parts)]
@@ -37,7 +37,25 @@
     (cond-> {:feature feature :scenarios scenarios}
       has-background? (assoc :background background-steps))))
 
-(defn match-step [step step-defs]
+;; Bug 2: Compile string keys to regex Patterns for cucumber-style step defs.
+;; String keys like "Given (\\d+) beads" are compiled to Pattern.
+;; Pattern keys pass through unchanged.
+
+(defn compile-step-defs
+  "Compile step definition keys: strings become regex Patterns, Patterns pass through."
+  [step-defs]
+  (into {}
+    (map (fn [[k v]]
+           (if (instance? java.util.regex.Pattern k)
+             [k v]
+             [(re-pattern k) v]))
+         step-defs)))
+
+(defn match-step
+  "Match a parsed step against step definitions.
+   Tries exact string match first, then regex Pattern match.
+   For Pattern matches, capture groups are passed as args to the step fn."
+  [step step-defs]
   (let [full-text (str (:keyword step) " " (:text step))]
     (if-let [f (get step-defs full-text)]
       f
@@ -48,13 +66,39 @@
                (let [groups (if (string? m) [] (vec (rest m)))]
                  (fn [] (apply f groups))))))))
 
-(defn run-feature [feature step-defs]
-  (for [scenario (:scenarios feature)]
-    (try
-      (doseq [step (:steps scenario)]
-        (if-let [step-fn (match-step step step-defs)]
-          (step-fn)
-          (throw (Exception. (str "No step definition for: " (:keyword step) " " (:text step))))))
-      {:scenario (:title scenario) :status :passed :steps []}
-      (catch Exception e
-        {:scenario (:title scenario) :status :failed :steps []}))))
+(defn- execute-step
+  "Execute a single step. Returns {:step name :status :passed/:failed}."
+  [step step-defs]
+  (let [step-name (str (:keyword step) " " (:text step))]
+    (if-let [step-fn (match-step step step-defs)]
+      (try
+        (step-fn)
+        {:step step-name :status :passed}
+        (catch Exception e
+          {:step step-name :status :failed :error (.getMessage e)}))
+      {:step step-name :status :failed :error (str "No step definition for: " step-name)})))
+
+(defn- run-steps
+  "Run a sequence of steps, recording pass/fail for each.
+   Stops on first failure. Returns {:status :passed/:failed, :steps [...]}."
+  [steps step-defs]
+  (let [result (reduce (fn [results step]
+                         (let [step-result (execute-step step step-defs)]
+                           (if (= :failed (:status step-result))
+                             (reduced (conj results step-result))
+                             (conj results step-result))))
+                       [] steps)
+        failed? (= :failed (:status (peek result)))]
+    {:status (if failed? :failed :passed)
+     :steps result}))
+
+(defn run-feature
+  "Run all scenarios in a feature against step definitions.
+   Prepends background steps to each scenario. Returns a vector of result maps."
+  [feature step-defs]
+  (let [bg-steps (or (:background feature) [])]
+    (mapv (fn [scenario]
+            (let [all-steps (into (vec bg-steps) (:steps scenario))
+                  result (run-steps all-steps step-defs)]
+              (assoc result :scenario (:title scenario))))
+          (:scenarios feature))))
