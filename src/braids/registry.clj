@@ -1,3 +1,4 @@
+;; mutation-tested: 2026-03-06
 (ns braids.registry
   (:require [clojure.edn :as edn]
             [clojure.string :as str]
