@@ -395,12 +395,110 @@
                                     (str "the config should have \"" key "\" set to \"" expected "\""))
                             :code (fn [{:keys [key expected]}]
                                     (str "(should= \"" expected "\" (str (get (h/current-config) (keyword \"" key "\"))))"))}
-   :assert-appears-before {:text (fn [{:keys [first second]}]
-                                    (str "\"" first "\" should appear before \"" second "\" in the output"))
-                            :code (fn [{:keys [first second]}]
-                                    (str "(should (< (clojure.string/index-of (h/output) \"" first "\")\n"
-                                         "           (clojure.string/index-of (h/output) \"" second "\")))"))}
-   })
+    :assert-appears-before {:text (fn [{:keys [first second]}]
+                                     (str "\"" first "\" should appear before \"" second "\" in the output"))
+                             :code (fn [{:keys [first second]}]
+                                     (str "(should (< (clojure.string/index-of (h/output) \"" first "\")\n"
+                                          "           (clojure.string/index-of (h/output) \"" second "\")))"))}
+    ;; --- Project status ---
+    :project-configs-table {:text (constantly "project configs:")
+                            :code (fn [{:keys [table]}]
+                                    (when table
+                                      (let [{:keys [headers rows]} table]
+                                        (str "(h/set-project-configs-from-table\n"
+                                             "  " (pr-str headers) "\n"
+                                             "  " (pr-str rows) ")"))))}
+    :active-iterations-table {:text (constantly "active iterations:")
+                              :code (fn [{:keys [table]}]
+                                      (when table
+                                        (let [{:keys [headers rows]} table]
+                                          (str "(h/set-active-iterations-from-table\n"
+                                               "  " (pr-str headers) "\n"
+                                               "  " (pr-str rows) ")"))))}
+    :active-workers-table {:text (constantly "active workers:")
+                           :code (fn [{:keys [table]}]
+                                   (when table
+                                     (let [{:keys [headers rows]} table]
+                                       (str "(h/set-active-workers-from-table\n"
+                                            "  " (pr-str headers) "\n"
+                                            "  " (pr-str rows) ")"))))}
+    :no-active-iterations {:text (constantly "no active iterations")
+                           :code (constantly nil)}
+    :build-dashboard      {:text (constantly "building the dashboard")
+                           :code (constantly "(h/build-dashboard!)")}
+    :assert-dashboard-project-count
+                          {:text (fn [{:keys [count]}]
+                                   (str "the dashboard should have " count " projects"))
+                           :code (fn [{:keys [count]}]
+                                   (str "(should= " count " (count (:projects (h/dashboard))))"))}
+    :assert-project-status {:text (fn [{:keys [slug expected]}]
+                                    (str "project \"" slug "\" should have status \"" expected "\""))
+                            :code (fn [{:keys [slug expected]}]
+                                    (str "(should= \"" expected "\" (:status (h/dashboard-project \"" slug "\")))"))}
+    :assert-project-iteration-number
+                          {:text (fn [{:keys [slug expected]}]
+                                   (str "project \"" slug "\" should have iteration number \"" expected "\""))
+                           :code (fn [{:keys [slug expected]}]
+                                   (str "(should= \"" expected "\" (get-in (h/dashboard-project \"" slug "\") [:iteration :number]))"))}
+    :assert-project-workers {:text (fn [{:keys [slug workers max-workers]}]
+                                     (str "project \"" slug "\" should have workers " workers " of " max-workers))
+                             :code (fn [{:keys [slug workers max-workers]}]
+                                     (str "(should= " workers " (:workers (h/dashboard-project \"" slug "\")))\n"
+                                          "(should= " max-workers " (:max-workers (h/dashboard-project \"" slug "\")))"))}
+    :assert-project-no-iteration
+                          {:text (fn [{:keys [slug]}]
+                                   (str "project \"" slug "\" should have no iteration"))
+                           :code (fn [{:keys [slug]}]
+                                   (str "(should-be-nil (:iteration (h/dashboard-project \"" slug "\")))"))}
+    :dashboard-project    {:text (fn [{:keys [slug]}]
+                                   (str "a dashboard project \"" slug "\" with:"))
+                           :code (fn [{:keys [slug table]}]
+                                   (when table
+                                     (let [{:keys [headers rows]} table]
+                                       (str "(h/set-dashboard-project \"" slug "\"\n"
+                                            "  " (pr-str headers) "\n"
+                                            "  " (pr-str rows) ")"))))}
+    :project-has-iteration {:text (fn [{:keys [slug]}]
+                                    (str "project \"" slug "\" has iteration:"))
+                            :code (fn [{:keys [slug table]}]
+                                    (when table
+                                      (let [{:keys [headers rows]} table]
+                                        (str "(h/set-project-iteration \"" slug "\"\n"
+                                             "  " (pr-str headers) "\n"
+                                             "  " (pr-str rows) ")"))))}
+    :project-has-stories  {:text (fn [{:keys [slug]}]
+                                   (str "project \"" slug "\" has stories:"))
+                           :code (fn [{:keys [slug table]}]
+                                   (when table
+                                     (let [{:keys [headers rows]} table]
+                                       (str "(h/set-project-stories \"" slug "\"\n"
+                                            "  " (pr-str headers) "\n"
+                                            "  " (pr-str rows) ")"))))}
+    :project-has-no-iteration {:text (fn [{:keys [slug]}]
+                                       (str "project \"" slug "\" has no iteration"))
+                               :code (fn [{:keys [slug]}]
+                                       (str "(h/clear-project-iteration \"" slug "\")"))}
+    :format-project-detail {:text (fn [{:keys [slug]}]
+                                    (str "formatting project detail for \"" slug "\""))
+                            :code (fn [{:keys [slug]}]
+                                    (str "(h/format-project-detail! \"" slug "\")"))}
+    :format-dashboard-json {:text (constantly "formatting the dashboard as JSON")
+                            :code (constantly "(h/format-dashboard-json!)")}
+    :format-dashboard     {:text (constantly "formatting the dashboard")
+                           :code (constantly "(h/format-dashboard!)")}
+    :assert-json-project-count
+                          {:text (fn [{:keys [count]}]
+                                   (str "the JSON should contain " count " project"))
+                           :code (fn [{:keys [count]}]
+                                   (str "(should= " count " (count (:projects (h/dashboard-json))))"))}
+    :assert-json-project-iteration-percent
+                          {:text (fn [{:keys [slug percent]}]
+                                   (str "the JSON project \"" slug "\" should have iteration percent " percent))
+                           :code (fn [{:keys [slug percent]}]
+                                   (str "(should= " percent " (get-in (h/dashboard-json-project \"" slug "\") [\"iteration\" \"stats\" \"percent\"]))"))}
+    :empty-registry       {:text (constantly "an empty registry")
+                           :code (constantly "(h/set-empty-registry)")}
+    })
 
 ;; --- Step text and code: thin dispatchers over the registry ---
 

@@ -492,7 +492,93 @@
 
     (it "classifies assert-json-contains"
       (should= {:pattern :assert-json-contains :expected "number"}
-               (gherkin/classify-step "the JSON should contain \"number\""))))
+               (gherkin/classify-step "the JSON should contain \"number\"")))
+
+    ;; --- Project status step patterns ---
+
+    (it "classifies project-configs-table"
+      (should= {:pattern :project-configs-table}
+               (gherkin/classify-step "project configs:")))
+
+    (it "classifies active-iterations-table"
+      (should= {:pattern :active-iterations-table}
+               (gherkin/classify-step "active iterations:")))
+
+    (it "classifies active-workers-table"
+      (should= {:pattern :active-workers-table}
+               (gherkin/classify-step "active workers:")))
+
+    (it "classifies no-active-iterations"
+      (should= {:pattern :no-active-iterations}
+               (gherkin/classify-step "no active iterations")))
+
+    (it "classifies no-active-workers for status feature"
+      (should= {:pattern :no-active-workers}
+               (gherkin/classify-step "no active workers")))
+
+    (it "classifies building-the-dashboard"
+      (should= {:pattern :build-dashboard}
+               (gherkin/classify-step "building the dashboard")))
+
+    (it "classifies assert-dashboard-project-count"
+      (should= {:pattern :assert-dashboard-project-count :count 3}
+               (gherkin/classify-step "the dashboard should have 3 projects")))
+
+    (it "classifies assert-project-status"
+      (should= {:pattern :assert-project-status :slug "alpha" :expected "active"}
+               (gherkin/classify-step "project \"alpha\" should have status \"active\"")))
+
+    (it "classifies assert-project-iteration-number"
+      (should= {:pattern :assert-project-iteration-number :slug "alpha" :expected "009"}
+               (gherkin/classify-step "project \"alpha\" should have iteration number \"009\"")))
+
+    (it "classifies assert-project-workers"
+      (should= {:pattern :assert-project-workers :slug "alpha" :workers 1 :max-workers 2}
+               (gherkin/classify-step "project \"alpha\" should have workers 1 of 2")))
+
+    (it "classifies assert-project-no-iteration"
+      (should= {:pattern :assert-project-no-iteration :slug "beta"}
+               (gherkin/classify-step "project \"beta\" should have no iteration")))
+
+    (it "classifies dashboard-project-with-table"
+      (should= {:pattern :dashboard-project :slug "alpha"}
+               (gherkin/classify-step "a dashboard project \"alpha\" with:")))
+
+    (it "classifies project-has-iteration-table"
+      (should= {:pattern :project-has-iteration :slug "alpha"}
+               (gherkin/classify-step "project \"alpha\" has iteration:")))
+
+    (it "classifies project-has-stories-table"
+      (should= {:pattern :project-has-stories :slug "alpha"}
+               (gherkin/classify-step "project \"alpha\" has stories:")))
+
+    (it "classifies project-has-no-iteration"
+      (should= {:pattern :project-has-no-iteration :slug "beta"}
+               (gherkin/classify-step "project \"beta\" has no iteration")))
+
+    (it "classifies formatting-project-detail"
+      (should= {:pattern :format-project-detail :slug "alpha"}
+               (gherkin/classify-step "formatting project detail for \"alpha\"")))
+
+    (it "classifies formatting-dashboard-json"
+      (should= {:pattern :format-dashboard-json}
+               (gherkin/classify-step "formatting the dashboard as JSON")))
+
+    (it "classifies formatting-dashboard"
+      (should= {:pattern :format-dashboard}
+               (gherkin/classify-step "formatting the dashboard")))
+
+    (it "classifies assert-json-project-count"
+      (should= {:pattern :assert-json-project-count :count 1}
+               (gherkin/classify-step "the JSON should contain 1 project")))
+
+    (it "classifies assert-json-project-iteration-percent"
+      (should= {:pattern :assert-json-project-iteration-percent :slug "alpha" :percent 33}
+               (gherkin/classify-step "the JSON project \"alpha\" should have iteration percent 33")))
+
+    (it "classifies empty-registry"
+      (should= {:pattern :empty-registry}
+               (gherkin/classify-step "an empty registry"))))
 
   (context "parse-feature"
 

@@ -326,7 +326,89 @@
 
     (it "formats assert-json-contains step"
       (should= "the JSON should contain \"number\""
-               (gen/step-text {:pattern :assert-json-contains :expected "number"}))))
+               (gen/step-text {:pattern :assert-json-contains :expected "number"})))
+
+    ;; --- Project status step-text ---
+
+    (it "formats project-configs-table step"
+      (should= "project configs:"
+               (gen/step-text {:pattern :project-configs-table})))
+
+    (it "formats active-iterations-table step"
+      (should= "active iterations:"
+               (gen/step-text {:pattern :active-iterations-table})))
+
+    (it "formats active-workers-table step"
+      (should= "active workers:"
+               (gen/step-text {:pattern :active-workers-table})))
+
+    (it "formats no-active-iterations step"
+      (should= "no active iterations"
+               (gen/step-text {:pattern :no-active-iterations})))
+
+    (it "formats build-dashboard step"
+      (should= "building the dashboard"
+               (gen/step-text {:pattern :build-dashboard})))
+
+    (it "formats assert-dashboard-project-count step"
+      (should= "the dashboard should have 3 projects"
+               (gen/step-text {:pattern :assert-dashboard-project-count :count 3})))
+
+    (it "formats assert-project-status step"
+      (should= "project \"alpha\" should have status \"active\""
+               (gen/step-text {:pattern :assert-project-status :slug "alpha" :expected "active"})))
+
+    (it "formats assert-project-iteration-number step"
+      (should= "project \"alpha\" should have iteration number \"009\""
+               (gen/step-text {:pattern :assert-project-iteration-number :slug "alpha" :expected "009"})))
+
+    (it "formats assert-project-workers step"
+      (should= "project \"alpha\" should have workers 1 of 2"
+               (gen/step-text {:pattern :assert-project-workers :slug "alpha" :workers 1 :max-workers 2})))
+
+    (it "formats assert-project-no-iteration step"
+      (should= "project \"beta\" should have no iteration"
+               (gen/step-text {:pattern :assert-project-no-iteration :slug "beta"})))
+
+    (it "formats dashboard-project step"
+      (should= "a dashboard project \"alpha\" with:"
+               (gen/step-text {:pattern :dashboard-project :slug "alpha"})))
+
+    (it "formats project-has-iteration step"
+      (should= "project \"alpha\" has iteration:"
+               (gen/step-text {:pattern :project-has-iteration :slug "alpha"})))
+
+    (it "formats project-has-stories step"
+      (should= "project \"alpha\" has stories:"
+               (gen/step-text {:pattern :project-has-stories :slug "alpha"})))
+
+    (it "formats project-has-no-iteration step"
+      (should= "project \"beta\" has no iteration"
+               (gen/step-text {:pattern :project-has-no-iteration :slug "beta"})))
+
+    (it "formats format-project-detail step"
+      (should= "formatting project detail for \"alpha\""
+               (gen/step-text {:pattern :format-project-detail :slug "alpha"})))
+
+    (it "formats format-dashboard-json step"
+      (should= "formatting the dashboard as JSON"
+               (gen/step-text {:pattern :format-dashboard-json})))
+
+    (it "formats format-dashboard step"
+      (should= "formatting the dashboard"
+               (gen/step-text {:pattern :format-dashboard})))
+
+    (it "formats assert-json-project-count step"
+      (should= "the JSON should contain 1 project"
+               (gen/step-text {:pattern :assert-json-project-count :count 1})))
+
+    (it "formats assert-json-project-iteration-percent step"
+      (should= "the JSON project \"alpha\" should have iteration percent 33"
+               (gen/step-text {:pattern :assert-json-project-iteration-percent :slug "alpha" :percent 33})))
+
+    (it "formats empty-registry step"
+      (should= "an empty registry"
+               (gen/step-text {:pattern :empty-registry}))))
 
   (context "generate-step-comments"
 
@@ -758,7 +840,91 @@
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-config-key!" output)
-        (should-contain "(h/current-config)" output))))
+        (should-contain "(h/current-config)" output)))
+
+    ;; --- Project status generate-scenario ---
+
+    (it "generates executable code for dashboard build scenario"
+      (let [scenario {:scenario "Dashboard includes all projects"
+                      :steps [{:type :given :pattern :registry-with-projects-table
+                               :table {:headers ["slug" "status" "priority" "path"]
+                                       :rows [["alpha" "active" "high" "~/Projects/alpha"]]}}
+                              {:type :and :pattern :project-configs-table
+                               :table {:headers ["slug" "max-workers"]
+                                       :rows [["alpha" "2"]]}}
+                              {:type :and :pattern :active-iterations-table
+                               :table {:headers ["slug" "number" "total" "closed" "percent"]
+                                       :rows [["alpha" "009" "3" "1" "33"]]}}
+                              {:type :and :pattern :active-workers-table
+                               :table {:headers ["slug" "count"]
+                                       :rows [["alpha" "1"]]}}
+                              {:type :when :pattern :build-dashboard}
+                              {:type :then :pattern :assert-dashboard-project-count :count 1}
+                              {:type :and :pattern :assert-project-status :slug "alpha" :expected "active"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/reset!)" output)
+        (should-contain "(h/set-registry-from-table" output)
+        (should-contain "(h/set-project-configs-from-table" output)
+        (should-contain "(h/set-active-iterations-from-table" output)
+        (should-contain "(h/set-active-workers-from-table" output)
+        (should-contain "(h/build-dashboard!)" output)
+        (should-contain "(should= 1 (count (:projects (h/dashboard))))" output)
+        (should-contain "(should= \"active\" (:status (h/dashboard-project \"alpha\")))" output)))
+
+    (it "generates executable code for project detail scenario"
+      (let [scenario {:scenario "Project detail"
+                      :steps [{:type :given :pattern :dashboard-project :slug "alpha"
+                               :table {:headers ["status" "active"] :rows []}}
+                              {:type :and :pattern :project-has-iteration :slug "alpha"
+                               :table {:headers ["number" "009"] :rows []}}
+                              {:type :and :pattern :project-has-stories :slug "alpha"
+                               :table {:headers ["id" "title" "status"]
+                                       :rows [["a-001" "Do thing" "closed"]]}}
+                              {:type :when :pattern :format-project-detail :slug "alpha"}
+                              {:type :then :pattern :assert-output-contains :expected "alpha"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-dashboard-project \"alpha\"" output)
+        (should-contain "(h/set-project-iteration \"alpha\"" output)
+        (should-contain "(h/set-project-stories \"alpha\"" output)
+        (should-contain "(h/format-project-detail! \"alpha\")" output)))
+
+    (it "generates executable code for no-iteration project detail"
+      (let [scenario {:scenario "No iteration fallback"
+                      :steps [{:type :given :pattern :dashboard-project :slug "beta"
+                               :table {:headers ["status" "paused"] :rows []}}
+                              {:type :and :pattern :project-has-no-iteration :slug "beta"}
+                              {:type :when :pattern :format-project-detail :slug "beta"}
+                              {:type :then :pattern :assert-output-contains :expected "no active iteration"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/clear-project-iteration \"beta\")" output)
+        (should-contain "(h/format-project-detail! \"beta\")" output)))
+
+    (it "generates executable code for dashboard JSON scenario"
+      (let [scenario {:scenario "Dashboard JSON output"
+                      :steps [{:type :when :pattern :format-dashboard-json}
+                              {:type :then :pattern :assert-json-project-count :count 1}
+                              {:type :and :pattern :assert-json-project-iteration-percent :slug "alpha" :percent 33}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/format-dashboard-json!)" output)
+        (should-contain "(should= 1 (count (:projects (h/dashboard-json))))" output)
+        (should-contain "(should= 33 (get-in (h/dashboard-json-project \"alpha\") [\"iteration\" \"stats\" \"percent\"]))" output)))
+
+    (it "generates executable code for empty registry scenario"
+      (let [scenario {:scenario "Empty registry"
+                      :steps [{:type :given :pattern :empty-registry}
+                              {:type :when :pattern :build-dashboard}
+                              {:type :and :pattern :format-dashboard}
+                              {:type :then :pattern :assert-output-equals :expected "No projects registered."}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-empty-registry)" output)
+        (should-contain "(h/build-dashboard!)" output)
+        (should-contain "(h/format-dashboard!)" output)
+        (should-contain "(should= \"No projects registered.\" (h/output))" output))))
 
   (context "generate-spec"
 

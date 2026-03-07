@@ -494,9 +494,83 @@
     (fn [[_ key expected]]
       {:pattern :assert-config-has-value :key key :expected expected})]
 
-   [#"^\"([^\"]+)\" should appear before \"([^\"]+)\" in the output$"
-    (fn [[_ first-item second-item]]
-      {:pattern :assert-appears-before :first first-item :second second-item})]])
+    [#"^\"([^\"]+)\" should appear before \"([^\"]+)\" in the output$"
+     (fn [[_ first-item second-item]]
+       {:pattern :assert-appears-before :first first-item :second second-item})]
+
+    ;; --- Project status step patterns ---
+
+    [#"^project configs:$"
+     (fn [_] {:pattern :project-configs-table})]
+
+    [#"^active iterations:$"
+     (fn [_] {:pattern :active-iterations-table})]
+
+    [#"^active workers:$"
+     (fn [_] {:pattern :active-workers-table})]
+
+    [#"^no active iterations$"
+     (fn [_] {:pattern :no-active-iterations})]
+
+    [#"^building the dashboard$"
+     (fn [_] {:pattern :build-dashboard})]
+
+    [#"^the dashboard should have (\d+) projects?$"
+     (fn [[_ count]]
+       {:pattern :assert-dashboard-project-count :count (parse-long count)})]
+
+    [#"^project \"([^\"]+)\" should have status \"([^\"]+)\"$"
+     (fn [[_ slug expected]]
+       {:pattern :assert-project-status :slug slug :expected expected})]
+
+    [#"^project \"([^\"]+)\" should have iteration number \"([^\"]+)\"$"
+     (fn [[_ slug expected]]
+       {:pattern :assert-project-iteration-number :slug slug :expected expected})]
+
+    [#"^project \"([^\"]+)\" should have workers (\d+) of (\d+)$"
+     (fn [[_ slug workers max-workers]]
+       {:pattern :assert-project-workers :slug slug :workers (parse-long workers) :max-workers (parse-long max-workers)})]
+
+    [#"^project \"([^\"]+)\" should have no iteration$"
+     (fn [[_ slug]]
+       {:pattern :assert-project-no-iteration :slug slug})]
+
+    [#"^a dashboard project \"([^\"]+)\" with:$"
+     (fn [[_ slug]]
+       {:pattern :dashboard-project :slug slug})]
+
+    [#"^project \"([^\"]+)\" has iteration:$"
+     (fn [[_ slug]]
+       {:pattern :project-has-iteration :slug slug})]
+
+    [#"^project \"([^\"]+)\" has stories:$"
+     (fn [[_ slug]]
+       {:pattern :project-has-stories :slug slug})]
+
+    [#"^project \"([^\"]+)\" has no iteration$"
+     (fn [[_ slug]]
+       {:pattern :project-has-no-iteration :slug slug})]
+
+    [#"^formatting project detail for \"([^\"]+)\"$"
+     (fn [[_ slug]]
+       {:pattern :format-project-detail :slug slug})]
+
+    [#"^formatting the dashboard as JSON$"
+     (fn [_] {:pattern :format-dashboard-json})]
+
+    [#"^formatting the dashboard$"
+     (fn [_] {:pattern :format-dashboard})]
+
+    [#"^the JSON should contain (\d+) projects?$"
+     (fn [[_ count]]
+       {:pattern :assert-json-project-count :count (parse-long count)})]
+
+    [#"^the JSON project \"([^\"]+)\" should have iteration percent (\d+)$"
+     (fn [[_ slug percent]]
+       {:pattern :assert-json-project-iteration-percent :slug slug :percent (parse-long percent)})]
+
+    [#"^an empty registry$"
+     (fn [_] {:pattern :empty-registry})]])
 
 (defn classify-step
   "Pattern-match step text into a typed IR node map, or {:pattern :unrecognized :text text}."

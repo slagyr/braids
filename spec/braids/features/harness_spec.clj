@@ -573,4 +573,156 @@
     (it "request-config-help! stores help output"
       (h/request-config-help!)
       (should (clojure.string/includes? (h/output) "Usage: braids config"))))
+
+  ;; --- Project status harness ---
+
+  (context "set-project-configs-from-table"
+
+    (it "builds project configs from table data"
+      (h/set-registry-from-table
+        ["slug" "status" "priority" "path"]
+        [["alpha" "active" "high" "~/Projects/alpha"]])
+      (h/set-project-configs-from-table
+        ["slug" "max-workers"]
+        [["alpha" "2"]])
+      (h/build-dashboard!)
+      (should= 2 (:max-workers (h/dashboard-project "alpha")))))
+
+  (context "set-active-iterations-from-table"
+
+    (it "builds iterations from table data"
+      (h/set-registry-from-table
+        ["slug" "status" "priority" "path"]
+        [["alpha" "active" "high" "~/Projects/alpha"]])
+      (h/set-project-configs-from-table
+        ["slug" "max-workers"]
+        [["alpha" "2"]])
+      (h/set-active-iterations-from-table
+        ["slug" "number" "total" "closed" "percent"]
+        [["alpha" "009" "3" "1" "33"]])
+      (h/build-dashboard!)
+      (should= "009" (get-in (h/dashboard-project "alpha") [:iteration :number]))))
+
+  (context "set-active-workers-from-table"
+
+    (it "builds workers from table data"
+      (h/set-registry-from-table
+        ["slug" "status" "priority" "path"]
+        [["alpha" "active" "high" "~/Projects/alpha"]])
+      (h/set-project-configs-from-table
+        ["slug" "max-workers"]
+        [["alpha" "2"]])
+      (h/set-active-workers-from-table
+        ["slug" "count"]
+        [["alpha" "1"]])
+      (h/build-dashboard!)
+      (should= 1 (:workers (h/dashboard-project "alpha")))))
+
+  (context "build-dashboard!"
+
+    (it "builds dashboard from accumulated state"
+      (h/set-registry-from-table
+        ["slug" "status" "priority" "path"]
+        [["alpha" "active" "high" "~/Projects/alpha"]
+         ["beta" "paused" "normal" "~/Projects/beta"]])
+      (h/set-project-configs-from-table
+        ["slug" "max-workers"]
+        [["alpha" "2"] ["beta" "1"]])
+      (h/set-active-iterations-from-table
+        ["slug" "number" "total" "closed" "percent"]
+        [["alpha" "009" "3" "1" "33"]])
+      (h/set-active-workers-from-table
+        ["slug" "count"]
+        [["alpha" "1"]])
+      (h/build-dashboard!)
+      (should= 2 (count (:projects (h/dashboard))))
+      (should= "active" (:status (h/dashboard-project "alpha")))
+      (should= "paused" (:status (h/dashboard-project "beta")))
+      (should-be-nil (:iteration (h/dashboard-project "beta")))))
+
+  (context "dashboard-project"
+
+    (it "finds a project by slug"
+      (h/set-registry-from-table
+        ["slug" "status" "priority" "path"]
+        [["alpha" "active" "high" "~/Projects/alpha"]])
+      (h/set-project-configs-from-table
+        ["slug" "max-workers"]
+        [["alpha" "2"]])
+      (h/build-dashboard!)
+      (should= "alpha" (:slug (h/dashboard-project "alpha")))))
+
+  (context "set-dashboard-project"
+
+    (it "builds a project for detail formatting"
+      (h/set-dashboard-project "alpha"
+        ["status" "active"]
+        [["workers" "1"] ["max-workers" "2"]])
+      (h/set-project-iteration "alpha"
+        ["number" "009"]
+        [["total" "3"] ["closed" "1"] ["percent" "33"]])
+      (h/set-project-stories "alpha"
+        ["id" "title" "status"]
+        [["a-001" "Do thing" "closed"]])
+      (h/format-project-detail! "alpha")
+      (should (clojure.string/includes? (h/output) "alpha"))))
+
+  (context "format-project-detail!"
+
+    (it "formats project detail with iteration"
+      (h/set-dashboard-project "alpha"
+        ["status" "active"]
+        [["workers" "1"] ["max-workers" "2"]])
+      (h/set-project-iteration "alpha"
+        ["number" "009"]
+        [["total" "3"] ["closed" "1"] ["percent" "33"]])
+      (h/set-project-stories "alpha"
+        ["id" "title" "status"]
+        [["a-001" "Do thing" "closed"]])
+      (h/format-project-detail! "alpha")
+      (should (clojure.string/includes? (h/output) "1/3"))
+      (should (clojure.string/includes? (h/output) "33%")))
+
+    (it "formats project detail without iteration"
+      (h/set-dashboard-project "beta"
+        ["status" "paused"]
+        [["workers" "0"] ["max-workers" "1"]])
+      (h/clear-project-iteration "beta")
+      (h/format-project-detail! "beta")
+      (should (clojure.string/includes? (h/output) "no active iteration"))))
+
+  (context "format-dashboard!"
+
+    (it "formats dashboard for human output"
+      (h/set-empty-registry)
+      (h/build-dashboard!)
+      (h/format-dashboard!)
+      (should= "No projects registered." (h/output))))
+
+  (context "format-dashboard-json!"
+
+    (it "formats dashboard as JSON"
+      (h/set-registry-from-table
+        ["slug" "status" "priority" "path"]
+        [["alpha" "active" "high" "~/Projects/alpha"]])
+      (h/set-project-configs-from-table
+        ["slug" "max-workers"]
+        [["alpha" "2"]])
+      (h/set-active-iterations-from-table
+        ["slug" "number" "total" "closed" "percent"]
+        [["alpha" "009" "3" "1" "33"]])
+      (h/set-active-workers-from-table
+        ["slug" "count"]
+        [["alpha" "1"]])
+      (h/build-dashboard!)
+      (h/format-dashboard-json!)
+      (should= 1 (count (:projects (h/dashboard-json))))
+      (should= "active" (get (h/dashboard-json-project "alpha") "status"))))
+
+  (context "set-empty-registry"
+
+    (it "sets an empty registry"
+      (h/set-empty-registry)
+      (h/build-dashboard!)
+      (should= 0 (count (:projects (h/dashboard))))))
 )

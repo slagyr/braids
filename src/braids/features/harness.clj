@@ -8,6 +8,7 @@
             [braids.ready :as ready]
             [braids.iteration :as iteration]
             [braids.config :as config]
+            [braids.status :as status]
             [cheshire.core :as json]
             [clojure.string :as str]))
 
@@ -68,7 +69,15 @@
                                ;; Configuration state
                                :config-map nil
                                :config-edn-str nil
-                               :config-result nil}))
+                               :config-result nil
+                               ;; Project status / dashboard state
+                               :status-registry {:projects []}
+                               :status-configs {}
+                               :status-iterations {}
+                               :status-workers {}
+                               :dashboard nil
+                               :dashboard-json-data nil
+                               :detail-projects {}}))
 
 ;; --- State accessors ---
 
@@ -504,11 +513,12 @@
          (str/includes? output text))))
 
 (defn json-project
-  "Find a project by slug in the JSON list output. Returns parsed map or nil."
+  "Find a project by slug in the JSON output. Handles both array and {projects: [...]} formats."
   [slug]
   (when-let [output (:list-json-output @state)]
-    (let [parsed (json/parse-string output)]
-      (first (filter #(= slug (get % "slug")) parsed)))))
+    (let [parsed (json/parse-string output)
+          projects (if (map? parsed) (get parsed "projects") parsed)]
+      (first (filter #(= slug (get % "slug")) projects)))))
 
 ;; --- Ready beads helpers ---
 
@@ -519,13 +529,14 @@
     {:slug (get m "slug")
      :status (keyword (get m "status"))
      :priority (keyword (get m "priority"))
-     :path (str "/projects/" (get m "slug"))}))
+     :path (or (get m "path") (str "/projects/" (get m "slug")))}))
 
 (defn set-registry-from-table
-  "Build ready-beads registry from table headers and rows."
+  "Build registry from table headers and rows. Sets both ready-registry and status-registry."
   [headers rows]
-  (let [projects (mapv #(table-row->ready-registry-project headers %) rows)]
-    (swap! state assoc :ready-registry {:projects projects})))
+  (let [projects (mapv #(table-row->ready-registry-project headers %) rows)
+        registry {:projects projects}]
+    (swap! state assoc :ready-registry registry :status-registry registry)))
 
 (defn set-project-config
   "Set ready-beads config for a project."
@@ -822,3 +833,146 @@
   "Returns the current config map."
   []
   (:config-map @state))
+
+;; --- Project status / dashboard helpers ---
+
+;; Given step builders
+
+(defn set-project-configs-from-table
+  "Build project configs from table headers and rows."
+  [headers rows]
+  (let [configs (reduce (fn [acc row]
+                          (let [m (zipmap headers row)
+                                slug (get m "slug")
+                                max-w (parse-long (get m "max-workers"))]
+                            (assoc acc slug {:max-workers max-w})))
+                        {}
+                        rows)]
+    (swap! state update :status-configs merge configs)))
+
+(defn set-active-iterations-from-table
+  "Build active iterations from table headers and rows."
+  [headers rows]
+  (let [iterations (reduce (fn [acc row]
+                             (let [m (zipmap headers row)
+                                   slug (get m "slug")]
+                               (assoc acc slug {:number (get m "number")
+                                                :stats {:total (parse-long (get m "total"))
+                                                        :closed (parse-long (get m "closed"))
+                                                        :percent (parse-long (get m "percent"))}})))
+                           {}
+                           rows)]
+    (swap! state update :status-iterations merge iterations)))
+
+(defn set-active-workers-from-table
+  "Build active workers from table headers and rows."
+  [headers rows]
+  (let [workers (reduce (fn [acc row]
+                          (let [m (zipmap headers row)]
+                            (assoc acc (get m "slug") (parse-long (get m "count")))))
+                        {}
+                        rows)]
+    (swap! state update :status-workers merge workers)))
+
+(defn set-empty-registry
+  "Set an empty registry for status."
+  []
+  (swap! state assoc :status-registry {:projects []}
+                     :ready-registry {:projects []}))
+
+(defn set-dashboard-project
+  "Build a dashboard project for detail formatting from key-value table.
+   Table has headers as the first key-value pair, rows as additional pairs."
+  [slug headers rows]
+  (let [all-pairs (cons headers rows)
+        m (reduce (fn [acc [k v]] (assoc acc k v)) {} (map vec all-pairs))]
+    (swap! state assoc-in [:detail-projects slug]
+           {:slug slug
+            :status (get m "status" "unknown")
+            :workers (when-let [w (get m "workers")] (parse-long w))
+            :max-workers (when-let [w (get m "max-workers")] (parse-long w))})))
+
+(defn set-project-iteration
+  "Set iteration data for a detail project from key-value table."
+  [slug headers rows]
+  (let [all-pairs (cons headers rows)
+        m (reduce (fn [acc [k v]] (assoc acc k v)) {} (map vec all-pairs))]
+    (swap! state update-in [:detail-projects slug]
+           assoc :iteration {:number (get m "number")
+                             :stats {:total (parse-long (get m "total"))
+                                     :closed (parse-long (get m "closed"))
+                                     :percent (parse-long (get m "percent"))}})))
+
+(defn set-project-stories
+  "Set stories for a detail project from table data."
+  [slug headers rows]
+  (let [stories (mapv (fn [row]
+                        (let [m (zipmap headers row)]
+                          {:id (get m "id")
+                           :title (get m "title")
+                           :status (get m "status")}))
+                      rows)]
+    (swap! state update-in [:detail-projects slug :iteration] assoc :stories stories)))
+
+(defn clear-project-iteration
+  "Remove iteration from a detail project."
+  [slug]
+  (swap! state update-in [:detail-projects slug] dissoc :iteration))
+
+;; When step actions
+
+(defn build-dashboard!
+  "Build dashboard from accumulated status state."
+  []
+  (let [{:keys [status-registry ready-registry status-configs status-iterations status-workers]} @state
+        registry (if (seq (:projects status-registry))
+                   status-registry
+                   ready-registry)
+        result (status/build-dashboard registry status-configs status-iterations status-workers)]
+    (swap! state assoc :dashboard result)))
+
+(defn format-project-detail!
+  "Format a specific project detail and store output."
+  [slug]
+  (let [project (get-in @state [:detail-projects slug])
+        result (status/format-project-detail project)]
+    (swap! state assoc :output result)))
+
+(defn format-dashboard!
+  "Format the dashboard for human-readable output."
+  []
+  (let [dash (:dashboard @state)
+        result (status/format-dashboard dash)]
+    (swap! state assoc :output result)))
+
+(defn format-dashboard-json!
+  "Format the dashboard as JSON."
+  []
+  (let [dash (:dashboard @state)
+        result (status/format-dashboard-json dash)
+        parsed (json/parse-string result true)]
+    (swap! state assoc :dashboard-json-data parsed :output result :list-json-output result)))
+
+;; Then step accessors
+
+(defn dashboard
+  "Returns the dashboard data."
+  []
+  (:dashboard @state))
+
+(defn dashboard-project
+  "Find a project by slug in the dashboard."
+  [slug]
+  (first (filter #(= slug (:slug %)) (:projects (:dashboard @state)))))
+
+(defn dashboard-json
+  "Returns the parsed dashboard JSON data."
+  []
+  (:dashboard-json-data @state))
+
+(defn dashboard-json-project
+  "Find a project by slug in the dashboard JSON. Returns string-keyed map."
+  [slug]
+  (let [json-str (:output @state)
+        parsed (json/parse-string json-str)]
+    (first (filter #(= slug (get % "slug")) (get parsed "projects")))))
