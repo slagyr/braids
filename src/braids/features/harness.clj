@@ -2,6 +2,7 @@
   "Test harness for generated feature specs. Manages mutable test state
    and provides helpers that generated code calls."
   (:require [braids.orch :as orch]
+            [braids.orch-runner :as orch-runner]
             [braids.init :as init]
             [braids.new :as new-proj]
             [braids.list :as list]
@@ -77,7 +78,17 @@
                                :status-workers {}
                                :dashboard nil
                                :dashboard-json-data nil
-                               :detail-projects {}}))
+                               :detail-projects {}
+                               ;; Orch runner state
+                               :runner-spawn-entry {}
+                               :runner-config {}
+                               :runner-cli-args []
+                               :runner-parsed-cli-args nil
+                               :runner-worker-task nil
+                               :runner-worker-args nil
+                               :runner-tick-result nil
+                               :runner-zombies []
+                               :runner-log nil}))
 
 ;; --- State accessors ---
 
@@ -976,3 +987,142 @@
   (let [json-str (:output @state)
         parsed (json/parse-string json-str)]
     (first (filter #(= slug (get % "slug")) (get parsed "projects")))))
+
+;; --- Orch runner helpers ---
+
+;; Given step builders
+
+(defn set-spawn-entry
+  "Set the spawn entry map."
+  [entry]
+  (swap! state assoc :runner-spawn-entry entry))
+
+(defn spawn-entry
+  "Returns the current spawn entry."
+  []
+  (:runner-spawn-entry @state))
+
+(defn update-spawn-entry
+  "Merge additional fields into the spawn entry."
+  [fields]
+  (swap! state update :runner-spawn-entry merge fields))
+
+(defn set-worker-agent
+  "Set the worker agent on the spawn entry."
+  [agent]
+  (swap! state assoc-in [:runner-spawn-entry :worker-agent] agent))
+
+(defn set-cli-args
+  "Store CLI args for parsing."
+  [args]
+  (swap! state assoc :runner-cli-args args))
+
+(defn cli-args
+  "Returns the stored CLI args."
+  []
+  (:runner-cli-args @state))
+
+(defn set-spawn-tick-result
+  "Build a spawn tick result with beads."
+  [count beads]
+  (let [spawns (mapv (fn [b] {:bead b :worker-agent nil}) beads)]
+    (swap! state assoc :runner-tick-result {:action "spawn" :spawns spawns})))
+
+(defn add-spawn-beads
+  "Add bead entries to the spawn tick result."
+  [beads]
+  (let [spawns (mapv (fn [b] {:bead b :worker-agent nil}) beads)]
+    (swap! state assoc-in [:runner-tick-result :spawns] spawns)))
+
+(defn set-idle-tick-result
+  "Build an idle tick result with a reason."
+  [reason]
+  (swap! state assoc :runner-tick-result {:action "idle" :reason reason}))
+
+(defn set-zombie-sessions
+  "Build zombie session data."
+  [count reasons]
+  (let [zombies (mapv (fn [r] {:bead (str "z-" r) :reason r}) reasons)]
+    (swap! state assoc :runner-zombies zombies)))
+
+;; When step actions
+
+(defn build-worker-task!
+  "Build the worker task from the spawn entry."
+  []
+  (let [entry (:runner-spawn-entry @state)
+        task (orch-runner/build-worker-task entry)]
+    (swap! state assoc :runner-worker-task task)))
+
+(defn worker-task
+  "Returns the built worker task."
+  []
+  (:runner-worker-task @state))
+
+(defn build-worker-args!
+  "Build the worker args from the spawn entry.
+   Also extracts the session ID from args for assert-session-id compatibility."
+  []
+  (let [entry (:runner-spawn-entry @state)
+        config (:runner-config @state)
+        args (orch-runner/build-worker-args config entry)
+        sid-idx (when args (.indexOf ^java.util.List args "--session-id"))
+        session-id (when (and sid-idx (>= sid-idx 0) (< (inc sid-idx) (count args)))
+                     (nth args (inc sid-idx)))]
+    (swap! state assoc :runner-worker-args args
+           :session-id-result session-id)))
+
+(defn worker-args
+  "Returns the built worker args."
+  []
+  (:runner-worker-args @state))
+
+(defn parse-cli-args!
+  "Parse the stored CLI args."
+  []
+  (let [args (:runner-cli-args @state)
+        result (orch-runner/parse-cli-args args)]
+    (swap! state assoc :runner-parsed-cli-args result)))
+
+(defn parsed-cli-args
+  "Returns the parsed CLI args result."
+  []
+  (:runner-parsed-cli-args @state))
+
+(defn format-spawn-log!
+  "Format the spawn log from the tick result."
+  []
+  (let [result (:runner-tick-result @state)
+        log (orch-runner/format-spawn-log result)]
+    (swap! state assoc :runner-log log)))
+
+(defn format-idle-log!
+  "Format the idle log from the tick result."
+  []
+  (let [result (:runner-tick-result @state)
+        log (orch-runner/format-idle-log result)]
+    (swap! state assoc :runner-log log)))
+
+(defn format-zombie-log!
+  "Format the zombie log."
+  []
+  (let [zombies (:runner-zombies @state)
+        log (orch-runner/format-zombie-log zombies)]
+    (swap! state assoc :runner-log log)))
+
+;; Then step accessors
+
+(defn runner-tick-result
+  "Returns the runner tick result."
+  []
+  (:runner-tick-result @state))
+
+(defn runner-zombies
+  "Returns the runner zombies."
+  []
+  (:runner-zombies @state))
+
+(defn runner-log
+  "Returns the runner log lines."
+  []
+  (:runner-log @state))

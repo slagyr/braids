@@ -570,7 +570,104 @@
        {:pattern :assert-json-project-iteration-percent :slug slug :percent (parse-long percent)})]
 
     [#"^an empty registry$"
-     (fn [_] {:pattern :empty-registry})]])
+     (fn [_] {:pattern :empty-registry})]
+
+    ;; --- Orch runner step patterns ---
+
+    [#"^a spawn entry with path \"([^\"]+)\" and bead \"([^\"]+)\"$"
+     (fn [[_ path bead]]
+       {:pattern :spawn-entry-path-bead :path path :bead bead})]
+
+    [#"^iteration \"([^\"]+)\" and channel \"([^\"]+)\"$"
+     (fn [[_ iteration channel]]
+       {:pattern :spawn-iteration-channel :iteration iteration :channel channel})]
+
+    [#"^a spawn entry with bead \"([^\"]+)\"$"
+     (fn [[_ bead]]
+       {:pattern :spawn-entry-bead :bead bead})]
+
+    [#"^no custom worker agent$"
+     (fn [_] {:pattern :no-worker-agent})]
+
+    [#"^worker agent \"([^\"]+)\"$"
+     (fn [[_ agent]]
+       {:pattern :worker-agent :agent agent})]
+
+    [#"^no CLI arguments$"
+     (fn [_] {:pattern :no-cli-args})]
+
+    [#"^CLI arguments \"([^\"]+)\"$"
+     (fn [[_ args]]
+       {:pattern :cli-args :args args})]
+
+    [#"^a spawn tick result with (\d+) workers?$"
+     (fn [[_ count]]
+       {:pattern :spawn-tick-result :count (parse-long count)})]
+
+    [#"^beads \"([^\"]+)\" and \"([^\"]+)\"$"
+     (fn [[_ b1 b2]]
+       {:pattern :spawn-beads :beads [b1 b2]})]
+
+    [#"^an idle tick result with reason \"([^\"]+)\"$"
+     (fn [[_ reason]]
+       {:pattern :idle-tick-result :reason reason})]
+
+    [#"^(\d+) zombie sessions with reasons \"([^\"]+)\" and \"([^\"]+)\"$"
+     (fn [[_ count r1 r2]]
+       {:pattern :zombie-sessions :count (parse-long count) :reasons [r1 r2]})]
+
+    [#"^building the worker task$"
+     (fn [_] {:pattern :build-worker-task})]
+
+    [#"^building the worker args$"
+     (fn [_] {:pattern :build-worker-args})]
+
+    [#"^parsing CLI args$"
+     (fn [_] {:pattern :parse-cli-args})]
+
+    [#"^formatting the spawn log$"
+     (fn [_] {:pattern :format-spawn-log})]
+
+    [#"^formatting the idle log$"
+     (fn [_] {:pattern :format-idle-log})]
+
+    [#"^formatting the zombie log$"
+     (fn [_] {:pattern :format-zombie-log})]
+
+    [#"^the task should contain \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-task-contains :expected expected})]
+
+    [#"^the args should include \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-args-include :expected expected})]
+
+    [#"^the args should not include \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-args-not-include :expected expected})]
+
+    [#"^the agent value should be \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-agent-value :expected expected})]
+
+    [#"^dry-run should be (true|false)$"
+     (fn [[_ val]]
+       {:pattern :assert-dry-run :expected (= val "true")})]
+
+    [#"^verbose should be (true|false)$"
+     (fn [[_ val]]
+       {:pattern :assert-verbose :expected (= val "true")})]
+
+    [#"^parsing should return an error$"
+     (fn [_] {:pattern :assert-parse-error})]
+
+    [#"^the error should contain \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-error-contains :expected expected})]
+
+    [#"^the log should contain \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-log-contains :expected expected})]])
 
 (defn classify-step
   "Pattern-match step text into a typed IR node map, or {:pattern :unrecognized :text text}."

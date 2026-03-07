@@ -725,4 +725,111 @@
       (h/set-empty-registry)
       (h/build-dashboard!)
       (should= 0 (count (:projects (h/dashboard))))))
+
+  ;; --- Orch runner harness ---
+
+  (context "set-spawn-entry"
+
+    (it "stores spawn entry path and bead"
+      (h/set-spawn-entry {:path "~/Projects/test" :bead "test-abc"})
+      (should= "~/Projects/test" (:path (h/spawn-entry)))
+      (should= "test-abc" (:bead (h/spawn-entry)))))
+
+  (context "update-spawn-entry"
+
+    (it "merges additional fields into the spawn entry"
+      (h/set-spawn-entry {:path "~/test" :bead "b1"})
+      (h/update-spawn-entry {:iteration "001" :channel "12345"})
+      (should= "001" (:iteration (h/spawn-entry)))
+      (should= "12345" (:channel (h/spawn-entry)))
+      (should= "~/test" (:path (h/spawn-entry)))))
+
+  (context "set-worker-agent"
+
+    (it "sets the worker agent on the spawn entry"
+      (h/set-spawn-entry {:bead "b1"})
+      (h/set-worker-agent "scrapper")
+      (should= "scrapper" (:worker-agent (h/spawn-entry)))))
+
+  (context "build-worker-task!"
+
+    (it "builds the worker task and stores the result"
+      (h/set-spawn-entry {:path "~/Projects/test" :bead "test-abc"})
+      (h/update-spawn-entry {:iteration "001" :channel "12345"})
+      (h/build-worker-task!)
+      (should (clojure.string/includes? (h/worker-task) "~/Projects/test"))
+      (should (clojure.string/includes? (h/worker-task) "test-abc"))))
+
+  (context "build-worker-args!"
+
+    (it "builds the worker args and stores the result"
+      (h/set-spawn-entry {:bead "proj-abc"})
+      (h/build-worker-args!)
+      (should (some #(= "--message" %) (h/worker-args)))
+      (should (some #(= "--session-id" %) (h/worker-args)))))
+
+  (context "set-cli-args"
+
+    (it "stores CLI args for parsing"
+      (h/set-cli-args ["--confirmed"])
+      (should= ["--confirmed"] (h/cli-args))))
+
+  (context "parse-cli-args!"
+
+    (it "parses stored CLI args and stores result"
+      (h/set-cli-args [])
+      (h/parse-cli-args!)
+      (should= true (:dry-run (h/parsed-cli-args)))
+      (should= false (:verbose (h/parsed-cli-args))))
+
+    (it "parses --confirmed flag"
+      (h/set-cli-args ["--confirmed"])
+      (h/parse-cli-args!)
+      (should= false (:dry-run (h/parsed-cli-args)))))
+
+  (context "set-spawn-tick-result"
+
+    (it "stores a spawn tick result"
+      (h/set-spawn-tick-result 2 ["b1" "b2"])
+      (should= 2 (count (:spawns (h/runner-tick-result))))))
+
+  (context "add-spawn-beads"
+
+    (it "adds beads to a tick result"
+      (h/set-spawn-tick-result 0 [])
+      (h/add-spawn-beads ["b1" "b2"])
+      (should= 2 (count (:spawns (h/runner-tick-result))))))
+
+  (context "set-idle-tick-result"
+
+    (it "stores an idle tick result"
+      (h/set-idle-tick-result "all-at-capacity")
+      (should= "all-at-capacity" (:reason (h/runner-tick-result)))))
+
+  (context "set-zombie-sessions"
+
+    (it "stores zombie sessions"
+      (h/set-zombie-sessions 2 ["bead-closed" "timeout"])
+      (should= 2 (count (h/runner-zombies)))))
+
+  (context "format-spawn-log!"
+
+    (it "formats the spawn log"
+      (h/set-spawn-tick-result 2 ["b1" "b2"])
+      (h/format-spawn-log!)
+      (should (some #(clojure.string/includes? % "2 worker") (h/runner-log)))))
+
+  (context "format-idle-log!"
+
+    (it "formats the idle log"
+      (h/set-idle-tick-result "all-at-capacity")
+      (h/format-idle-log!)
+      (should (some #(clojure.string/includes? % "Idle") (h/runner-log)))))
+
+  (context "format-zombie-log!"
+
+    (it "formats the zombie log"
+      (h/set-zombie-sessions 2 ["bead-closed" "timeout"])
+      (h/format-zombie-log!)
+      (should (some #(clojure.string/includes? % "2 zombie") (h/runner-log)))))
 )

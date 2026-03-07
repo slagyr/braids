@@ -408,7 +408,117 @@
 
     (it "formats empty-registry step"
       (should= "an empty registry"
-               (gen/step-text {:pattern :empty-registry}))))
+               (gen/step-text {:pattern :empty-registry})))
+
+    ;; --- Orch runner step-text ---
+
+    (it "formats spawn-entry-path-bead step"
+      (should= "a spawn entry with path \"~/Projects/test\" and bead \"test-abc\""
+               (gen/step-text {:pattern :spawn-entry-path-bead :path "~/Projects/test" :bead "test-abc"})))
+
+    (it "formats spawn-iteration-channel step"
+      (should= "iteration \"001\" and channel \"12345\""
+               (gen/step-text {:pattern :spawn-iteration-channel :iteration "001" :channel "12345"})))
+
+    (it "formats spawn-entry-bead step"
+      (should= "a spawn entry with bead \"proj-abc\""
+               (gen/step-text {:pattern :spawn-entry-bead :bead "proj-abc"})))
+
+    (it "formats no-worker-agent step"
+      (should= "no custom worker agent"
+               (gen/step-text {:pattern :no-worker-agent})))
+
+    (it "formats worker-agent step"
+      (should= "worker agent \"scrapper\""
+               (gen/step-text {:pattern :worker-agent :agent "scrapper"})))
+
+    (it "formats no-cli-args step"
+      (should= "no CLI arguments"
+               (gen/step-text {:pattern :no-cli-args})))
+
+    (it "formats cli-args step"
+      (should= "CLI arguments \"--confirmed\""
+               (gen/step-text {:pattern :cli-args :args "--confirmed"})))
+
+    (it "formats spawn-tick-result step"
+      (should= "a spawn tick result with 2 workers"
+               (gen/step-text {:pattern :spawn-tick-result :count 2})))
+
+    (it "formats spawn-beads step"
+      (should= "beads \"b1\" and \"b2\""
+               (gen/step-text {:pattern :spawn-beads :beads ["b1" "b2"]})))
+
+    (it "formats idle-tick-result step"
+      (should= "an idle tick result with reason \"all-at-capacity\""
+               (gen/step-text {:pattern :idle-tick-result :reason "all-at-capacity"})))
+
+    (it "formats zombie-sessions step"
+      (should= "2 zombie sessions with reasons \"bead-closed\" and \"timeout\""
+               (gen/step-text {:pattern :zombie-sessions :count 2 :reasons ["bead-closed" "timeout"]})))
+
+    (it "formats build-worker-task step"
+      (should= "building the worker task"
+               (gen/step-text {:pattern :build-worker-task})))
+
+    (it "formats build-worker-args step"
+      (should= "building the worker args"
+               (gen/step-text {:pattern :build-worker-args})))
+
+    (it "formats parse-cli-args step"
+      (should= "parsing CLI args"
+               (gen/step-text {:pattern :parse-cli-args})))
+
+    (it "formats format-spawn-log step"
+      (should= "formatting the spawn log"
+               (gen/step-text {:pattern :format-spawn-log})))
+
+    (it "formats format-idle-log step"
+      (should= "formatting the idle log"
+               (gen/step-text {:pattern :format-idle-log})))
+
+    (it "formats format-zombie-log step"
+      (should= "formatting the zombie log"
+               (gen/step-text {:pattern :format-zombie-log})))
+
+    (it "formats assert-task-contains step"
+      (should= "the task should contain \"~/Projects/test\""
+               (gen/step-text {:pattern :assert-task-contains :expected "~/Projects/test"})))
+
+    (it "formats assert-args-include step"
+      (should= "the args should include \"--message\""
+               (gen/step-text {:pattern :assert-args-include :expected "--message"})))
+
+    (it "formats assert-args-not-include step"
+      (should= "the args should not include \"--agent\""
+               (gen/step-text {:pattern :assert-args-not-include :expected "--agent"})))
+
+    (it "formats assert-agent-value step"
+      (should= "the agent value should be \"scrapper\""
+               (gen/step-text {:pattern :assert-agent-value :expected "scrapper"})))
+
+    (it "formats assert-dry-run true step"
+      (should= "dry-run should be true"
+               (gen/step-text {:pattern :assert-dry-run :expected true})))
+
+    (it "formats assert-dry-run false step"
+      (should= "dry-run should be false"
+               (gen/step-text {:pattern :assert-dry-run :expected false})))
+
+    (it "formats assert-verbose step"
+      (should= "verbose should be false"
+               (gen/step-text {:pattern :assert-verbose :expected false})))
+
+    (it "formats assert-parse-error step"
+      (should= "parsing should return an error"
+               (gen/step-text {:pattern :assert-parse-error})))
+
+    (it "formats assert-error-contains step"
+      (should= "the error should contain \"--bogus\""
+               (gen/step-text {:pattern :assert-error-contains :expected "--bogus"})))
+
+    (it "formats assert-log-contains step"
+      (should= "the log should contain \"2 worker\""
+               (gen/step-text {:pattern :assert-log-contains :expected "2 worker"}))))
 
   (context "generate-step-comments"
 
@@ -924,7 +1034,129 @@
         (should-contain "(h/set-empty-registry)" output)
         (should-contain "(h/build-dashboard!)" output)
         (should-contain "(h/format-dashboard!)" output)
-        (should-contain "(should= \"No projects registered.\" (h/output))" output))))
+        (should-contain "(should= \"No projects registered.\" (h/output))" output)))
+
+    ;; --- Orch runner generate-scenario ---
+
+    (it "generates executable code for build worker task scenario"
+      (let [scenario {:scenario "Build worker task message from template"
+                      :steps [{:type :given :pattern :spawn-entry-path-bead :path "~/Projects/test" :bead "test-abc"}
+                              {:type :and :pattern :spawn-iteration-channel :iteration "001" :channel "12345"}
+                              {:type :when :pattern :build-worker-task}
+                              {:type :then :pattern :assert-task-contains :expected "~/Projects/test"}
+                              {:type :and :pattern :assert-task-contains :expected "test-abc"}
+                              {:type :and :pattern :assert-task-contains :expected "001"}
+                              {:type :and :pattern :assert-task-contains :expected "worker.md"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/reset!)" output)
+        (should-contain "(h/set-spawn-entry {:path \"~/Projects/test\" :bead \"test-abc\"})" output)
+        (should-contain "(h/update-spawn-entry {:iteration \"001\" :channel \"12345\"})" output)
+        (should-contain "(h/build-worker-task!)" output)
+        (should-contain "(should (clojure.string/includes? (h/worker-task) \"~/Projects/test\"))" output)))
+
+    (it "generates executable code for build worker args scenario"
+      (let [scenario {:scenario "Build worker CLI args with session ID"
+                      :steps [{:type :given :pattern :spawn-entry-bead :bead "proj-abc"}
+                              {:type :and :pattern :no-worker-agent}
+                              {:type :when :pattern :build-worker-args}
+                              {:type :then :pattern :assert-args-include :expected "--message"}
+                              {:type :and :pattern :assert-args-include :expected "--session-id"}
+                              {:type :and :pattern :assert-args-not-include :expected "--agent"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-spawn-entry {:bead \"proj-abc\"})" output)
+        (should-contain "(h/build-worker-args!)" output)
+        (should-contain "(should (some #(= \"--message\" %) (h/worker-args)))" output)
+        (should-contain "(should-not (some #(= \"--agent\" %) (h/worker-args)))" output)))
+
+    (it "generates executable code for custom agent scenario"
+      (let [scenario {:scenario "Build args with custom agent"
+                      :steps [{:type :given :pattern :spawn-entry-bead :bead "proj-abc"}
+                              {:type :and :pattern :worker-agent :agent "scrapper"}
+                              {:type :when :pattern :build-worker-args}
+                              {:type :then :pattern :assert-args-include :expected "--agent"}
+                              {:type :and :pattern :assert-agent-value :expected "scrapper"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-worker-agent \"scrapper\")" output)
+        (should-contain "(h/build-worker-args!)" output)))
+
+    (it "generates executable code for parse CLI args defaults scenario"
+      (let [scenario {:scenario "Parse CLI args defaults to dry-run"
+                      :steps [{:type :given :pattern :no-cli-args}
+                              {:type :when :pattern :parse-cli-args}
+                              {:type :then :pattern :assert-dry-run :expected true}
+                              {:type :and :pattern :assert-verbose :expected false}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-cli-args [])" output)
+        (should-contain "(h/parse-cli-args!)" output)
+        (should-contain "(should= true (:dry-run (h/parsed-cli-args)))" output)
+        (should-contain "(should= false (:verbose (h/parsed-cli-args)))" output)))
+
+    (it "generates executable code for parse --confirmed scenario"
+      (let [scenario {:scenario "Parse --confirmed enables run"
+                      :steps [{:type :given :pattern :cli-args :args "--confirmed"}
+                              {:type :when :pattern :parse-cli-args}
+                              {:type :then :pattern :assert-dry-run :expected false}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-cli-args [\"--confirmed\"])" output)
+        (should-contain "(h/parse-cli-args!)" output)
+        (should-contain "(should= false (:dry-run (h/parsed-cli-args)))" output)))
+
+    (it "generates executable code for parse unknown arg scenario"
+      (let [scenario {:scenario "Parse unknown arg returns error"
+                      :steps [{:type :given :pattern :cli-args :args "--bogus"}
+                              {:type :when :pattern :parse-cli-args}
+                              {:type :then :pattern :assert-parse-error}
+                              {:type :and :pattern :assert-error-contains :expected "--bogus"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-cli-args [\"--bogus\"])" output)
+        (should-contain "(should (:error (h/parsed-cli-args)))" output)
+        (should-contain "(should (clojure.string/includes? (:error (h/parsed-cli-args)) \"--bogus\"))" output)))
+
+    (it "generates executable code for format spawn log scenario"
+      (let [scenario {:scenario "Format spawn log"
+                      :steps [{:type :given :pattern :spawn-tick-result :count 2}
+                              {:type :and :pattern :spawn-beads :beads ["b1" "b2"]}
+                              {:type :when :pattern :format-spawn-log}
+                              {:type :then :pattern :assert-log-contains :expected "2 worker"}
+                              {:type :and :pattern :assert-log-contains :expected "b1"}
+                              {:type :and :pattern :assert-log-contains :expected "b2"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-spawn-tick-result 2 [])" output)
+        (should-contain "(h/add-spawn-beads [\"b1\" \"b2\"])" output)
+        (should-contain "(h/format-spawn-log!)" output)
+        (should-contain "(should (some #(clojure.string/includes? % \"2 worker\") (h/runner-log)))" output)))
+
+    (it "generates executable code for format idle log scenario"
+      (let [scenario {:scenario "Format idle log"
+                      :steps [{:type :given :pattern :idle-tick-result :reason "all-at-capacity"}
+                              {:type :when :pattern :format-idle-log}
+                              {:type :then :pattern :assert-log-contains :expected "Idle"}
+                              {:type :and :pattern :assert-log-contains :expected "all-at-capacity"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-idle-tick-result \"all-at-capacity\")" output)
+        (should-contain "(h/format-idle-log!)" output)
+        (should-contain "(should (some #(clojure.string/includes? % \"Idle\") (h/runner-log)))" output)))
+
+    (it "generates executable code for format zombie log scenario"
+      (let [scenario {:scenario "Format zombie log"
+                      :steps [{:type :given :pattern :zombie-sessions :count 2 :reasons ["bead-closed" "timeout"]}
+                              {:type :when :pattern :format-zombie-log}
+                              {:type :then :pattern :assert-log-contains :expected "2 zombie"}
+                              {:type :and :pattern :assert-log-contains :expected "bead-closed"}
+                              {:type :and :pattern :assert-log-contains :expected "timeout"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-zombie-sessions 2 [\"bead-closed\" \"timeout\"])" output)
+        (should-contain "(h/format-zombie-log!)" output)
+        (should-contain "(should (some #(clojure.string/includes? % \"2 zombie\") (h/runner-log)))" output))))
 
   (context "generate-spec"
 
