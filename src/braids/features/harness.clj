@@ -61,7 +61,6 @@
                                :ready-registry {:projects []}
                                :ready-configs {}
                                :ready-beads {}
-                               :ready-workers {}
                                :ready-result nil
                                :ready-format-beads nil
                                :ready-output nil}))
