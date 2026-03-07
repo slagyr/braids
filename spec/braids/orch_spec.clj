@@ -549,5 +549,46 @@
             output (orch/format-debug-output reg configs iterations open-beads tick-result {})
             high-idx (.indexOf output "high")
             low-idx (.indexOf output "low")]
-        (should (< high-idx low-idx)))))
+        (should (< high-idx low-idx))))
+
+    (it "shows ready beads in output"
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active :max-workers 2}}
+            iterations {"proj" "005"}
+            open-beads {"proj" [{:id "proj-aa1" :title "Task A1" :status "ready"}
+                                {:id "proj-aa2" :title "Task A2" :status "closed"}]}
+            tick-result {:action "spawn" :spawns [{:bead "proj-aa1"}]}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
+        (should-contain "aa1" output)
+        (should-contain "ready" output)
+        (should-not-contain "aa2" output)))
+
+    (it "shows bead title in output lines"
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active :max-workers 1}}
+            iterations {"proj" "001"}
+            open-beads {"proj" [{:id "proj-xx1" :title "My Task" :status "ready"}]}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
+        (should-contain "My Task" output)))
+
+    (it "truncates bead titles longer than 20 characters"
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active :max-workers 1}}
+            iterations {"proj" "001"}
+            open-beads {"proj" [{:id "proj-xx1" :title "This Title Is Way Too Long For Col" :status "ready"}]}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
+        (should-contain "This Title Is Way..." output)
+        (should-not-contain "Too Long" output)))
+
+    (it "does not truncate titles of exactly 20 characters"
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active :max-workers 1}}
+            iterations {"proj" "001"}
+            open-beads {"proj" [{:id "proj-xx1" :title "Exactly Twenty Chars" :status "ready"}]}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
+        (should-contain "Exactly Twenty Chars" output)
+        (should-not-contain "..." output))))
 )

@@ -209,7 +209,7 @@
   (case status
     "blocked" "✗"
     ("in-progress" "in_progress") "●"
-    "open" "○"
+    ("open" "ready") "○"
     "○"))
 
 (defn- bead-status-color [status]
@@ -251,9 +251,8 @@
                       status (or (:status cfg) :active)
                       iter (get iterations slug)
                       all-beads (get open-beads slug [])
-                      active-beads (filter #(let [s (some-> (:status %) name clojure.string/lower-case)]
-                                              (or (= "in-progress" s) (= "blocked" s) (= "in_progress" s)))
-                                           all-beads)
+                      visible-beads (remove #(= "closed" (some-> (:status %) name clojure.string/lower-case))
+                                            all-beads)
                       status-str (c (name status) (config-status-color status))
                       name-str (c slug :bold-white)
                       iter-str (if iter
@@ -262,7 +261,7 @@
                       current-w (get workers slug 0)
                       max-w (or (:max-workers cfg) 1)
                       workers-str (str "workers:" current-w "/" max-w)]
-                  (if (empty? active-beads)
+                  (if (empty? visible-beads)
                     (if iter
                       (str "  " name-str "  " status-str "  " iter-str "  " workers-str "  beads: (none)")
                       (str "  " name-str "  " status-str "  " iter-str "  " workers-str))
@@ -271,9 +270,14 @@
                                             (let [bs (or (some-> (:status b) name clojure.string/lower-case) "open")
                                                   icon (bead-status-icon bs)
                                                   id-suffix (last (clojure.string/split (:id b) #"-"))
+                                                  title (or (:title b) "")
+                                                  truncated-title (if (> (count title) 20)
+                                                                    (str (subs title 0 17) "...")
+                                                                    title)
+                                                  padded-title (format "%-20s" truncated-title)
                                                   colored-status (c bs (bead-status-color bs))]
-                                              (str "    " icon " " id-suffix "  " colored-status)))
-                                          active-beads)]
+                                              (str "    " icon " " id-suffix " " padded-title " " colored-status)))
+                                          visible-beads)]
                       (clojure.string/join "\n" (cons header bead-lines))))))
               active-projects)
         decision-line (let [{:keys [action reason]} tick-result
