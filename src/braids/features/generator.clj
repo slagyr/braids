@@ -47,6 +47,25 @@
    [#"^no zombies should be detected$"
     (fn [_] {:pattern :assert-no-zombies})]
 
+   ;; --- Orch output patterns ---
+
+   [#"^configured projects:$"
+    (fn [_] {:pattern :configured-projects-table})]
+
+   [#"^project \"([^\"]+)\" has beads:$"
+    (fn [[_ slug]]
+      {:pattern :project-has-beads-table :slug slug})]
+
+   [#"^the output contains lines matching$"
+    (fn [_] {:pattern :output-contains-lines-matching})]
+
+   [#"^the output does not contain$"
+    (fn [_] {:pattern :output-does-not-contain})]
+
+   [#"^the output has \"([^\"]+)\" before \"([^\"]+)\"$"
+    (fn [[_ first-text second-text]]
+      {:pattern :output-has-before :first first-text :second second-text})]
+
    ;; --- Orch spawning patterns ---
 
    [#"^a project \"([^\"]+)\" with max-workers (\d+)$"
@@ -1188,6 +1207,49 @@
                                    (str "(should= " percent " (get-in (h/dashboard-json-project \"" slug "\") [\"iteration\" \"stats\" \"percent\"]))"))}
     :empty-registry       {:text (constantly "an empty registry")
                            :code (constantly "(h/set-empty-registry)")}
+
+    ;; --- Orch output ---
+    :configured-projects-table
+                          {:text (constantly "configured projects:")
+                           :code (fn [{:keys [table]}]
+                                   (when table
+                                     (let [{:keys [headers rows]} table]
+                                       (str "(h/configure-projects-from-table\n"
+                                            "  " (pr-str headers) "\n"
+                                            "  " (pr-str rows) ")"))))}
+    :project-has-beads-table
+                          {:text (fn [{:keys [slug]}]
+                                   (str "project \"" slug "\" has beads:"))
+                           :code (fn [{:keys [slug table]}]
+                                   (when table
+                                     (let [{:keys [headers rows]} table]
+                                       (str "(h/set-project-beads \"" slug "\"\n"
+                                            "  " (pr-str headers) "\n"
+                                            "  " (pr-str rows) ")"))))}
+    :output-contains-lines-matching
+                          {:text (constantly "the output contains lines matching")
+                           :code (fn [{:keys [table]}]
+                                   (when table
+                                     (let [{:keys [rows]} table
+                                           assertions (map (fn [row]
+                                                             (let [expr (first row)]
+                                                               (str "(should (h/output-contains-line? \"" expr "\"))")))
+                                                           rows)]
+                                       (str/join "\n" assertions))))}
+    :output-does-not-contain
+                          {:text (constantly "the output does not contain")
+                           :code (fn [{:keys [table]}]
+                                   (when table
+                                     (let [{:keys [rows]} table
+                                           assertions (map (fn [row]
+                                                             (let [text (first row)]
+                                                               (str "(should-not (h/output-contains? \"" text "\"))")))
+                                                           rows)]
+                                       (str/join "\n" assertions))))}
+    :output-has-before    {:text (fn [{:keys [first second]}]
+                                   (str "the output has \"" first "\" before \"" second "\""))
+                           :code (fn [{:keys [first second]}]
+                                   (str "(should (h/output-has-before? \"" first "\" \"" second "\"))"))}
 
     ;; --- Orch runner ---
     :spawn-entry-path-bead {:text (fn [{:keys [path bead]}]

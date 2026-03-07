@@ -832,4 +832,111 @@
       (h/set-zombie-sessions 2 ["bead-closed" "timeout"])
       (h/format-zombie-log!)
       (should (some #(clojure.string/includes? % "2 zombie") (h/runner-log)))))
+
+  ;; --- Orch output harness ---
+
+  (context "configure-projects-from-table"
+
+    (it "sets up projects with all attributes from table data"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["alpha" "active" "normal" "2" "005" "0"]
+         ["beta" "active" "normal" "1" "003" "1"]])
+      ;; Should set up registry, configs, iterations, and workers
+      ;; Without beads, tick should idle with no-ready-beads (not no-active-iterations)
+      (h/orch-tick!)
+      (should= "idle" (h/tick-action))
+      (should= "no-ready-beads" (h/idle-reason)))
+
+    (it "handles empty active-iteration"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["gamma" "active" "normal" "1" "" "0"]])
+      (h/orch-tick!)
+      ;; No active iteration means idle
+      (should= "idle" (h/tick-action))
+      (should= "no-active-iterations" (h/idle-reason))))
+
+  (context "set-project-beads"
+
+    (it "sets beads with id, title, and status for a project"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["alpha" "active" "normal" "2" "005" "0"]])
+      (h/set-project-beads "alpha"
+        ["id" "title" "status"]
+        [["alpha-aa1" "Task A1" "ready"]
+         ["alpha-aa2" "Task A2" "closed"]])
+      (h/orch-tick-with-output!)
+      (let [output (h/tick-output)]
+        (should (clojure.string/includes? output "aa1"))
+        (should-not (clojure.string/includes? output "aa2")))))
+
+  (context "orch-tick-with-output!"
+
+    (it "captures tick output and stores result"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["alpha" "active" "normal" "1" "001" "0"]])
+      (h/orch-tick-with-output!)
+      (let [output (h/tick-output)]
+        (should (string? output))
+        (should (clojure.string/includes? output "alpha"))))
+
+    (it "stores tick action result alongside output"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["alpha" "active" "normal" "1" "001" "0"]])
+      (h/orch-tick-with-output!)
+      (should= "idle" (h/tick-action))))
+
+  (context "output-contains-line?"
+
+    (it "returns true when line matches a substring in output"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["alpha" "active" "normal" "1" "001" "0"]])
+      (h/orch-tick-with-output!)
+      (should (h/output-contains-line? "alpha")))
+
+    (it "returns false when line does not match"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["alpha" "active" "normal" "1" "001" "0"]])
+      (h/orch-tick-with-output!)
+      (should-not (h/output-contains-line? "nonexistent"))))
+
+  (context "output-contains?"
+
+    (it "returns true when text found anywhere in output"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["alpha" "active" "normal" "1" "001" "0"]])
+      (h/orch-tick-with-output!)
+      (should (h/output-contains? "alpha")))
+
+    (it "returns false when text not in output"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["alpha" "active" "normal" "1" "001" "0"]])
+      (h/orch-tick-with-output!)
+      (should-not (h/output-contains? "zzzzz"))))
+
+  (context "output-has-before?"
+
+    (it "returns true when first text appears before second in output"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["low" "active" "low" "1" "001" "0"]
+         ["high" "active" "high" "1" "001" "0"]])
+      (h/orch-tick-with-output!)
+      (should (h/output-has-before? "high" "low")))
+
+    (it "returns false when first text appears after second"
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers"]
+        [["low" "active" "low" "1" "001" "0"]
+         ["high" "active" "high" "1" "001" "0"]])
+      (h/orch-tick-with-output!)
+      (should-not (h/output-has-before? "low" "high"))))
 )

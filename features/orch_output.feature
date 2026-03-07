@@ -4,7 +4,6 @@ Feature: Orchestrator tick output
   open beads when it ticks. Ready, in-progress, and blocked beads
   are shown with status icons. Closed beads are excluded.
 
-  @wip
   Scenario: ready, in-progress, and blocked beads are printed
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -35,7 +34,6 @@ Feature: Orchestrator tick output
       | aa2  |
       | bb4  |
 
-  @wip
   Scenario: long bead titles are truncated to 20 characters
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -52,7 +50,6 @@ Feature: Orchestrator tick output
       |     ○ xx2 Exactly Twenty Chars ready |
       |     ○ xx3 This Title Is Way... ready |
 
-  @wip
   Scenario: project with no active iteration
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -62,7 +59,6 @@ Feature: Orchestrator tick output
       | expression                                          |
       | gamma  active  (no iteration)  workers:0/1 |
 
-  @wip
   Scenario: project with active workers shows worker count
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -76,7 +72,6 @@ Feature: Orchestrator tick output
       | alpha  active  iteration 002  workers:2/3  beads: |
       |     ○ aa1 Task A1              ready |
 
-  @wip
   Scenario: project with no open beads shows none
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -86,7 +81,6 @@ Feature: Orchestrator tick output
       | expression                                                  |
       | alpha  active  iteration 001  workers:0/1  beads: (none) |
 
-  @wip
   Scenario: idle tick appends decision line
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -96,7 +90,6 @@ Feature: Orchestrator tick output
       | expression                  |
       | → idle: no-ready-beads |
 
-  @wip
   Scenario: projects are ordered by priority
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -107,7 +100,6 @@ Feature: Orchestrator tick output
     Then the output has "high" before "norm"
     And the output has "norm" before "low"
 
-  @wip
   Scenario: paused projects are excluded from output
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |

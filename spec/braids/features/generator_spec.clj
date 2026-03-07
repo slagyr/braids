@@ -86,7 +86,29 @@
 
     (it "classifies empty-registry"
       (should= {:pattern :empty-registry}
-               (gen/classify-step "an empty registry"))))
+               (gen/classify-step "an empty registry")))
+
+    ;; --- Orch output step patterns ---
+
+    (it "classifies configured-projects-table"
+      (should= {:pattern :configured-projects-table}
+               (gen/classify-step "configured projects:")))
+
+    (it "classifies project-has-beads-table"
+      (should= {:pattern :project-has-beads-table :slug "alpha"}
+               (gen/classify-step "project \"alpha\" has beads:")))
+
+    (it "classifies output-contains-lines-matching"
+      (should= {:pattern :output-contains-lines-matching}
+               (gen/classify-step "the output contains lines matching")))
+
+    (it "classifies output-does-not-contain"
+      (should= {:pattern :output-does-not-contain}
+               (gen/classify-step "the output does not contain")))
+
+    (it "classifies output-has-before"
+      (should= {:pattern :output-has-before :first "high" :second "low"}
+               (gen/classify-step "the output has \"high\" before \"low\""))))
 
   (context "source->ns-name"
 

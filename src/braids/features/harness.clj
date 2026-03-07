@@ -185,11 +185,14 @@
   (swap! state assoc-in [:workers slug] count))
 
 (defn orch-tick!
-  "Run orch/tick with all accumulated state, store the result."
+  "Run orch/tick with all accumulated state, store the result.
+   Also captures formatted debug output if open-beads data is available."
   []
-  (let [{:keys [registry configs iterations beads workers]} @state
-        result (orch/tick registry configs iterations beads workers {})]
-    (swap! state assoc :tick-result result)))
+  (let [{:keys [registry configs iterations beads workers open-beads]} @state
+        result (orch/tick registry configs iterations beads workers {})
+        all-open-beads (or open-beads {})
+        output (orch/format-debug-output registry configs iterations all-open-beads result workers)]
+    (swap! state assoc :tick-result result :tick-output output :output output)))
 
 (defn orch-tick-project!
   "Run orch/tick for a single project only.
@@ -1126,3 +1129,79 @@
   "Returns the runner log lines."
   []
   (:runner-log @state))
+
+;; --- Orch output helpers ---
+
+(defn configure-projects-from-table
+  "Set up projects from table data with columns: slug, status, priority,
+   max-workers, active-iteration, active-workers."
+  [headers rows]
+  (doseq [row rows]
+    (let [m (zipmap headers row)
+          slug (get m "slug")
+          status (keyword (get m "status"))
+          priority (keyword (get m "priority"))
+          max-workers (parse-long (get m "max-workers"))
+          active-iteration (get m "active-iteration")
+          active-workers (parse-long (get m "active-workers"))]
+      ;; Add to registry
+      (swap! state update-in [:registry :projects] conj
+             {:slug slug :status status :priority priority :path (str "/projects/" slug)})
+      ;; Set config
+      (swap! state assoc-in [:configs slug]
+             {:status status :max-workers max-workers})
+      ;; Set active iteration (if non-empty)
+      (when (and active-iteration (seq active-iteration))
+        (swap! state assoc-in [:iterations slug] active-iteration))
+      ;; Set active workers
+      (swap! state assoc-in [:workers slug] active-workers))))
+
+(defn set-project-beads
+  "Set beads with id, title, status for a project.
+   Stores in :open-beads for format-debug-output (all non-closed beads shown)
+   and also sets :beads for ready beads (only ready ones used by tick)."
+  [slug headers rows]
+  (let [beads (mapv (fn [row]
+                      (let [m (zipmap headers row)]
+                        {:id (get m "id")
+                         :title (get m "title")
+                         :status (get m "status")}))
+                    rows)
+        ready-beads (filterv #(= "ready" (:status %)) beads)]
+    (swap! state assoc-in [:open-beads slug] beads)
+    (swap! state assoc-in [:beads slug] ready-beads)))
+
+(defn orch-tick-with-output!
+  "Run orch/tick with all accumulated state, store the result,
+   then format debug output and store it."
+  []
+  (let [{:keys [registry configs iterations beads workers open-beads]} @state
+        result (orch/tick registry configs iterations beads workers {})
+        all-open-beads (or open-beads {})
+        output (orch/format-debug-output registry configs iterations all-open-beads result workers)]
+    (swap! state assoc :tick-result result :tick-output output :output output)))
+
+(defn tick-output
+  "Returns the formatted tick output."
+  []
+  (:tick-output @state))
+
+(defn output-contains-line?
+  "Returns true if any line in the output contains the given text as a substring."
+  [text]
+  (when-let [output (:tick-output @state)]
+    (some #(str/includes? % text) (str/split-lines output))))
+
+(defn output-contains?
+  "Returns true if the text appears anywhere in the tick output."
+  [text]
+  (when-let [output (:tick-output @state)]
+    (str/includes? output text)))
+
+(defn output-has-before?
+  "Returns true if text a appears before text b in the tick output."
+  [a b]
+  (when-let [output (:tick-output @state)]
+    (let [idx-a (str/index-of output a)
+          idx-b (str/index-of output b)]
+      (and idx-a idx-b (< idx-a idx-b)))))
