@@ -1,6 +1,6 @@
 .cpcache/
 .idea/
-.skills/
+.toolbox/
 target/
 features/edn/
 features/generated/

@@ -2,18 +2,27 @@
 
 This project is managed by the **braids** skill. Config: `.braids/config.edn`. Goals and guardrails are below.
 
-## Skills
+## Toolbox
 
 This project uses [toolbox](https://raw.githubusercontent.com/slagyr/toolbox/main/SKILL.md)
-to manage skills. If `.skills/` doesn't exist, fetch the toolbox SKILL.md
-from the URL above and follow its instructions. Once bootstrapped, load
-skills from `.skills/{name}/SKILL.md` when their descriptions match the
-task at hand.
+to manage agent components. If `.toolbox/` doesn't exist, fetch the toolbox
+SKILL.md from the URL above and follow its instructions. Once bootstrapped:
 
-- [tdd](https://raw.githubusercontent.com/slagyr/agent-skills/main/tdd/SKILL.md)
+- **Skills:** Load from `.toolbox/skills/{name}/SKILL.md` when their descriptions match the task at hand.
+- **Commands:** When the user invokes a command by name (e.g., "/work"), read and follow `.toolbox/commands/{name}.md`.
+
+### Skills
+
+- [tdd](https://raw.githubusercontent.com/slagyr/agent-lib/main/skills/tdd/SKILL.md)
 - [crap4clj](https://raw.githubusercontent.com/unclebob/crap4clj/master/SKILL.md)
 - [using-clj-mutate](https://raw.githubusercontent.com/unclebob/clj-mutate/master/skills/using-clj-mutate/SKILL.md)
 - [speclj-structure-check](https://raw.githubusercontent.com/unclebob/speclj-structure-check/master/.claude/skills/speclj-structure-check/SKILL.md)
+
+### Commands
+
+- [plan](https://raw.githubusercontent.com/slagyr/agent-lib/main/commands/plan.md)
+- [todo](https://raw.githubusercontent.com/slagyr/agent-lib/main/commands/todo.md)
+- [work](https://raw.githubusercontent.com/slagyr/agent-lib/main/commands/work.md)
 
 ## Development Process
 
