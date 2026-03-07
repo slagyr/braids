@@ -6,12 +6,6 @@
                                         "spec/braids"
                                         "-s" "src"
                                         *command-line-args*)}
-         features:examples {:doc      "Run gherkin example features"
-                            :requires ([braids.gherkin-runner :as runner])
-                            :task     (System/exit
-                                        (runner/run-features
-                                          "features/examples"
-                                          "spec/step_defs/examples"))}
          features:parse    {:doc      "Parse .feature files to .edn IR"
                             :requires ([braids.gherkin :as gherkin])
                             :task     (let [source (or (first *command-line-args*) "features")
