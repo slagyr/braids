@@ -30,189 +30,189 @@
   (context "step-text"
 
     (it "returns :text for unrecognized steps"
-      (should= "a step" (gen/step-text {:type :unrecognized :text "a step"})))
+      (should= "a step" (gen/step-text {:pattern :unrecognized :text "a step"})))
 
     (it "formats project-config step"
       (should= "a project \"proj\" with worker-timeout 3600"
-               (gen/step-text {:type :project-config :slug "proj" :worker-timeout 3600})))
+               (gen/step-text {:pattern :project-config :slug "proj" :worker-timeout 3600})))
 
     (it "formats session step"
       (should= "a session \"s1\" with label \"project:proj:proj-abc\""
-               (gen/step-text {:type :session :session-id "s1" :label "project:proj:proj-abc"})))
+               (gen/step-text {:pattern :session :session-id "s1" :label "project:proj:proj-abc"})))
 
     (it "formats session-status step"
       (should= "session \"s1\" has status \"running\" and age 100 seconds"
-               (gen/step-text {:type :session-status :session-id "s1" :status "running" :age-seconds 100})))
+               (gen/step-text {:pattern :session-status :session-id "s1" :status "running" :age-seconds 100})))
 
     (it "formats check-zombies step"
       (should= "checking for zombies"
-               (gen/step-text {:type :check-zombies})))
+               (gen/step-text {:pattern :check-zombies})))
 
     (it "formats assert-zombie step"
       (should= "session \"s1\" should be a zombie with reason \"bead-closed\""
-               (gen/step-text {:type :assert-zombie :session-id "s1" :reason "bead-closed"})))
+               (gen/step-text {:pattern :assert-zombie :session-id "s1" :reason "bead-closed"})))
 
     (it "formats assert-no-zombies step"
       (should= "no zombies should be detected"
-               (gen/step-text {:type :assert-no-zombies})))
+               (gen/step-text {:pattern :assert-no-zombies})))
 
     ;; --- Orch spawning step-text ---
 
     (it "formats project-config with max-workers step"
       (should= "a project \"alpha\" with max-workers 2"
-               (gen/step-text {:type :project-config :slug "alpha" :max-workers 2})))
+               (gen/step-text {:pattern :project-config :slug "alpha" :max-workers 2})))
 
     (it "formats active-iteration step"
       (should= "project \"alpha\" has an active iteration \"003\""
-               (gen/step-text {:type :active-iteration :slug "alpha" :iteration "003"})))
+               (gen/step-text {:pattern :active-iteration :slug "alpha" :iteration "003"})))
 
     (it "formats no-active-iteration step"
       (should= "project \"beta\" has no active iteration"
-               (gen/step-text {:type :no-active-iteration :slug "beta"})))
+               (gen/step-text {:pattern :no-active-iteration :slug "beta"})))
 
     (it "formats ready-beads step"
       (should= "project \"alpha\" has 3 ready beads"
-               (gen/step-text {:type :ready-beads :slug "alpha" :count 3})))
+               (gen/step-text {:pattern :ready-beads :slug "alpha" :count 3})))
 
     (it "formats ready-bead-with-id step"
       (should= "project \"alpha\" has 1 ready bead with id \"alpha-abc\""
-               (gen/step-text {:type :ready-bead-with-id :slug "alpha" :bead-id "alpha-abc"})))
+               (gen/step-text {:pattern :ready-bead-with-id :slug "alpha" :bead-id "alpha-abc"})))
 
     (it "formats active-workers step"
       (should= "project \"alpha\" has 0 active workers"
-               (gen/step-text {:type :active-workers :slug "alpha" :count 0})))
+               (gen/step-text {:pattern :active-workers :slug "alpha" :count 0})))
 
     (it "formats orch-tick step"
       (should= "the orchestrator ticks"
-               (gen/step-text {:type :orch-tick})))
+               (gen/step-text {:pattern :orch-tick})))
 
     (it "formats orch-tick-project step"
       (should= "the orchestrator ticks for project \"beta\" only"
-               (gen/step-text {:type :orch-tick-project :slug "beta"})))
+               (gen/step-text {:pattern :orch-tick-project :slug "beta"})))
 
     (it "formats assert-action step"
       (should= "the action should be \"spawn\""
-               (gen/step-text {:type :assert-action :expected "spawn"})))
+               (gen/step-text {:pattern :assert-action :expected "spawn"})))
 
     (it "formats assert-spawn-count step"
       (should= "2 workers should be spawned"
-               (gen/step-text {:type :assert-spawn-count :count 2})))
+               (gen/step-text {:pattern :assert-spawn-count :count 2})))
 
     (it "formats assert-idle-reason step"
       (should= "the idle reason should be \"no-ready-beads\""
-               (gen/step-text {:type :assert-idle-reason :expected "no-ready-beads"})))
+               (gen/step-text {:pattern :assert-idle-reason :expected "no-ready-beads"})))
 
     (it "formats assert-spawn-label step"
       (should= "the spawn label should be \"project:alpha:alpha-abc\""
-               (gen/step-text {:type :assert-spawn-label :expected "project:alpha:alpha-abc"})))
+               (gen/step-text {:pattern :assert-spawn-label :expected "project:alpha:alpha-abc"})))
 
     ;; --- Worker session tracking step-text ---
 
     (it "formats bead step"
       (should= "a bead with id \"proj-abc\""
-               (gen/step-text {:type :bead :bead-id "proj-abc"})))
+               (gen/step-text {:pattern :bead :bead-id "proj-abc"})))
 
     (it "formats session-id-literal step"
       (should= "a session ID \"braids-proj-abc-worker\""
-               (gen/step-text {:type :session-id-literal :session-id "braids-proj-abc-worker"})))
+               (gen/step-text {:pattern :session-id-literal :session-id "braids-proj-abc-worker"})))
 
     (it "formats generate-session-id step"
       (should= "generating the session ID"
-               (gen/step-text {:type :generate-session-id})))
+               (gen/step-text {:pattern :generate-session-id})))
 
     (it "formats generate-session-id-twice step"
       (should= "generating the session ID twice"
-               (gen/step-text {:type :generate-session-id-twice})))
+               (gen/step-text {:pattern :generate-session-id-twice})))
 
     (it "formats generate-session-ids-both step"
       (should= "generating session IDs for both"
-               (gen/step-text {:type :generate-session-ids-both})))
+               (gen/step-text {:pattern :generate-session-ids-both})))
 
     (it "formats parse-session-id step"
       (should= "parsing the session ID"
-               (gen/step-text {:type :parse-session-id})))
+               (gen/step-text {:pattern :parse-session-id})))
 
     (it "formats assert-session-id step"
       (should= "the session ID should be \"braids-proj-abc-worker\""
-               (gen/step-text {:type :assert-session-id :expected "braids-proj-abc-worker"})))
+               (gen/step-text {:pattern :assert-session-id :expected "braids-proj-abc-worker"})))
 
     (it "formats assert-ids-identical step"
       (should= "both session IDs should be identical"
-               (gen/step-text {:type :assert-ids-identical})))
+               (gen/step-text {:pattern :assert-ids-identical})))
 
     (it "formats assert-ids-different step"
       (should= "the session IDs should be different"
-               (gen/step-text {:type :assert-ids-different})))
+               (gen/step-text {:pattern :assert-ids-different})))
 
     (it "formats assert-bead-id step"
       (should= "the extracted bead ID should be \"proj-abc\""
-               (gen/step-text {:type :assert-bead-id :expected "proj-abc"})))
+               (gen/step-text {:pattern :assert-bead-id :expected "proj-abc"})))
 
     ;; --- Ready beads step-text ---
 
     (it "formats registry-with-projects-table step"
       (should= "a registry with projects:"
-               (gen/step-text {:type :registry-with-projects-table})))
+               (gen/step-text {:pattern :registry-with-projects-table})))
 
     (it "formats project-config-max-workers step"
       (should= "project \"alpha\" has config with max-workers 1"
-               (gen/step-text {:type :project-config-max-workers :slug "alpha" :max-workers 1})))
+               (gen/step-text {:pattern :project-config-max-workers :slug "alpha" :max-workers 1})))
 
     (it "formats project-config-status-and-max-workers step"
       (should= "project \"proj\" has config with status \"paused\" and max-workers 1"
-               (gen/step-text {:type :project-config-status-and-max-workers :slug "proj" :status "paused" :max-workers 1})))
+               (gen/step-text {:pattern :project-config-status-and-max-workers :slug "proj" :status "paused" :max-workers 1})))
 
     (it "formats project-ready-beads-table step"
       (should= "project \"alpha\" has ready beads:"
-               (gen/step-text {:type :project-ready-beads-table :slug "alpha"})))
+               (gen/step-text {:pattern :project-ready-beads-table :slug "alpha"})))
 
     (it "formats no-active-workers step"
       (should= "no active workers"
-               (gen/step-text {:type :no-active-workers})))
+               (gen/step-text {:pattern :no-active-workers})))
 
     (it "formats compute-ready-beads step"
       (should= "computing ready beads"
-               (gen/step-text {:type :compute-ready-beads})))
+               (gen/step-text {:pattern :compute-ready-beads})))
 
     (it "formats assert-result-contains-bead step"
       (should= "the result should contain bead \"alpha-aaa\""
-               (gen/step-text {:type :assert-result-contains-bead :bead-id "alpha-aaa"})))
+               (gen/step-text {:pattern :assert-result-contains-bead :bead-id "alpha-aaa"})))
 
     (it "formats assert-result-not-contains-bead step"
       (should= "the result should not contain bead \"beta-bbb\""
-               (gen/step-text {:type :assert-result-not-contains-bead :bead-id "beta-bbb"})))
+               (gen/step-text {:pattern :assert-result-not-contains-bead :bead-id "beta-bbb"})))
 
     (it "formats assert-result-empty step"
       (should= "the result should be empty"
-               (gen/step-text {:type :assert-result-empty})))
+               (gen/step-text {:pattern :assert-result-empty})))
 
     (it "formats assert-nth-result-project step for first"
       (should= "the first result should be from project \"high\""
-               (gen/step-text {:type :assert-nth-result-project :position 1 :slug "high"})))
+               (gen/step-text {:pattern :assert-nth-result-project :position 1 :slug "high"})))
 
     (it "formats assert-nth-result-project step for second"
       (should= "the second result should be from project \"norm\""
-               (gen/step-text {:type :assert-nth-result-project :position 2 :slug "norm"})))
+               (gen/step-text {:pattern :assert-nth-result-project :position 2 :slug "norm"})))
 
     (it "formats assert-nth-result-project step for third"
       (should= "the third result should be from project \"low\""
-               (gen/step-text {:type :assert-nth-result-project :position 3 :slug "low"})))
+               (gen/step-text {:pattern :assert-nth-result-project :position 3 :slug "low"})))
 
     (it "formats ready-beads-to-format step"
       (should= "ready beads to format:"
-               (gen/step-text {:type :ready-beads-to-format})))
+               (gen/step-text {:pattern :ready-beads-to-format})))
 
     (it "formats no-ready-beads-to-format step"
       (should= "no ready beads to format"
-               (gen/step-text {:type :no-ready-beads-to-format})))
+               (gen/step-text {:pattern :no-ready-beads-to-format})))
 
     (it "formats format-ready-output step"
       (should= "formatting ready output"
-               (gen/step-text {:type :format-ready-output})))
+               (gen/step-text {:pattern :format-ready-output})))
 
     (it "formats assert-output-contains step"
       (should= "the output should contain \"proj-abc\""
-               (gen/step-text {:type :assert-output-contains :expected "proj-abc"})))
+               (gen/step-text {:pattern :assert-output-contains :expected "proj-abc"})))
 
     ;; --- Iteration management step-text ---
 
@@ -731,7 +731,35 @@
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-iteration-with-status \"001\" \"bogus\")" output)
-        (should-contain "(h/validate-iteration!)" output))))
+        (should-contain "(h/validate-iteration!)" output)))
+
+    ;; --- Configuration generate-scenario ---
+
+    (it "generates executable code for config get scenario"
+      (let [scenario {:scenario "Config get returns value"
+                      :givens [{:pattern :config-with-values
+                                :table {:headers ["key" "value"]
+                                        :rows [["braids-home" "/custom/path"]]}}]
+                      :whens [{:pattern :get-config-key :key "braids-home"}]
+                      :thens [{:pattern :assert-result-ok-with-value :expected "/custom/path"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/reset!)" output)
+        (should-contain "(h/set-config-from-table" output)
+        (should-contain "(h/get-config-key!" output)
+        (should-contain "(should= \"/custom/path\" (:ok (h/config-result)))" output)))
+
+    (it "generates executable code for config set scenario"
+      (let [scenario {:scenario "Config set updates value"
+                      :givens [{:pattern :config-with-values
+                                :table {:headers ["key" "value"]
+                                        :rows [["braids-home" "~/Projects"]]}}]
+                      :whens [{:pattern :set-config-key :key "braids-home" :value "/new/path"}]
+                      :thens [{:pattern :assert-config-has-value :key "braids-home" :expected "/new/path"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-config-key!" output)
+        (should-contain "(h/current-config)" output))))
 
   (context "generate-spec"
 

@@ -351,17 +351,70 @@
                                 :code (fn [{:keys [expected]}]
                                        (str "(should= " expected " (h/stats-percent))"))}
    :assert-json-contains  {:text (fn [{:keys [expected]}]
-                                   (str "the JSON should contain \"" expected "\""))
+                                    (str "the JSON should contain \"" expected "\""))
+                             :code (fn [{:keys [expected]}]
+                                    (str "(should (clojure.string/includes? (h/iter-json-output) \"" expected "\"))"))}
+   ;; Configuration
+   :config-with-values    {:text (constantly "a config with values:")
+                            :code (fn [{:keys [table]}]
+                                    (when table
+                                      (let [{:keys [headers rows]} table]
+                                        (str "(h/set-config-from-table\n"
+                                             "  " (pr-str headers) "\n"
+                                             "  " (pr-str rows) ")"))))}
+   :list-config           {:text (constantly "listing the config")
+                            :code (constantly "(h/list-config!)")}
+   :get-config-key        {:text (fn [{:keys [key]}]
+                                    (str "getting config key \"" key "\""))
+                            :code (fn [{:keys [key]}]
+                                    (str "(h/get-config-key! \"" key "\")"))}
+   :set-config-key        {:text (fn [{:keys [key value]}]
+                                    (str "setting config key \"" key "\" to \"" value "\""))
+                            :code (fn [{:keys [key value]}]
+                                    (str "(h/set-config-key! \"" key "\" \"" value "\")"))}
+   :empty-config-string   {:text (constantly "an empty config string")
+                            :code (constantly "(h/set-empty-config)")}
+   :parse-config          {:text (constantly "parsing the config")
+                            :code (constantly "(h/parse-config!)")}
+   :request-config-help   {:text (constantly "requesting config help")
+                            :code (constantly "(h/request-config-help!)")}
+   :assert-result-ok-with-value
+                           {:text (fn [{:keys [expected]}]
+                                    (str "the result should be ok with value \"" expected "\""))
                             :code (fn [{:keys [expected]}]
-                                   (str "(should (clojure.string/includes? (h/iter-json-output) \"" expected "\"))"))}
+                                    (str "(should= \"" expected "\" (:ok (h/config-result)))"))}
+   :assert-result-error   {:text (constantly "the result should be an error")
+                            :code (constantly "(should (:error (h/config-result)))")}
+   :assert-error-message-contains
+                           {:text (fn [{:keys [expected]}]
+                                    (str "the error message should contain \"" expected "\""))
+                            :code (fn [{:keys [expected]}]
+                                    (str "(should (clojure.string/includes? (:error (h/config-result)) \"" expected "\"))"))}
+   :assert-config-has-value
+                           {:text (fn [{:keys [key expected]}]
+                                    (str "the config should have \"" key "\" set to \"" expected "\""))
+                            :code (fn [{:keys [key expected]}]
+                                    (str "(should= \"" expected "\" (str (get (h/current-config) (keyword \"" key "\"))))"))}
+   :assert-appears-before {:text (fn [{:keys [first second]}]
+                                    (str "\"" first "\" should appear before \"" second "\" in the output"))
+                            :code (fn [{:keys [first second]}]
+                                    (str "(should (< (clojure.string/index-of (h/output) \"" first "\")\n"
+                                         "           (clojure.string/index-of (h/output) \"" second "\")))"))}
    })
 
 ;; --- Step text and code: thin dispatchers over the registry ---
 
+(defn- step-pattern
+  "Extract the pattern classification from an IR step node.
+   Supports both new format (:pattern key) and legacy format (:type key)."
+  [node]
+  (or (:pattern node) (:type node)))
+
 (defn step-text
   "Convert a typed IR node to a human-readable step text string."
-  [{:keys [type] :as node}]
-  (let [entry (get step-registry type)
+  [node]
+  (let [pat (step-pattern node)
+        entry (get step-registry pat)
         text-fn (:text entry)]
     (cond
       (nil? entry)    (str node)
@@ -370,18 +423,27 @@
 
 (defn- generate-step-code
   "Generate executable Clojure code for a typed IR step, or nil to skip."
-  [{:keys [type] :as node}]
-  (when-let [code-fn (:code (get step-registry type))]
-    (code-fn node)))
+  [node]
+  (let [pat (step-pattern node)]
+    (when-let [code-fn (:code (get step-registry pat))]
+      (code-fn node))))
+
+(defn- scenario-steps
+  "Extract all steps from a scenario and optional background.
+   Supports new flat :steps format and legacy {:givens :whens :thens} format."
+  [scenario background]
+  (if (:steps scenario)
+    (concat (:steps background) (:steps scenario))
+    (concat (:givens background)
+            (:givens scenario)
+            (:whens scenario)
+            (:thens scenario))))
 
 (defn- all-recognized?
   "Returns true if all steps in a scenario (and optional background) are recognized types."
   [scenario background]
-  (let [all-steps (concat (:givens background)
-                          (:givens scenario)
-                          (:whens scenario)
-                          (:thens scenario))]
-    (every? #(not= :unrecognized (:type %)) all-steps)))
+  (let [all-steps (scenario-steps scenario background)]
+    (every? #(not= :unrecognized (step-pattern %)) all-steps)))
 
 ;; --- NS form generation ---
 
@@ -398,8 +460,19 @@
 
 ;; --- Step comments (for pending scenarios) ---
 
-(defn- format-steps
-  "Format a sequence of IR step nodes as comments with Given/When/Then prefixes."
+(defn- step-keyword-label
+  "Convert a step :type to its Gherkin keyword label for comments."
+  [step-type]
+  (case step-type
+    :given "Given"
+    :when  "When"
+    :then  "Then"
+    :and   "And"
+    :but   "But"
+    "Given"))
+
+(defn- format-steps-legacy
+  "Format a sequence of IR step nodes as comments with Given/When/Then prefixes (legacy format)."
   [keyword steps]
   (when (seq steps)
     (let [texts (map step-text steps)
@@ -410,28 +483,48 @@
 (defn generate-step-comments
   "Generate step comments for a scenario, optionally including background."
   [scenario background]
-  (let [bg-comments (when background
-                      (let [bg-header ";; Background:"
-                            bg-steps (format-steps "Given" (:givens background))]
-                        (str bg-header "\n" bg-steps "\n;;")))
-        given-comments (format-steps "Given" (:givens scenario))
-        when-comments (format-steps "When" (:whens scenario))
-        then-comments (format-steps "Then" (:thens scenario))
-        parts (remove nil? [bg-comments given-comments when-comments then-comments])]
-    (str/join "\n" parts)))
+  (if (:steps scenario)
+    ;; New flat :steps format
+    (let [bg-steps (:steps background)
+          scenario-steps (:steps scenario)
+          bg-comments (when (seq bg-steps)
+                        (let [bg-lines (map (fn [s]
+                                              (str ";; " (step-keyword-label (:type s)) " " (step-text s)))
+                                            bg-steps)]
+                          (str ";; Background:\n" (str/join "\n" bg-lines) "\n;;")))
+          step-lines (map (fn [s]
+                            (str ";; " (step-keyword-label (:type s)) " " (step-text s)))
+                          scenario-steps)
+          parts (remove nil? [bg-comments (when (seq step-lines) (str/join "\n" step-lines))])]
+      (str/join "\n" parts))
+    ;; Legacy {:givens :whens :thens} format
+    (let [bg-comments (when background
+                        (let [bg-header ";; Background:"
+                              bg-steps (format-steps-legacy "Given" (:givens background))]
+                          (str bg-header "\n" bg-steps "\n;;")))
+          given-comments (format-steps-legacy "Given" (:givens scenario))
+          when-comments (format-steps-legacy "When" (:whens scenario))
+          then-comments (format-steps-legacy "Then" (:thens scenario))
+          parts (remove nil? [bg-comments given-comments when-comments then-comments])]
+      (str/join "\n" parts))))
 
 ;; --- Scenario generation ---
 
 (defn- generate-executable-body
   "Generate the executable code body for a fully recognized scenario."
   [scenario background]
-  (let [all-steps (concat [[:reset "(h/reset!)"]]
-                          (map (fn [s] [:bg (generate-step-code s)]) (:givens background))
-                          (map (fn [s] [:given (generate-step-code s)]) (:givens scenario))
-                          (map (fn [s] [:when (generate-step-code s)]) (:whens scenario))
-                          (map (fn [s] [:then (generate-step-code s)]) (:thens scenario)))
-        code-lines (->> all-steps
-                        (map second)
+  (let [all-code (if (:steps scenario)
+                   ;; New flat :steps format
+                   (concat ["(h/reset!)"]
+                           (map generate-step-code (:steps background))
+                           (map generate-step-code (:steps scenario)))
+                   ;; Legacy {:givens :whens :thens} format
+                   (concat ["(h/reset!)"]
+                           (map generate-step-code (:givens background))
+                           (map generate-step-code (:givens scenario))
+                           (map generate-step-code (:whens scenario))
+                           (map generate-step-code (:thens scenario))))
+        code-lines (->> all-code
                         (remove nil?)
                         (mapcat #(str/split-lines %)))]
     (->> code-lines

@@ -523,5 +523,54 @@
       (h/format-iteration-json!)
       (should (clojure.string/includes? (h/iter-json-output) "number"))
       (should (clojure.string/includes? (h/iter-json-output) "stories"))
-      (should (clojure.string/includes? (h/iter-json-output) "percent")))))
+      (should (clojure.string/includes? (h/iter-json-output) "percent"))))
+  (context "configuration helpers"
 
+    (it "set-config-from-table builds config map from table data"
+      (h/set-config-from-table
+        ["key" "value"]
+        [["braids-home" "/custom/path"]
+         ["bd-bin" "bd"]])
+      (should= "/custom/path" (str (get (h/current-config) :braids-home)))
+      (should= "bd" (str (get (h/current-config) :bd-bin))))
+
+    (it "list-config! formats config and stores output"
+      (h/set-config-from-table
+        ["key" "value"]
+        [["braids-home" "~/Projects"]
+         ["bd-bin" "bd"]])
+      (h/list-config!)
+      (should (clojure.string/includes? (h/output) "braids-home = ~/Projects"))
+      (should (clojure.string/includes? (h/output) "bd-bin = bd")))
+
+    (it "get-config-key! returns ok for existing key"
+      (h/set-config-from-table
+        ["key" "value"]
+        [["braids-home" "/custom/path"]])
+      (h/get-config-key! "braids-home")
+      (should= "/custom/path" (:ok (h/config-result))))
+
+    (it "get-config-key! returns error for missing key"
+      (h/set-config-from-table
+        ["key" "value"]
+        [["braids-home" "~/Projects"]])
+      (h/get-config-key! "nonexistent")
+      (should (:error (h/config-result)))
+      (should (clojure.string/includes? (:error (h/config-result)) "nonexistent")))
+
+    (it "set-config-key! updates config value"
+      (h/set-config-from-table
+        ["key" "value"]
+        [["braids-home" "~/Projects"]])
+      (h/set-config-key! "braids-home" "/new/path")
+      (should= "/new/path" (str (get (h/current-config) :braids-home))))
+
+    (it "set-empty-config sets empty config string"
+      (h/set-empty-config)
+      (h/parse-config!)
+      (should= "~/Projects" (str (get (h/current-config) :braids-home))))
+
+    (it "request-config-help! stores help output"
+      (h/request-config-help!)
+      (should (clojure.string/includes? (h/output) "Usage: braids config"))))
+)

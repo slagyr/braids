@@ -7,6 +7,7 @@
             [braids.list :as list]
             [braids.ready :as ready]
             [braids.iteration :as iteration]
+            [braids.config :as config]
             [cheshire.core :as json]
             [clojure.string :as str]))
 
@@ -63,7 +64,11 @@
                                :ready-beads {}
                                :ready-result nil
                                :ready-format-beads nil
-                               :ready-output nil}))
+                               :ready-output nil
+                               ;; Configuration state
+                               :config-map nil
+                               :config-edn-str nil
+                               :config-result nil}))
 
 ;; --- State accessors ---
 
@@ -750,3 +755,70 @@
   "Returns the JSON output from format-iteration-json."
   []
   (:iter-json-output @state))
+
+;; --- Configuration helpers ---
+
+;; Given step builders
+
+(defn set-config-from-table
+  "Build config map from table headers and rows."
+  [headers rows]
+  (let [m (reduce (fn [acc row]
+                    (let [kv (zipmap headers row)]
+                      (assoc acc (keyword (get kv "key")) (get kv "value"))))
+                  {}
+                  rows)]
+    (swap! state assoc :config-map m)))
+
+(defn set-empty-config
+  "Set an empty config string for parsing."
+  []
+  (swap! state assoc :config-edn-str "{}"))
+
+;; When step actions
+
+(defn list-config!
+  "Format config using config/config-list and store output."
+  []
+  (let [cfg (:config-map @state)
+        output (config/config-list cfg)]
+    (swap! state assoc :output output)))
+
+(defn get-config-key!
+  "Get a config value by key string and store result."
+  [key-str]
+  (let [cfg (:config-map @state)
+        result (config/config-get cfg key-str)]
+    (swap! state assoc :config-result result)))
+
+(defn set-config-key!
+  "Set a config value and update the stored config map."
+  [key-str value-str]
+  (let [cfg (:config-map @state)
+        updated (config/config-set cfg key-str value-str)]
+    (swap! state assoc :config-map updated)))
+
+(defn parse-config!
+  "Parse the stored config EDN string using config/parse-config."
+  []
+  (let [edn-str (:config-edn-str @state)
+        result (config/parse-config edn-str)]
+    (swap! state assoc :config-map result)))
+
+(defn request-config-help!
+  "Run config/config-help and store output."
+  []
+  (let [output (config/config-help)]
+    (swap! state assoc :output output)))
+
+;; Then step accessors
+
+(defn config-result
+  "Returns the result from the last config get operation."
+  []
+  (:config-result @state))
+
+(defn current-config
+  "Returns the current config map."
+  []
+  (:config-map @state))
