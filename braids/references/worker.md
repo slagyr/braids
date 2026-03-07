@@ -67,7 +67,7 @@ You are writing production code and tests that make feature specs pass.
 
 - **CAN modify:** `src/`, `spec/`
 - **CANNOT modify:** `features/*.feature`
-- The generated specs in `features/generated/` are disposable (regenerated every `bb test:features` run). Do not write implementations there. Instead, enhance the parser, generator, and harness so the pipeline produces executable specs.
+- The generated specs in `features/generated/` are disposable (regenerated every `bb features` run). Do not write implementations there. Instead, enhance the parser, generator, and harness so the pipeline produces executable specs.
 
 #### Untagged beads
 

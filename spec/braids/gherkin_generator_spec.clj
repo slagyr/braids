@@ -1223,7 +1223,7 @@
 
   (context "generate-spec with real IR"
 
-    ;; Note: These tests require running bb parse:features first to generate the .edn IR files
+    ;; Note: These tests require running bb features:parse first to generate the .edn IR files
     ;; with the new typed IR format.
 
     (it "generates spec from orch_spawning IR with all executable scenarios"

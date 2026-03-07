@@ -82,7 +82,7 @@ Build and refine the "braids" OpenClaw skill — an autonomous project managemen
 
 A bead is **not done** until all of the following are satisfied:
 
-1. **Unit tests pass:** Run the full test suite (`bb test`) — all specs green
+1. **Unit tests pass:** Run the full test suite (`bb spec`) — all specs green
 2. **CLI verification:** Test the actual `bd` CLI with real commands against a test project. Do not assume code changes work just because tests pass — run the CLI and confirm the output is correct
 3. **Integration check:** If the change affects workflow (worker, orchestrator, iteration transitions), verify end-to-end by simulating the workflow with real CLI commands
 4. **Document what you tested:** In the deliverable, include the actual commands you ran and their output (text, not screenshots). Example:
