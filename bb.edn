@@ -7,17 +7,17 @@
                                         "-s" "src"
                                         *command-line-args*)}
          features:parse    {:doc      "Parse .feature files to .edn IR"
-                            :requires ([braids.gherkin :as gherkin])
+                            :requires ([braids.features.parser :as parser])
                             :task     (let [source (or (first *command-line-args*) "features")
                                             output (or (second *command-line-args*) "features/edn")]
-                                        (gherkin/parse-features! source output))}
+                                        (parser/parse-features! source output))}
          features:generate {:doc      "Generate speclj specs from .edn IR"
-                            :requires ([braids.gherkin-generator :as gen])
+                            :requires ([braids.features.generator :as gen])
                             :task     (let [edn-dir (or (first *command-line-args*) "features/edn")
                                             output (or (second *command-line-args*) "features/generated")]
                                         (gen/generate-features! edn-dir output))}
          features          {:doc      "Parse, generate, and run feature specs"
-                            :requires ([braids.gherkin-pipeline :as pipeline]
+                            :requires ([braids.features.pipeline :as pipeline]
                                        [speclj.main :as speclj])
                             :task     (do
                                         (pipeline/run-pipeline!)

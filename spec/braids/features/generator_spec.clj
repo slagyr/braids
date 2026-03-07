@@ -1,6 +1,6 @@
-(ns braids.gherkin-generator-spec
+(ns braids.features.generator-spec
   (:require [speclj.core :refer :all]
-            [braids.gherkin-generator :as gen]
+            [braids.features.generator :as gen]
             [clojure.string :as str]
             [clojure.java.io :as io]))
 

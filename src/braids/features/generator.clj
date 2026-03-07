@@ -1,4 +1,4 @@
-(ns braids.gherkin-generator
+(ns braids.features.generator
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.string :as str]))

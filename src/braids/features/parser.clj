@@ -1,4 +1,4 @@
-(ns braids.gherkin
+(ns braids.features.parser
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [braids.edn-format :refer [edn-format]]))

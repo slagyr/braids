@@ -1,6 +1,6 @@
-(ns braids.gherkin-spec
+(ns braids.features.parser-spec
   (:require [speclj.core :refer :all]
-            [braids.gherkin :as gherkin]))
+            [braids.features.parser :as gherkin]))
 
 (describe "Gherkin Parser"
 

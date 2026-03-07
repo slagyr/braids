@@ -1,6 +1,6 @@
-(ns braids.gherkin-pipeline-spec
+(ns braids.features.pipeline-spec
   (:require [speclj.core :refer :all]
-            [braids.gherkin-pipeline :as pipeline]
+            [braids.features.pipeline :as pipeline]
             [clojure.java.io :as io]
             [clojure.string :as str]))
 

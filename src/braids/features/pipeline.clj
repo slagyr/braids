@@ -1,6 +1,6 @@
-(ns braids.gherkin-pipeline
-  (:require [braids.gherkin :as parser]
-            [braids.gherkin-generator :as generator]))
+(ns braids.features.pipeline
+  (:require [braids.features.parser :as parser]
+            [braids.features.generator :as generator]))
 
 (def default-features-dir "features")
 (def default-edn-dir "features/edn")
