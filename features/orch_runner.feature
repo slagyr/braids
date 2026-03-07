@@ -70,3 +70,4 @@ Feature: Orchestrator runner
     Then the log should contain "2 zombie"
     And the log should contain "bead-closed"
     And the log should contain "timeout"
+
