@@ -13,7 +13,7 @@
       (str "-spec")))
 
 ;; --- Step registry: data-driven dispatch for text and code generation ---
-;; Each IR :type maps to {:text (fn [node] ...) :code (fn [node] ...)}
+;; Each IR :pattern maps to {:text (fn [node] ...) :code (fn [node] ...)}
 ;; :text produces human-readable step text for comments
 ;; :code produces executable Clojure code (or nil to skip)
 
@@ -404,17 +404,10 @@
 
 ;; --- Step text and code: thin dispatchers over the registry ---
 
-(defn- step-pattern
-  "Extract the pattern classification from an IR step node.
-   Supports both new format (:pattern key) and legacy format (:type key)."
-  [node]
-  (or (:pattern node) (:type node)))
-
 (defn step-text
   "Convert a typed IR node to a human-readable step text string."
-  [node]
-  (let [pat (step-pattern node)
-        entry (get step-registry pat)
+  [{:keys [pattern] :as node}]
+  (let [entry (get step-registry pattern)
         text-fn (:text entry)]
     (cond
       (nil? entry)    (str node)
@@ -423,27 +416,15 @@
 
 (defn- generate-step-code
   "Generate executable Clojure code for a typed IR step, or nil to skip."
-  [node]
-  (let [pat (step-pattern node)]
-    (when-let [code-fn (:code (get step-registry pat))]
-      (code-fn node))))
-
-(defn- scenario-steps
-  "Extract all steps from a scenario and optional background.
-   Supports new flat :steps format and legacy {:givens :whens :thens} format."
-  [scenario background]
-  (if (:steps scenario)
-    (concat (:steps background) (:steps scenario))
-    (concat (:givens background)
-            (:givens scenario)
-            (:whens scenario)
-            (:thens scenario))))
+  [{:keys [pattern] :as node}]
+  (when-let [code-fn (:code (get step-registry pattern))]
+    (code-fn node)))
 
 (defn- all-recognized?
-  "Returns true if all steps in a scenario (and optional background) are recognized types."
+  "Returns true if all steps in a scenario (and optional background) are recognized patterns."
   [scenario background]
-  (let [all-steps (scenario-steps scenario background)]
-    (every? #(not= :unrecognized (step-pattern %)) all-steps)))
+  (let [all-steps (concat (:steps background) (:steps scenario))]
+    (every? #(not= :unrecognized (:pattern %)) all-steps)))
 
 ;; --- NS form generation ---
 
@@ -471,59 +452,30 @@
     :but   "But"
     "Given"))
 
-(defn- format-steps-legacy
-  "Format a sequence of IR step nodes as comments with Given/When/Then prefixes (legacy format)."
-  [keyword steps]
-  (when (seq steps)
-    (let [texts (map step-text steps)
-          first-line (str ";; " keyword " " (first texts))
-          rest-lines (map #(str ";; And " %) (rest texts))]
-      (str/join "\n" (cons first-line rest-lines)))))
-
 (defn generate-step-comments
   "Generate step comments for a scenario, optionally including background."
   [scenario background]
-  (if (:steps scenario)
-    ;; New flat :steps format
-    (let [bg-steps (:steps background)
-          scenario-steps (:steps scenario)
-          bg-comments (when (seq bg-steps)
-                        (let [bg-lines (map (fn [s]
-                                              (str ";; " (step-keyword-label (:type s)) " " (step-text s)))
-                                            bg-steps)]
-                          (str ";; Background:\n" (str/join "\n" bg-lines) "\n;;")))
-          step-lines (map (fn [s]
-                            (str ";; " (step-keyword-label (:type s)) " " (step-text s)))
-                          scenario-steps)
-          parts (remove nil? [bg-comments (when (seq step-lines) (str/join "\n" step-lines))])]
-      (str/join "\n" parts))
-    ;; Legacy {:givens :whens :thens} format
-    (let [bg-comments (when background
-                        (let [bg-header ";; Background:"
-                              bg-steps (format-steps-legacy "Given" (:givens background))]
-                          (str bg-header "\n" bg-steps "\n;;")))
-          given-comments (format-steps-legacy "Given" (:givens scenario))
-          when-comments (format-steps-legacy "When" (:whens scenario))
-          then-comments (format-steps-legacy "Then" (:thens scenario))
-          parts (remove nil? [bg-comments given-comments when-comments then-comments])]
-      (str/join "\n" parts))))
+  (let [bg-steps (:steps background)
+        scenario-steps (:steps scenario)
+        bg-comments (when (seq bg-steps)
+                      (let [bg-lines (map (fn [s]
+                                            (str ";; " (step-keyword-label (:type s)) " " (step-text s)))
+                                          bg-steps)]
+                        (str ";; Background:\n" (str/join "\n" bg-lines) "\n;;")))
+        step-lines (map (fn [s]
+                          (str ";; " (step-keyword-label (:type s)) " " (step-text s)))
+                        scenario-steps)
+        parts (remove nil? [bg-comments (when (seq step-lines) (str/join "\n" step-lines))])]
+    (str/join "\n" parts)))
 
 ;; --- Scenario generation ---
 
 (defn- generate-executable-body
   "Generate the executable code body for a fully recognized scenario."
   [scenario background]
-  (let [all-code (if (:steps scenario)
-                   ;; New flat :steps format
-                   (concat ["(h/reset!)"]
-                           (map generate-step-code (:steps background))
-                           (map generate-step-code (:steps scenario)))
-                   ;; Legacy {:givens :whens :thens} format
-                   (concat ["(h/reset!)"]
-                           (map generate-step-code (:givens background))
-                           (map generate-step-code (:givens scenario))
-                           (map generate-step-code (:whens scenario))
-                           (map generate-step-code (:thens scenario))))
+  (let [all-code (concat ["(h/reset!)"]
+                         (map generate-step-code (:steps background))
+                         (map generate-step-code (:steps scenario)))
         code-lines (->> all-code
                         (remove nil?)
                         (mapcat #(str/split-lines %)))]

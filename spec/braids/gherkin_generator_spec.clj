@@ -218,148 +218,147 @@
 
     (it "formats iteration-edn step"
       (should= "iteration EDN with number \"003\" and status \"active\" and 1 story"
-               (gen/step-text {:type :iteration-edn :number "003" :status "active" :story-count 1})))
+               (gen/step-text {:pattern :iteration-edn :number "003" :status "active" :story-count 1})))
 
     (it "formats edn-no-guardrails-or-notes step"
       (should= "the EDN has no guardrails or notes"
-               (gen/step-text {:type :edn-no-guardrails-or-notes})))
+               (gen/step-text {:pattern :edn-no-guardrails-or-notes})))
 
     (it "formats iteration-with-status step"
       (should= "an iteration with number \"001\" and status \"bogus\" and stories"
-               (gen/step-text {:type :iteration-with-status :number "001" :status "bogus"})))
+               (gen/step-text {:pattern :iteration-with-status :number "001" :status "bogus"})))
 
     (it "formats iteration-no-number step"
       (should= "an iteration with no number"
-               (gen/step-text {:type :iteration-no-number})))
+               (gen/step-text {:pattern :iteration-no-number})))
 
     (it "formats iteration-with-stories step"
       (should= "an iteration with stories \"proj-abc\" and \"proj-def\""
-               (gen/step-text {:type :iteration-with-stories :story-ids ["proj-abc" "proj-def"]})))
+               (gen/step-text {:pattern :iteration-with-stories :story-ids ["proj-abc" "proj-def"]})))
 
     (it "formats iteration-with-story step"
       (should= "an iteration with story \"proj-xyz\""
-               (gen/step-text {:type :iteration-with-story :story-id "proj-xyz"})))
+               (gen/step-text {:pattern :iteration-with-story :story-id "proj-xyz"})))
 
     (it "formats iter-bead-status step"
       (should= "bead \"proj-abc\" has status \"open\" and priority 1"
-               (gen/step-text {:type :iter-bead-status :bead-id "proj-abc" :status "open" :priority 1})))
+               (gen/step-text {:pattern :iter-bead-status :bead-id "proj-abc" :status "open" :priority 1})))
 
     (it "formats no-bead-data step"
       (should= "no bead data exists"
-               (gen/step-text {:type :no-bead-data})))
+               (gen/step-text {:pattern :no-bead-data})))
 
     (it "formats annotated-stories step"
       (should= "annotated stories with 2 closed and 2 open out of 4 total"
-               (gen/step-text {:type :annotated-stories :closed 2 :open 2 :total 4})))
+               (gen/step-text {:pattern :annotated-stories :closed 2 :open 2 :total 4})))
 
     (it "formats iteration-no-stories step"
       (should= "an iteration with no stories"
-               (gen/step-text {:type :iteration-no-stories})))
+               (gen/step-text {:pattern :iteration-no-stories})))
 
     (it "formats iteration-number-status step"
       (should= "an iteration \"009\" with status \"active\""
-               (gen/step-text {:type :iteration-number-status :number "009" :status "active"})))
+               (gen/step-text {:pattern :iteration-number-status :number "009" :status "active"})))
 
     (it "formats story-with-status step"
       (should= "a story \"proj-abc\" with status \"open\""
-               (gen/step-text {:type :story-with-status :story-id "proj-abc" :status "open"})))
+               (gen/step-text {:pattern :story-with-status :story-id "proj-abc" :status "open"})))
 
     (it "formats completion-stats step"
       (should= "completion stats of 1 closed out of 2"
-               (gen/step-text {:type :completion-stats :closed 1 :total 2})))
+               (gen/step-text {:pattern :completion-stats :closed 1 :total 2})))
 
     (it "formats parse-iteration-edn step"
       (should= "parsing the iteration EDN"
-               (gen/step-text {:type :parse-iteration-edn})))
+               (gen/step-text {:pattern :parse-iteration-edn})))
 
     (it "formats validate-iteration step"
       (should= "validating the iteration"
-               (gen/step-text {:type :validate-iteration})))
+               (gen/step-text {:pattern :validate-iteration})))
 
     (it "formats annotate-stories step"
       (should= "annotating stories with bead data"
-               (gen/step-text {:type :annotate-stories})))
+               (gen/step-text {:pattern :annotate-stories})))
 
     (it "formats calculate-completion-stats step"
       (should= "calculating completion stats"
-               (gen/step-text {:type :calculate-completion-stats})))
+               (gen/step-text {:pattern :calculate-completion-stats})))
 
     (it "formats format-iteration step"
       (should= "formatting the iteration"
-               (gen/step-text {:type :format-iteration})))
+               (gen/step-text {:pattern :format-iteration})))
 
     (it "formats format-iteration-json step"
       (should= "formatting the iteration as JSON"
-               (gen/step-text {:type :format-iteration-json})))
+               (gen/step-text {:pattern :format-iteration-json})))
 
     (it "formats assert-iteration-number step"
       (should= "the iteration number should be \"003\""
-               (gen/step-text {:type :assert-iteration-number :expected "003"})))
+               (gen/step-text {:pattern :assert-iteration-number :expected "003"})))
 
     (it "formats assert-iteration-status step"
       (should= "the iteration status should be \"active\""
-               (gen/step-text {:type :assert-iteration-status :expected "active"})))
+               (gen/step-text {:pattern :assert-iteration-status :expected "active"})))
 
     (it "formats assert-iteration-guardrails-empty step"
       (should= "the iteration guardrails should be empty"
-               (gen/step-text {:type :assert-iteration-guardrails-empty})))
+               (gen/step-text {:pattern :assert-iteration-guardrails-empty})))
 
     (it "formats assert-iteration-notes-empty step"
       (should= "the iteration notes should be empty"
-               (gen/step-text {:type :assert-iteration-notes-empty})))
+               (gen/step-text {:pattern :assert-iteration-notes-empty})))
 
     (it "formats assert-story-status step"
       (should= "story \"proj-abc\" should have status \"open\""
-               (gen/step-text {:type :assert-story-status :story-id "proj-abc" :expected "open"})))
+               (gen/step-text {:pattern :assert-story-status :story-id "proj-abc" :expected "open"})))
 
     (it "formats assert-total step"
       (should= "the total should be 4"
-               (gen/step-text {:type :assert-total :expected 4})))
+               (gen/step-text {:pattern :assert-total :expected 4})))
 
     (it "formats assert-closed-count step"
       (should= "the closed count should be 2"
-               (gen/step-text {:type :assert-closed-count :expected 2})))
+               (gen/step-text {:pattern :assert-closed-count :expected 2})))
 
     (it "formats assert-completion-percent step"
       (should= "the completion percent should be 50"
-               (gen/step-text {:type :assert-completion-percent :expected 50})))
+               (gen/step-text {:pattern :assert-completion-percent :expected 50})))
 
     (it "formats assert-json-contains step"
       (should= "the JSON should contain \"number\""
-               (gen/step-text {:type :assert-json-contains :expected "number"}))))
+               (gen/step-text {:pattern :assert-json-contains :expected "number"}))))
 
   (context "generate-step-comments"
 
     (it "generates Given comments from IR nodes"
       (let [comments (gen/generate-step-comments
-                       {:givens [{:type :unrecognized :text "a step"}
-                                 {:type :unrecognized :text "another step"}]
-                        :whens [] :thens []}
+                       {:steps [{:type :given :pattern :unrecognized :text "a step"}
+                                {:type :and :pattern :unrecognized :text "another step"}]}
                        nil)]
         (should-contain ";; Given a step" comments)
         (should-contain ";; And another step" comments)))
 
     (it "generates When comments from IR nodes"
       (let [comments (gen/generate-step-comments
-                       {:givens [] :whens [{:type :unrecognized :text "something happens"}] :thens []}
+                       {:steps [{:type :when :pattern :unrecognized :text "something happens"}]}
                        nil)]
         (should-contain ";; When something happens" comments)))
 
     (it "generates Then comments from IR nodes"
       (let [comments (gen/generate-step-comments
-                       {:givens [] :whens [] :thens [{:type :unrecognized :text "a result"}
-                                                     {:type :unrecognized :text "another result"}]}
+                       {:steps [{:type :then :pattern :unrecognized :text "a result"}
+                                {:type :and :pattern :unrecognized :text "another result"}]}
                        nil)]
         (should-contain ";; Then a result" comments)
         (should-contain ";; And another result" comments)))
 
     (it "includes background steps as comments before scenario steps"
-      (let [background {:givens [{:type :unrecognized :text "common setup"}
-                                 {:type :unrecognized :text "other setup"}]}
+      (let [background {:steps [{:type :given :pattern :unrecognized :text "common setup"}
+                                {:type :and :pattern :unrecognized :text "other setup"}]}
             comments (gen/generate-step-comments
-                       {:givens [{:type :unrecognized :text "scenario step"}]
-                        :whens [{:type :unrecognized :text "action"}]
-                        :thens [{:type :unrecognized :text "result"}]}
+                       {:steps [{:type :given :pattern :unrecognized :text "scenario step"}
+                                {:type :when :pattern :unrecognized :text "action"}
+                                {:type :then :pattern :unrecognized :text "result"}]}
                        background)]
         (should-contain ";; Background:" comments)
         (should-contain ";; Given common setup" comments)
@@ -372,9 +371,9 @@
 
     (it "generates a context with pending it block for unrecognized steps"
       (let [scenario {:scenario "Simple test"
-                      :givens [{:type :unrecognized :text "a step"}]
-                      :whens [{:type :unrecognized :text "action"}]
-                      :thens [{:type :unrecognized :text "result"}]}
+                      :steps [{:type :given :pattern :unrecognized :text "a step"}
+                              {:type :when :pattern :unrecognized :text "action"}
+                              {:type :then :pattern :unrecognized :text "result"}]}
             output (gen/generate-scenario scenario nil)]
         (should-contain "(context \"Simple test\"" output)
         (should-contain "(it \"Simple test\"" output)
@@ -382,9 +381,9 @@
 
     (it "includes step comments in the pending it block"
       (let [scenario {:scenario "Test"
-                      :givens [{:type :unrecognized :text "first given"}]
-                      :whens [{:type :unrecognized :text "the action"}]
-                      :thens [{:type :unrecognized :text "expected result"}]}
+                      :steps [{:type :given :pattern :unrecognized :text "first given"}
+                              {:type :when :pattern :unrecognized :text "the action"}
+                              {:type :then :pattern :unrecognized :text "expected result"}]}
             output (gen/generate-scenario scenario nil)]
         (should-contain ";; Given first given" output)
         (should-contain ";; When the action" output)
@@ -392,22 +391,22 @@
 
     (it "includes background comments when present"
       (let [scenario {:scenario "With bg"
-                      :givens [{:type :unrecognized :text "scenario step"}]
-                      :whens [{:type :unrecognized :text "action"}]
-                      :thens [{:type :unrecognized :text "result"}]}
-            background {:givens [{:type :unrecognized :text "bg step"}]}
+                      :steps [{:type :given :pattern :unrecognized :text "scenario step"}
+                              {:type :when :pattern :unrecognized :text "action"}
+                              {:type :then :pattern :unrecognized :text "result"}]}
+            background {:steps [{:type :given :pattern :unrecognized :text "bg step"}]}
             output (gen/generate-scenario scenario background)]
         (should-contain ";; Background:" output)
         (should-contain ";; Given bg step" output)))
 
     (it "generates executable code for fully recognized scenarios"
       (let [scenario {:scenario "Zombie detected"
-                      :givens [{:type :session :session-id "s1" :label "project:proj:proj-abc"}
-                               {:type :session-status :session-id "s1" :status "running" :age-seconds 100}
-                               {:type :bead-status :bead-id "proj-abc" :status "closed"}]
-                      :whens [{:type :check-zombies}]
-                      :thens [{:type :assert-zombie :session-id "s1" :reason "bead-closed"}]}
-            background {:givens [{:type :project-config :slug "proj" :worker-timeout 3600}]}
+                      :steps [{:type :given :pattern :session :session-id "s1" :label "project:proj:proj-abc"}
+                              {:type :and :pattern :session-status :session-id "s1" :status "running" :age-seconds 100}
+                              {:type :and :pattern :bead-status :bead-id "proj-abc" :status "closed"}
+                              {:type :when :pattern :check-zombies}
+                              {:type :then :pattern :assert-zombie :session-id "s1" :reason "bead-closed"}]}
+            background {:steps [{:type :given :pattern :project-config :slug "proj" :worker-timeout 3600}]}
             output (gen/generate-scenario scenario background)]
         (should-not-contain "pending" output)
         (should-contain "(h/reset!)" output)
@@ -421,34 +420,34 @@
 
     (it "generates executable code for assert-no-zombies"
       (let [scenario {:scenario "No zombies"
-                      :givens [{:type :session :session-id "s3" :label "project:proj:proj-ghi"}
-                               {:type :session-status :session-id "s3" :status "running" :age-seconds 100}
-                               {:type :bead-status :bead-id "proj-ghi" :status "open"}]
-                      :whens [{:type :check-zombies}]
-                      :thens [{:type :assert-no-zombies}]}
-            background {:givens [{:type :project-config :slug "proj" :worker-timeout 3600}]}
+                      :steps [{:type :given :pattern :session :session-id "s3" :label "project:proj:proj-ghi"}
+                              {:type :and :pattern :session-status :session-id "s3" :status "running" :age-seconds 100}
+                              {:type :and :pattern :bead-status :bead-id "proj-ghi" :status "open"}
+                              {:type :when :pattern :check-zombies}
+                              {:type :then :pattern :assert-no-zombies}]}
+            background {:steps [{:type :given :pattern :project-config :slug "proj" :worker-timeout 3600}]}
             output (gen/generate-scenario scenario background)]
         (should-not-contain "pending" output)
         (should-contain "(should= [] (h/zombies))" output)))
 
     (it "generates pending for mixed recognized/unrecognized steps"
       (let [scenario {:scenario "Mixed"
-                      :givens [{:type :session :session-id "s1" :label "project:proj:proj-abc"}
-                               {:type :unrecognized :text "some unknown step"}]
-                      :whens [{:type :check-zombies}]
-                      :thens [{:type :assert-no-zombies}]}
+                      :steps [{:type :given :pattern :session :session-id "s1" :label "project:proj:proj-abc"}
+                              {:type :and :pattern :unrecognized :text "some unknown step"}
+                              {:type :when :pattern :check-zombies}
+                              {:type :then :pattern :assert-no-zombies}]}
             output (gen/generate-scenario scenario nil)]
         (should-contain "(pending \"not yet implemented\")" output)))
 
     (it "generates executable code for orch_spawning scenario"
       (let [scenario {:scenario "Spawn workers"
-                      :givens [{:type :ready-beads :slug "alpha" :count 3}
-                               {:type :active-workers :slug "alpha" :count 0}]
-                      :whens [{:type :orch-tick}]
-                      :thens [{:type :assert-action :expected "spawn"}
-                              {:type :assert-spawn-count :count 2}]}
-            background {:givens [{:type :project-config :slug "alpha" :max-workers 2}
-                                 {:type :active-iteration :slug "alpha" :iteration "003"}]}
+                      :steps [{:type :given :pattern :ready-beads :slug "alpha" :count 3}
+                              {:type :and :pattern :active-workers :slug "alpha" :count 0}
+                              {:type :when :pattern :orch-tick}
+                              {:type :then :pattern :assert-action :expected "spawn"}
+                              {:type :and :pattern :assert-spawn-count :count 2}]}
+            background {:steps [{:type :given :pattern :project-config :slug "alpha" :max-workers 2}
+                                {:type :and :pattern :active-iteration :slug "alpha" :iteration "003"}]}
             output (gen/generate-scenario scenario background)]
         (should-not-contain "pending" output)
         (should-contain "(h/reset!)" output)
@@ -462,13 +461,13 @@
 
     (it "generates executable code for orch idle scenario"
       (let [scenario {:scenario "Idle when no ready beads"
-                      :givens [{:type :ready-beads :slug "alpha" :count 0}
-                               {:type :active-workers :slug "alpha" :count 0}]
-                      :whens [{:type :orch-tick}]
-                      :thens [{:type :assert-action :expected "idle"}
-                              {:type :assert-idle-reason :expected "no-ready-beads"}]}
-            background {:givens [{:type :project-config :slug "alpha" :max-workers 2}
-                                 {:type :active-iteration :slug "alpha" :iteration "003"}]}
+                      :steps [{:type :given :pattern :ready-beads :slug "alpha" :count 0}
+                              {:type :and :pattern :active-workers :slug "alpha" :count 0}
+                              {:type :when :pattern :orch-tick}
+                              {:type :then :pattern :assert-action :expected "idle"}
+                              {:type :and :pattern :assert-idle-reason :expected "no-ready-beads"}]}
+            background {:steps [{:type :given :pattern :project-config :slug "alpha" :max-workers 2}
+                                {:type :and :pattern :active-iteration :slug "alpha" :iteration "003"}]}
             output (gen/generate-scenario scenario background)]
         (should-not-contain "pending" output)
         (should-contain "(should= \"idle\" (h/tick-action))" output)
@@ -476,9 +475,9 @@
 
     (it "generates executable code for orch-tick-project"
       (let [scenario {:scenario "Idle for beta only"
-                      :givens [{:type :no-active-iteration :slug "beta"}]
-                      :whens [{:type :orch-tick-project :slug "beta"}]
-                      :thens [{:type :assert-action :expected "idle"}]}
+                      :steps [{:type :given :pattern :no-active-iteration :slug "beta"}
+                              {:type :when :pattern :orch-tick-project :slug "beta"}
+                              {:type :then :pattern :assert-action :expected "idle"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/remove-iteration \"beta\")" output)
@@ -486,13 +485,13 @@
 
     (it "generates executable code for spawn label assertion"
       (let [scenario {:scenario "Label check"
-                      :givens [{:type :ready-bead-with-id :slug "alpha" :bead-id "alpha-abc"}
-                               {:type :active-workers :slug "alpha" :count 0}]
-                      :whens [{:type :orch-tick}]
-                      :thens [{:type :assert-action :expected "spawn"}
-                              {:type :assert-spawn-label :expected "project:alpha:alpha-abc"}]}
-            background {:givens [{:type :project-config :slug "alpha" :max-workers 2}
-                                 {:type :active-iteration :slug "alpha" :iteration "003"}]}
+                      :steps [{:type :given :pattern :ready-bead-with-id :slug "alpha" :bead-id "alpha-abc"}
+                              {:type :and :pattern :active-workers :slug "alpha" :count 0}
+                              {:type :when :pattern :orch-tick}
+                              {:type :then :pattern :assert-action :expected "spawn"}
+                              {:type :and :pattern :assert-spawn-label :expected "project:alpha:alpha-abc"}]}
+            background {:steps [{:type :given :pattern :project-config :slug "alpha" :max-workers 2}
+                                {:type :and :pattern :active-iteration :slug "alpha" :iteration "003"}]}
             output (gen/generate-scenario scenario background)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-ready-bead-with-id \"alpha\" \"alpha-abc\")" output)
@@ -500,9 +499,9 @@
 
     (it "generates executable code for session ID generation scenario"
       (let [scenario {:scenario "Generate deterministic session ID"
-                      :givens [{:type :bead :bead-id "proj-abc"}]
-                      :whens [{:type :generate-session-id}]
-                      :thens [{:type :assert-session-id :expected "braids-proj-abc-worker"}]}
+                      :steps [{:type :given :pattern :bead :bead-id "proj-abc"}
+                              {:type :when :pattern :generate-session-id}
+                              {:type :then :pattern :assert-session-id :expected "braids-proj-abc-worker"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/reset!)" output)
@@ -512,9 +511,9 @@
 
     (it "generates executable code for session ID identical scenario"
       (let [scenario {:scenario "Same bead same ID"
-                      :givens [{:type :bead :bead-id "proj-xyz"}]
-                      :whens [{:type :generate-session-id-twice}]
-                      :thens [{:type :assert-ids-identical}]}
+                      :steps [{:type :given :pattern :bead :bead-id "proj-xyz"}
+                              {:type :when :pattern :generate-session-id-twice}
+                              {:type :then :pattern :assert-ids-identical}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-bead-id \"proj-xyz\")" output)
@@ -523,10 +522,10 @@
 
     (it "generates executable code for different session IDs scenario"
       (let [scenario {:scenario "Different beads different IDs"
-                      :givens [{:type :bead :bead-id "proj-aaa"}
-                               {:type :bead :bead-id "proj-bbb"}]
-                      :whens [{:type :generate-session-ids-both}]
-                      :thens [{:type :assert-ids-different}]}
+                      :steps [{:type :given :pattern :bead :bead-id "proj-aaa"}
+                              {:type :and :pattern :bead :bead-id "proj-bbb"}
+                              {:type :when :pattern :generate-session-ids-both}
+                              {:type :then :pattern :assert-ids-different}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-bead-id \"proj-aaa\")" output)
@@ -536,9 +535,9 @@
 
     (it "generates executable code for parse session ID scenario"
       (let [scenario {:scenario "Parse session ID"
-                      :givens [{:type :session-id-literal :session-id "braids-proj-abc-worker"}]
-                      :whens [{:type :parse-session-id}]
-                      :thens [{:type :assert-bead-id :expected "proj-abc"}]}
+                      :steps [{:type :given :pattern :session-id-literal :session-id "braids-proj-abc-worker"}
+                              {:type :when :pattern :parse-session-id}
+                              {:type :then :pattern :assert-bead-id :expected "proj-abc"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-session-id-literal \"braids-proj-abc-worker\")" output)
@@ -547,22 +546,22 @@
 
     (it "generates executable code for ready beads filters active projects"
       (let [scenario {:scenario "Ready beads filters to active projects only"
-                      :givens [{:type :registry-with-projects-table
-                                :table {:headers ["slug" "status" "priority"]
-                                        :rows [["alpha" "active" "normal"]
-                                               ["beta" "paused" "normal"]]}}
-                               {:type :project-config-max-workers :slug "alpha" :max-workers 1}
-                               {:type :project-config-max-workers :slug "beta" :max-workers 1}
-                               {:type :project-ready-beads-table :slug "alpha"
-                                :table {:headers ["id" "title" "priority"]
-                                        :rows [["alpha-aaa" "Task A" "P1"]]}}
-                               {:type :project-ready-beads-table :slug "beta"
-                                :table {:headers ["id" "title" "priority"]
-                                        :rows [["beta-bbb" "Task B" "P1"]]}}
-                               {:type :no-active-workers}]
-                      :whens [{:type :compute-ready-beads}]
-                      :thens [{:type :assert-result-contains-bead :bead-id "alpha-aaa"}
-                              {:type :assert-result-not-contains-bead :bead-id "beta-bbb"}]}
+                      :steps [{:type :given :pattern :registry-with-projects-table
+                               :table {:headers ["slug" "status" "priority"]
+                                       :rows [["alpha" "active" "normal"]
+                                              ["beta" "paused" "normal"]]}}
+                              {:type :and :pattern :project-config-max-workers :slug "alpha" :max-workers 1}
+                              {:type :and :pattern :project-config-max-workers :slug "beta" :max-workers 1}
+                              {:type :and :pattern :project-ready-beads-table :slug "alpha"
+                               :table {:headers ["id" "title" "priority"]
+                                       :rows [["alpha-aaa" "Task A" "P1"]]}}
+                              {:type :and :pattern :project-ready-beads-table :slug "beta"
+                               :table {:headers ["id" "title" "priority"]
+                                       :rows [["beta-bbb" "Task B" "P1"]]}}
+                              {:type :and :pattern :no-active-workers}
+                              {:type :when :pattern :compute-ready-beads}
+                              {:type :then :pattern :assert-result-contains-bead :bead-id "alpha-aaa"}
+                              {:type :and :pattern :assert-result-not-contains-bead :bead-id "beta-bbb"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/reset!)" output)
@@ -575,19 +574,19 @@
 
     (it "generates executable code for ready beads result empty"
       (let [scenario {:scenario "Result empty"
-                      :givens [{:type :no-active-workers}]
-                      :whens [{:type :compute-ready-beads}]
-                      :thens [{:type :assert-result-empty}]}
+                      :steps [{:type :given :pattern :no-active-workers}
+                              {:type :when :pattern :compute-ready-beads}
+                              {:type :then :pattern :assert-result-empty}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(should (empty? (h/ready-result)))" output)))
 
     (it "generates executable code for nth result project assertion"
       (let [scenario {:scenario "Ordered by priority"
-                      :givens [{:type :no-active-workers}]
-                      :whens [{:type :compute-ready-beads}]
-                      :thens [{:type :assert-nth-result-project :position 1 :slug "high"}
-                              {:type :assert-nth-result-project :position 2 :slug "norm"}]}
+                      :steps [{:type :given :pattern :no-active-workers}
+                              {:type :when :pattern :compute-ready-beads}
+                              {:type :then :pattern :assert-nth-result-project :position 1 :slug "high"}
+                              {:type :and :pattern :assert-nth-result-project :position 2 :slug "norm"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(should= \"high\" (:project (nth (h/ready-result) 0)))" output)
@@ -595,11 +594,11 @@
 
     (it "generates executable code for format ready output scenario"
       (let [scenario {:scenario "Format output"
-                      :givens [{:type :ready-beads-to-format
-                                :table {:headers ["project" "id" "title" "priority"]
-                                        :rows [["proj" "proj-abc" "Do stuff" "P0"]]}}]
-                      :whens [{:type :format-ready-output}]
-                      :thens [{:type :assert-output-contains :expected "proj-abc"}]}
+                      :steps [{:type :given :pattern :ready-beads-to-format
+                               :table {:headers ["project" "id" "title" "priority"]
+                                       :rows [["proj" "proj-abc" "Do stuff" "P0"]]}}
+                              {:type :when :pattern :format-ready-output}
+                              {:type :then :pattern :assert-output-contains :expected "proj-abc"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-ready-beads-to-format" output)
@@ -608,31 +607,31 @@
 
     (it "generates executable code for no ready beads to format"
       (let [scenario {:scenario "Empty format"
-                      :givens [{:type :no-ready-beads-to-format}]
-                      :whens [{:type :format-ready-output}]
-                      :thens [{:type :assert-output-equals :expected "No ready beads."}]}
+                      :steps [{:type :given :pattern :no-ready-beads-to-format}
+                              {:type :when :pattern :format-ready-output}
+                              {:type :then :pattern :assert-output-equals :expected "No ready beads."}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-no-ready-beads-to-format)" output)))
 
     (it "generates executable code for project-config-status-and-max-workers"
       (let [scenario {:scenario "Config with status"
-                      :givens [{:type :project-config-status-and-max-workers :slug "proj" :status "paused" :max-workers 1}
-                               {:type :no-active-workers}]
-                      :whens [{:type :compute-ready-beads}]
-                      :thens [{:type :assert-result-empty}]}
+                      :steps [{:type :given :pattern :project-config-status-and-max-workers :slug "proj" :status "paused" :max-workers 1}
+                              {:type :and :pattern :no-active-workers}
+                              {:type :when :pattern :compute-ready-beads}
+                              {:type :then :pattern :assert-result-empty}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-project-config \"proj\" {:status \"paused\" :max-workers 1})" output)))
 
     (it "generates executable code for bead-no-status"
       (let [scenario {:scenario "No bead status"
-                      :givens [{:type :session :session-id "s5" :label "project:proj:proj-mno"}
-                               {:type :session-status :session-id "s5" :status "running" :age-seconds 100}
-                               {:type :bead-no-status :bead-id "proj-mno"}]
-                      :whens [{:type :check-zombies}]
-                      :thens [{:type :assert-no-zombies}]}
-            background {:givens [{:type :project-config :slug "proj" :worker-timeout 3600}]}
+                      :steps [{:type :given :pattern :session :session-id "s5" :label "project:proj:proj-mno"}
+                              {:type :and :pattern :session-status :session-id "s5" :status "running" :age-seconds 100}
+                              {:type :and :pattern :bead-no-status :bead-id "proj-mno"}
+                              {:type :when :pattern :check-zombies}
+                              {:type :then :pattern :assert-no-zombies}]}
+            background {:steps [{:type :given :pattern :project-config :slug "proj" :worker-timeout 3600}]}
             output (gen/generate-scenario scenario background)]
         ;; bead-no-status means no setup needed — skip that step
         (should-not-contain "bead-status" output)
@@ -642,13 +641,13 @@
 
     (it "generates executable code for parse iteration EDN scenario"
       (let [scenario {:scenario "Parse iteration EDN with defaults"
-                      :givens [{:type :iteration-edn :number "003" :status "active" :story-count 1}
-                               {:type :edn-no-guardrails-or-notes}]
-                      :whens [{:type :parse-iteration-edn}]
-                      :thens [{:type :assert-iteration-number :expected "003"}
-                              {:type :assert-iteration-status :expected "active"}
-                              {:type :assert-iteration-guardrails-empty}
-                              {:type :assert-iteration-notes-empty}]}
+                      :steps [{:type :given :pattern :iteration-edn :number "003" :status "active" :story-count 1}
+                              {:type :and :pattern :edn-no-guardrails-or-notes}
+                              {:type :when :pattern :parse-iteration-edn}
+                              {:type :then :pattern :assert-iteration-number :expected "003"}
+                              {:type :and :pattern :assert-iteration-status :expected "active"}
+                              {:type :and :pattern :assert-iteration-guardrails-empty}
+                              {:type :and :pattern :assert-iteration-notes-empty}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/reset!)" output)
@@ -661,12 +660,12 @@
 
     (it "generates executable code for annotate stories scenario"
       (let [scenario {:scenario "Annotate stories with bead data"
-                      :givens [{:type :iteration-with-stories :story-ids ["proj-abc" "proj-def"]}
-                               {:type :iter-bead-status :bead-id "proj-abc" :status "open" :priority 1}
-                               {:type :iter-bead-status :bead-id "proj-def" :status "closed" :priority 2}]
-                      :whens [{:type :annotate-stories}]
-                      :thens [{:type :assert-story-status :story-id "proj-abc" :expected "open"}
-                              {:type :assert-story-status :story-id "proj-def" :expected "closed"}]}
+                      :steps [{:type :given :pattern :iteration-with-stories :story-ids ["proj-abc" "proj-def"]}
+                              {:type :and :pattern :iter-bead-status :bead-id "proj-abc" :status "open" :priority 1}
+                              {:type :and :pattern :iter-bead-status :bead-id "proj-def" :status "closed" :priority 2}
+                              {:type :when :pattern :annotate-stories}
+                              {:type :then :pattern :assert-story-status :story-id "proj-abc" :expected "open"}
+                              {:type :and :pattern :assert-story-status :story-id "proj-def" :expected "closed"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-iteration-stories [\"proj-abc\" \"proj-def\"])" output)
@@ -678,11 +677,11 @@
 
     (it "generates executable code for completion stats scenario"
       (let [scenario {:scenario "Completion stats calculation"
-                      :givens [{:type :annotated-stories :closed 2 :open 2 :total 4}]
-                      :whens [{:type :calculate-completion-stats}]
-                      :thens [{:type :assert-total :expected 4}
-                              {:type :assert-closed-count :expected 2}
-                              {:type :assert-completion-percent :expected 50}]}
+                      :steps [{:type :given :pattern :annotated-stories :closed 2 :open 2 :total 4}
+                              {:type :when :pattern :calculate-completion-stats}
+                              {:type :then :pattern :assert-total :expected 4}
+                              {:type :and :pattern :assert-closed-count :expected 2}
+                              {:type :and :pattern :assert-completion-percent :expected 50}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-annotated-stories 2 2 4)" output)
@@ -693,14 +692,14 @@
 
     (it "generates executable code for format iteration scenario"
       (let [scenario {:scenario "Format iteration with status icons"
-                      :givens [{:type :iteration-number-status :number "009" :status "active"}
-                               {:type :story-with-status :story-id "proj-abc" :status "open"}
-                               {:type :story-with-status :story-id "proj-def" :status "closed"}
-                               {:type :completion-stats :closed 1 :total 2}]
-                      :whens [{:type :format-iteration}]
-                      :thens [{:type :assert-output-contains :expected "Iteration 009"}
-                              {:type :assert-output-contains :expected "active"}
-                              {:type :assert-output-contains :expected "50%"}]}
+                      :steps [{:type :given :pattern :iteration-number-status :number "009" :status "active"}
+                              {:type :and :pattern :story-with-status :story-id "proj-abc" :status "open"}
+                              {:type :and :pattern :story-with-status :story-id "proj-def" :status "closed"}
+                              {:type :and :pattern :completion-stats :closed 1 :total 2}
+                              {:type :when :pattern :format-iteration}
+                              {:type :then :pattern :assert-output-contains :expected "Iteration 009"}
+                              {:type :and :pattern :assert-output-contains :expected "active"}
+                              {:type :and :pattern :assert-output-contains :expected "50%"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-iteration-number-status \"009\" \"active\")" output)
@@ -711,13 +710,13 @@
 
     (it "generates executable code for format iteration JSON scenario"
       (let [scenario {:scenario "Format iteration as JSON"
-                      :givens [{:type :iteration-number-status :number "001" :status "active"}
-                               {:type :story-with-status :story-id "a" :status "open"}
-                               {:type :completion-stats :closed 0 :total 1}]
-                      :whens [{:type :format-iteration-json}]
-                      :thens [{:type :assert-json-contains :expected "number"}
-                              {:type :assert-json-contains :expected "stories"}
-                              {:type :assert-json-contains :expected "percent"}]}
+                      :steps [{:type :given :pattern :iteration-number-status :number "001" :status "active"}
+                              {:type :and :pattern :story-with-status :story-id "a" :status "open"}
+                              {:type :and :pattern :completion-stats :closed 0 :total 1}
+                              {:type :when :pattern :format-iteration-json}
+                              {:type :then :pattern :assert-json-contains :expected "number"}
+                              {:type :and :pattern :assert-json-contains :expected "stories"}
+                              {:type :and :pattern :assert-json-contains :expected "percent"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/format-iteration-json!)" output)
@@ -725,9 +724,9 @@
 
     (it "generates executable code for validate iteration scenario"
       (let [scenario {:scenario "Validate rejects invalid status"
-                      :givens [{:type :iteration-with-status :number "001" :status "bogus"}]
-                      :whens [{:type :validate-iteration}]
-                      :thens [{:type :assert-validation-fail :expected "Invalid status"}]}
+                      :steps [{:type :given :pattern :iteration-with-status :number "001" :status "bogus"}
+                              {:type :when :pattern :validate-iteration}
+                              {:type :then :pattern :assert-validation-fail :expected "Invalid status"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-iteration-with-status \"001\" \"bogus\")" output)
@@ -737,11 +736,11 @@
 
     (it "generates executable code for config get scenario"
       (let [scenario {:scenario "Config get returns value"
-                      :givens [{:pattern :config-with-values
-                                :table {:headers ["key" "value"]
-                                        :rows [["braids-home" "/custom/path"]]}}]
-                      :whens [{:pattern :get-config-key :key "braids-home"}]
-                      :thens [{:pattern :assert-result-ok-with-value :expected "/custom/path"}]}
+                      :steps [{:type :given :pattern :config-with-values
+                               :table {:headers ["key" "value"]
+                                       :rows [["braids-home" "/custom/path"]]}}
+                              {:type :when :pattern :get-config-key :key "braids-home"}
+                              {:type :then :pattern :assert-result-ok-with-value :expected "/custom/path"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/reset!)" output)
@@ -751,11 +750,11 @@
 
     (it "generates executable code for config set scenario"
       (let [scenario {:scenario "Config set updates value"
-                      :givens [{:pattern :config-with-values
-                                :table {:headers ["key" "value"]
-                                        :rows [["braids-home" "~/Projects"]]}}]
-                      :whens [{:pattern :set-config-key :key "braids-home" :value "/new/path"}]
-                      :thens [{:pattern :assert-config-has-value :key "braids-home" :expected "/new/path"}]}
+                      :steps [{:type :given :pattern :config-with-values
+                               :table {:headers ["key" "value"]
+                                       :rows [["braids-home" "~/Projects"]]}}
+                              {:type :when :pattern :set-config-key :key "braids-home" :value "/new/path"}
+                              {:type :then :pattern :assert-config-has-value :key "braids-home" :expected "/new/path"}]}
             output (gen/generate-scenario scenario nil)]
         (should-not-contain "pending" output)
         (should-contain "(h/set-config-key!" output)
@@ -767,9 +766,9 @@
       (let [ir {:source "test_feature.feature"
                 :feature "Test feature"
                 :scenarios [{:scenario "First test"
-                             :givens [{:type :unrecognized :text "a given"}]
-                             :whens [{:type :unrecognized :text "an action"}]
-                             :thens [{:type :unrecognized :text "a result"}]}]}
+                             :steps [{:type :given :pattern :unrecognized :text "a given"}
+                                     {:type :when :pattern :unrecognized :text "an action"}
+                                     {:type :then :pattern :unrecognized :text "a result"}]}]}
             output (gen/generate-spec ir)]
         (should-contain "(ns braids.features.test-feature-spec" output)
         (should-contain "(describe \"Test feature\"" output)
@@ -780,13 +779,13 @@
       (let [ir {:source "wip_test.feature"
                 :feature "WIP test"
                 :scenarios [{:scenario "Normal"
-                             :givens [{:type :unrecognized :text "a"}]
-                             :whens [{:type :unrecognized :text "b"}]
-                             :thens [{:type :unrecognized :text "c"}]}
+                             :steps [{:type :given :pattern :unrecognized :text "a"}
+                                     {:type :when :pattern :unrecognized :text "b"}
+                                     {:type :then :pattern :unrecognized :text "c"}]}
                             {:scenario "WIP one"
-                             :givens [{:type :unrecognized :text "a"}]
-                             :whens [{:type :unrecognized :text "b"}]
-                             :thens [{:type :unrecognized :text "c"}]
+                             :steps [{:type :given :pattern :unrecognized :text "a"}
+                                     {:type :when :pattern :unrecognized :text "b"}
+                                     {:type :then :pattern :unrecognized :text "c"}]
                              :wip true}]}
             output (gen/generate-spec ir)]
         (should-contain "(context \"Normal\"" output)
@@ -796,9 +795,9 @@
       (let [ir {:source "zombie.feature"
                 :feature "Zombie"
                 :scenarios [{:scenario "Test"
-                             :givens [{:type :session :session-id "s1" :label "project:proj:proj-abc"}]
-                             :whens [{:type :check-zombies}]
-                             :thens [{:type :assert-no-zombies}]}]}
+                             :steps [{:type :given :pattern :session :session-id "s1" :label "project:proj:proj-abc"}
+                                     {:type :when :pattern :check-zombies}
+                                     {:type :then :pattern :assert-no-zombies}]}]}
             output (gen/generate-spec ir)]
         (should-contain "[braids.features.harness :as h]" output)))
 
@@ -806,9 +805,9 @@
       (let [ir {:source "test.feature"
                 :feature "Test"
                 :scenarios [{:scenario "S1"
-                             :givens [{:type :unrecognized :text "a"}]
-                             :whens [{:type :unrecognized :text "b"}]
-                             :thens [{:type :unrecognized :text "c"}]}]}
+                             :steps [{:type :given :pattern :unrecognized :text "a"}
+                                     {:type :when :pattern :unrecognized :text "b"}
+                                     {:type :then :pattern :unrecognized :text "c"}]}]}
             output (gen/generate-spec ir)]
         (should-not-contain "harness" output)))
 
@@ -816,9 +815,9 @@
       (let [ir {:source "readable.feature"
                 :feature "Readable spec"
                 :scenarios [{:scenario "Test one"
-                             :givens [{:type :unrecognized :text "step"}]
-                             :whens [{:type :unrecognized :text "action"}]
-                             :thens [{:type :unrecognized :text "result"}]}]}
+                             :steps [{:type :given :pattern :unrecognized :text "step"}
+                                     {:type :when :pattern :unrecognized :text "action"}
+                                     {:type :then :pattern :unrecognized :text "result"}]}]}
             output (gen/generate-spec ir)]
         ;; Should be parseable as Clojure forms
         (should-not-throw
