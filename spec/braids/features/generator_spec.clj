@@ -44,10 +44,6 @@
       (should= {:pattern :unrecognized :text "something totally unknown"}
                (gen/classify-step "something totally unknown")))
 
-    (it "classifies project config with max-workers"
-      (should= {:pattern :project-config :slug "alpha" :max-workers 2}
-               (gen/classify-step "a project \"alpha\" with max-workers 2")))
-
     (it "classifies orch tick"
       (should= {:pattern :orch-tick}
                (gen/classify-step "the orchestrator ticks")))
@@ -162,26 +158,6 @@
 
     ;; --- Orch spawning step-text ---
 
-    (it "formats project-config with max-workers step"
-      (should= "a project \"alpha\" with max-workers 2"
-               (gen/step-text {:pattern :project-config :slug "alpha" :max-workers 2})))
-
-    (it "formats active-iteration step"
-      (should= "project \"alpha\" has an active iteration \"003\""
-               (gen/step-text {:pattern :active-iteration :slug "alpha" :iteration "003"})))
-
-    (it "formats no-active-iteration step"
-      (should= "project \"beta\" has no active iteration"
-               (gen/step-text {:pattern :no-active-iteration :slug "beta"})))
-
-    (it "formats ready-beads step"
-      (should= "project \"alpha\" has 3 ready beads"
-               (gen/step-text {:pattern :ready-beads :slug "alpha" :count 3})))
-
-    (it "formats ready-bead-with-id step"
-      (should= "project \"alpha\" has 1 ready bead with id \"alpha-abc\""
-               (gen/step-text {:pattern :ready-bead-with-id :slug "alpha" :bead-id "alpha-abc"})))
-
     (it "formats active-workers step"
       (should= "project \"alpha\" has 0 active workers"
                (gen/step-text {:pattern :active-workers :slug "alpha" :count 0})))
@@ -190,25 +166,13 @@
       (should= "the orchestrator ticks"
                (gen/step-text {:pattern :orch-tick})))
 
-    (it "formats orch-tick-project step"
-      (should= "the orchestrator ticks for project \"beta\" only"
-               (gen/step-text {:pattern :orch-tick-project :slug "beta"})))
-
     (it "formats assert-action step"
       (should= "the action should be \"spawn\""
                (gen/step-text {:pattern :assert-action :expected "spawn"})))
 
-    (it "formats assert-spawn-count step"
-      (should= "2 workers should be spawned"
-               (gen/step-text {:pattern :assert-spawn-count :count 2})))
-
     (it "formats assert-idle-reason step"
       (should= "the idle reason should be \"no-ready-beads\""
                (gen/step-text {:pattern :assert-idle-reason :expected "no-ready-beads"})))
-
-    (it "formats assert-spawn-label step"
-      (should= "the spawn label should be \"project:alpha:alpha-abc\""
-               (gen/step-text {:pattern :assert-spawn-label :expected "project:alpha:alpha-abc"})))
 
     ;; --- Worker session tracking step-text ---
 
@@ -734,64 +698,6 @@
                               {:type :then :pattern :assert-no-zombies}]}
             output (gen/generate-scenario scenario nil)]
         (should-contain "(pending \"not yet implemented\")" output)))
-
-    (it "generates executable code for orch_spawning scenario"
-      (let [scenario {:scenario "Spawn workers"
-                      :steps [{:type :given :pattern :ready-beads :slug "alpha" :count 3}
-                              {:type :and :pattern :active-workers :slug "alpha" :count 0}
-                              {:type :when :pattern :orch-tick}
-                              {:type :then :pattern :assert-action :expected "spawn"}
-                              {:type :and :pattern :assert-spawn-count :count 2}]}
-            background {:steps [{:type :given :pattern :project-config :slug "alpha" :max-workers 2}
-                                {:type :and :pattern :active-iteration :slug "alpha" :iteration "003"}]}
-            output (gen/generate-scenario scenario background)]
-        (should-not-contain "pending" output)
-        (should-contain "(h/reset!)" output)
-        (should-contain "(h/add-project \"alpha\" {:max-workers 2})" output)
-        (should-contain "(h/set-active-iteration \"alpha\" \"003\")" output)
-        (should-contain "(h/set-ready-beads \"alpha\" 3)" output)
-        (should-contain "(h/set-active-workers \"alpha\" 0)" output)
-        (should-contain "(h/orch-tick!)" output)
-        (should-contain "(should= \"spawn\" (h/tick-action))" output)
-        (should-contain "(should= 2 (h/spawn-count))" output)))
-
-    (it "generates executable code for orch idle scenario"
-      (let [scenario {:scenario "Idle when no ready beads"
-                      :steps [{:type :given :pattern :ready-beads :slug "alpha" :count 0}
-                              {:type :and :pattern :active-workers :slug "alpha" :count 0}
-                              {:type :when :pattern :orch-tick}
-                              {:type :then :pattern :assert-action :expected "idle"}
-                              {:type :and :pattern :assert-idle-reason :expected "no-ready-beads"}]}
-            background {:steps [{:type :given :pattern :project-config :slug "alpha" :max-workers 2}
-                                {:type :and :pattern :active-iteration :slug "alpha" :iteration "003"}]}
-            output (gen/generate-scenario scenario background)]
-        (should-not-contain "pending" output)
-        (should-contain "(should= \"idle\" (h/tick-action))" output)
-        (should-contain "(should= \"no-ready-beads\" (h/idle-reason))" output)))
-
-    (it "generates executable code for orch-tick-project"
-      (let [scenario {:scenario "Idle for beta only"
-                      :steps [{:type :given :pattern :no-active-iteration :slug "beta"}
-                              {:type :when :pattern :orch-tick-project :slug "beta"}
-                              {:type :then :pattern :assert-action :expected "idle"}]}
-            output (gen/generate-scenario scenario nil)]
-        (should-not-contain "pending" output)
-        (should-contain "(h/remove-iteration \"beta\")" output)
-        (should-contain "(h/orch-tick-project! \"beta\")" output)))
-
-    (it "generates executable code for spawn label assertion"
-      (let [scenario {:scenario "Label check"
-                      :steps [{:type :given :pattern :ready-bead-with-id :slug "alpha" :bead-id "alpha-abc"}
-                              {:type :and :pattern :active-workers :slug "alpha" :count 0}
-                              {:type :when :pattern :orch-tick}
-                              {:type :then :pattern :assert-action :expected "spawn"}
-                              {:type :and :pattern :assert-spawn-label :expected "project:alpha:alpha-abc"}]}
-            background {:steps [{:type :given :pattern :project-config :slug "alpha" :max-workers 2}
-                                {:type :and :pattern :active-iteration :slug "alpha" :iteration "003"}]}
-            output (gen/generate-scenario scenario background)]
-        (should-not-contain "pending" output)
-        (should-contain "(h/set-ready-bead-with-id \"alpha\" \"alpha-abc\")" output)
-        (should-contain "(should= \"project:alpha:alpha-abc\" (h/spawn-label))" output)))
 
     (it "generates executable code for session ID generation scenario"
       (let [scenario {:scenario "Generate deterministic session ID"

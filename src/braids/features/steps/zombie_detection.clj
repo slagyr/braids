@@ -32,7 +32,9 @@
              (fn [_] {:pattern :assert-no-zombies})]]})
 
 (def step-registry
-  {:session            {:text (fn [{:keys [session-id label]}]       (str "a session \"" session-id "\" with label \"" label "\""))
+  {:project-config     {:text (fn [{:keys [slug worker-timeout]}]    (str "a project \"" slug "\" with worker-timeout " worker-timeout))
+                        :code (fn [{:keys [slug worker-timeout]}]    (str "(h/add-project-config \"" slug "\" {:worker-timeout " worker-timeout "})"))}
+   :session            {:text (fn [{:keys [session-id label]}]       (str "a session \"" session-id "\" with label \"" label "\""))
                         :code (fn [{:keys [session-id label]}]       (str "(h/add-session \"" session-id "\" {:label \"" label "\"})"))}
    :session-status     {:text (fn [{:keys [session-id status age-seconds]}] (str "session \"" session-id "\" has status \"" status "\" and age " age-seconds " seconds"))
                         :code (fn [{:keys [session-id status age-seconds]}] (str "(h/set-session-status \"" session-id "\" \"" status "\" " age-seconds ")"))}
