@@ -38,11 +38,6 @@
 
   (after-all (proc/shell {:continue true} "rm" "-rf" test-tmp)))
 
-(describe "parse-session-labels (via gather-and-tick-with-zombies)"
-  ;; We test the public interface rather than the private parse fn
-  ;; The gather-and-tick-with-zombies function handles JSON parsing internally
-  )
-
 (describe "load-sessions-from-stores"
 
   (it "extracts project labels from session store files"

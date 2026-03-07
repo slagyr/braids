@@ -101,5 +101,3 @@
             project-idx (str/index-of content ".project/")]
         (when (and braids-idx project-idx)
           (should (< braids-idx project-idx)))))))
-
-(run-specs)

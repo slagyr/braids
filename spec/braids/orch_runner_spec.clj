@@ -107,11 +107,7 @@
   (context "log-line"
 
     (it "returns the message as-is (no timestamp)"
-      (should= "hello" (runner/log-line "hello")))
-
-    (it "includes the message"
-      (let [line (runner/log-line "test message")]
-        (should= "test message" line))))
+      (should= "hello" (runner/log-line "hello"))))
 
   (context "format-spawn-log"
 

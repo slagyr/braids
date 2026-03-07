@@ -104,22 +104,6 @@
           parsed (clojure.edn/read-string (slurp (str test-project "/.braids/iterations/000/iteration.edn")))]
       (should= :complete (:status parsed)))))
 
-;; ── Scenario 3: Deliverable Naming ──
-
-(describe "Scenario 3: Deliverable Naming"
-  (with-all test-env (setup-test-project!))
-
-  (it "deliverable file created"
-    (let [[_ test-project] @test-env]
-      (spit (str test-project "/.braids/iterations/001/aaa-first-test-bead.md")
-        "# First Test Bead\n\n## Summary\nCompleted.\n")
-      (should (fs/exists? (str test-project "/.braids/iterations/001/aaa-first-test-bead.md")))))
-  (it "deliverable has Summary section"
-    (let [[_ test-project] @test-env]
-      (should-contain "## Summary" (slurp (str test-project "/.braids/iterations/001/aaa-first-test-bead.md")))))
-  (it "deliverable name matches convention"
-    (should (re-find #"^[a-z0-9]{3}-[a-z0-9-]+\.md$" "aaa-first-test-bead.md"))))
-
 ;; ── Scenario 4: Orchestrator Self-Disable ──
 ;; NOTE: tick logic tests are in spec/braids/orch_spec.clj — these check CONTRACTS.md docs
 
@@ -135,41 +119,6 @@
                    {"p" {:status :active}}
                    {} {} {} {})]
       (should (contains? result :disable-cron)))))
-
-;; ── Scenario 5: Worker Context Loading ──
-
-(describe "Scenario 5: Worker Context Loading"
-  (with-all test-env (setup-test-project!))
-
-  (it "config.edn exists (context step 1)"
-    (let [[_ test-project] @test-env]
-      (should (fs/exists? (str test-project "/.braids/config.edn")))))
-  (it "Project AGENTS.md exists (context step 3)"
-    (let [[_ test-project] @test-env]
-      (should (fs/exists? (str test-project "/AGENTS.md")))))
-  (it "iteration.edn exists (context step 4)"
-    (let [[_ test-project] @test-env]
-      (should (fs/exists? (str test-project "/.braids/iterations/001/iteration.edn")))))
-  (it "Workspace AGENTS.md exists (context step 2 - simulated)"
-    (should-contain "Workspace AGENTS.md" (contracts))))
-
-;; ── Scenario 6: Spawn Message Format ──
-
-(describe "Scenario 6: Spawn Message Format"
-  (it "spawn message has correct format"
-    (let [msg "Project: /tmp/proj\nBead: test-sim-aaa\nIteration: 1\nChannel: test-channel-123"]
-      (should-contain "Project:" msg)
-      (should-contain "Bead:" msg)
-      (should-contain "Iteration:" msg)
-      (should-contain "Channel:" msg))))
-
-;; ── Scenario 7: Session Label Convention ──
-
-(describe "Scenario 7: Session Label Convention"
-  (it "label matches format"
-    (let [label "project:test-sim-project:test-sim-aaa"]
-      (should (re-find #"^project:[a-z0-9-]+:[a-z0-9-]+$" label))
-      (should (str/starts-with? label "project:")))))
 
 ;; ── Scenario 8: Bead Lifecycle ──
 
@@ -203,23 +152,6 @@
   (it "rejects 'complete' as registry status"
     (should-not (contains? #{:active :paused :blocked} :complete))))
 
-;; ── Scenario 10: Worker Error Handling ──
-
-(describe "Scenario 10: Worker Error Handling"
-  (with-all test-env (setup-test-project!))
-
-  (it "partial deliverable written"
-    (let [[_ test-project] @test-env]
-      (spit (str test-project "/.braids/iterations/001/bbb-partial.md")
-        "# Partial\n\n## Summary\nPartially completed.\n\n## Remaining\n- Finish integration\n")
-      (should (fs/exists? (str test-project "/.braids/iterations/001/bbb-partial.md")))))
-  (it "partial deliverable has Summary"
-    (let [[_ test-project] @test-env]
-      (should-contain "## Summary" (slurp (str test-project "/.braids/iterations/001/bbb-partial.md")))))
-  (it "partial deliverable documents remaining work"
-    (let [[_ test-project] @test-env]
-      (should-contain "## Remaining" (slurp (str test-project "/.braids/iterations/001/bbb-partial.md"))))))
-
 ;; ── Scenario 11: RETRO.md Removal Verification ──
 
 (describe "Scenario 11: RETRO.md feature removed"
@@ -241,14 +173,6 @@
     (should-contain "Concurrency Enforcement" (contracts)))
   (it "active iteration required for spawn"
     (should-contain "Active Iteration Required" (contracts))))
-
-;; ── Scenario 13: Git Conventions ──
-
-(describe "Scenario 13: Git Conventions"
-  (it "commit format matches convention"
-    (should (re-find #"^.+ \([a-z0-9-]+\)$" "Add first test bead (test-sim-aaa)")))
-  (it "iteration commit format"
-    (should (re-find #"^Complete iteration \d+$" "Complete iteration 1"))))
 
 ;; ── Scenario 14: Path Conventions ──
 

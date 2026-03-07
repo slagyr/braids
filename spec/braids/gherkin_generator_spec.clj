@@ -6,6 +6,88 @@
 
 (describe "Gherkin Generator"
 
+  (context "classify-step"
+
+    (it "classifies project config with worker-timeout"
+      (should= {:pattern :project-config :slug "proj" :worker-timeout 3600}
+               (gen/classify-step "a project \"proj\" with worker-timeout 3600")))
+
+    (it "classifies session with label"
+      (should= {:pattern :session :session-id "s1" :label "project:proj:proj-abc"}
+               (gen/classify-step "a session \"s1\" with label \"project:proj:proj-abc\"")))
+
+    (it "classifies session status and age"
+      (should= {:pattern :session-status :session-id "s1" :status "running" :age-seconds 100}
+               (gen/classify-step "session \"s1\" has status \"running\" and age 100 seconds")))
+
+    (it "classifies bead status"
+      (should= {:pattern :bead-status :bead-id "proj-abc" :status "closed"}
+               (gen/classify-step "bead \"proj-abc\" has status \"closed\"")))
+
+    (it "classifies bead with no recorded status"
+      (should= {:pattern :bead-no-status :bead-id "proj-mno"}
+               (gen/classify-step "bead \"proj-mno\" has no recorded status")))
+
+    (it "classifies checking for zombies"
+      (should= {:pattern :check-zombies}
+               (gen/classify-step "checking for zombies")))
+
+    (it "classifies zombie assertion with reason"
+      (should= {:pattern :assert-zombie :session-id "s1" :reason "bead-closed"}
+               (gen/classify-step "session \"s1\" should be a zombie with reason \"bead-closed\"")))
+
+    (it "classifies no zombies assertion"
+      (should= {:pattern :assert-no-zombies}
+               (gen/classify-step "no zombies should be detected")))
+
+    (it "returns unrecognized for unknown step text"
+      (should= {:pattern :unrecognized :text "something totally unknown"}
+               (gen/classify-step "something totally unknown")))
+
+    (it "classifies project config with max-workers"
+      (should= {:pattern :project-config :slug "alpha" :max-workers 2}
+               (gen/classify-step "a project \"alpha\" with max-workers 2")))
+
+    (it "classifies orch tick"
+      (should= {:pattern :orch-tick}
+               (gen/classify-step "the orchestrator ticks")))
+
+    (it "classifies bead with id"
+      (should= {:pattern :bead :bead-id "proj-abc"}
+               (gen/classify-step "a bead with id \"proj-abc\"")))
+
+    (it "classifies generating the session ID"
+      (should= {:pattern :generate-session-id}
+               (gen/classify-step "generating the session ID")))
+
+    (it "classifies bd-not-available"
+      (should= {:pattern :bd-not-available}
+               (gen/classify-step "bd is not available")))
+
+    (it "classifies registry-with-projects-table"
+      (should= {:pattern :registry-with-projects-table}
+               (gen/classify-step "a registry with projects:")))
+
+    (it "classifies project-list-with-table"
+      (should= {:pattern :project-list-with-table}
+               (gen/classify-step "a project list with the following projects:")))
+
+    (it "classifies iteration-edn-with-stories"
+      (should= {:pattern :iteration-edn :number "003" :status "active" :story-count 1}
+               (gen/classify-step "iteration EDN with number \"003\" and status \"active\" and 1 story")))
+
+    (it "classifies project-configs-table"
+      (should= {:pattern :project-configs-table}
+               (gen/classify-step "project configs:")))
+
+    (it "classifies spawn-entry-path-bead"
+      (should= {:pattern :spawn-entry-path-bead :path "~/Projects/test" :bead "test-abc"}
+               (gen/classify-step "a spawn entry with path \"~/Projects/test\" and bead \"test-abc\"")))
+
+    (it "classifies empty-registry"
+      (should= {:pattern :empty-registry}
+               (gen/classify-step "an empty registry"))))
+
   (context "source->ns-name"
 
     (it "converts feature filename to spec namespace"
@@ -1164,9 +1246,9 @@
       (let [ir {:source "test_feature.feature"
                 :feature "Test feature"
                 :scenarios [{:scenario "First test"
-                             :steps [{:type :given :pattern :unrecognized :text "a given"}
-                                     {:type :when :pattern :unrecognized :text "an action"}
-                                     {:type :then :pattern :unrecognized :text "a result"}]}]}
+                             :steps [{:type :given :text "a given"}
+                                     {:type :when :text "an action"}
+                                     {:type :then :text "a result"}]}]}
             output (gen/generate-spec ir)]
         (should-contain "(ns braids.features.test-feature-spec" output)
         (should-contain "(describe \"Test feature\"" output)
@@ -1177,13 +1259,13 @@
       (let [ir {:source "wip_test.feature"
                 :feature "WIP test"
                 :scenarios [{:scenario "Normal"
-                             :steps [{:type :given :pattern :unrecognized :text "a"}
-                                     {:type :when :pattern :unrecognized :text "b"}
-                                     {:type :then :pattern :unrecognized :text "c"}]}
+                             :steps [{:type :given :text "a"}
+                                     {:type :when :text "b"}
+                                     {:type :then :text "c"}]}
                             {:scenario "WIP one"
-                             :steps [{:type :given :pattern :unrecognized :text "a"}
-                                     {:type :when :pattern :unrecognized :text "b"}
-                                     {:type :then :pattern :unrecognized :text "c"}]
+                             :steps [{:type :given :text "a"}
+                                     {:type :when :text "b"}
+                                     {:type :then :text "c"}]
                              :wip true}]}
             output (gen/generate-spec ir)]
         (should-contain "(context \"Normal\"" output)
@@ -1203,9 +1285,9 @@
       (let [ir {:source "test.feature"
                 :feature "Test"
                 :scenarios [{:scenario "S1"
-                             :steps [{:type :given :pattern :unrecognized :text "a"}
-                                     {:type :when :pattern :unrecognized :text "b"}
-                                     {:type :then :pattern :unrecognized :text "c"}]}]}
+                             :steps [{:type :given :text "a"}
+                                     {:type :when :text "b"}
+                                     {:type :then :text "c"}]}]}
             output (gen/generate-spec ir)]
         (should-not-contain "harness" output)))
 
@@ -1213,9 +1295,9 @@
       (let [ir {:source "readable.feature"
                 :feature "Readable spec"
                 :scenarios [{:scenario "Test one"
-                             :steps [{:type :given :pattern :unrecognized :text "step"}
-                                     {:type :when :pattern :unrecognized :text "action"}
-                                     {:type :then :pattern :unrecognized :text "result"}]}]}
+                             :steps [{:type :given :text "step"}
+                                     {:type :when :text "action"}
+                                     {:type :then :text "result"}]}]}
             output (gen/generate-spec ir)]
         ;; Should be parseable as Clojure forms
         (should-not-throw

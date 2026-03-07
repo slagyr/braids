@@ -12,6 +12,696 @@
       (->> (str "braids.features."))
       (str "-spec")))
 
+;; --- Step classification: pattern-match step text into typed IR nodes ---
+
+(def ^:private step-patterns
+  "Ordered list of [regex handler-fn] pairs for classifying step text.
+   First match wins. Handler receives regex match groups."
+  [[#"^a project \"([^\"]+)\" with worker-timeout (\d+)$"
+    (fn [[_ slug timeout]]
+      {:pattern :project-config :slug slug :worker-timeout (parse-long timeout)})]
+
+   [#"^a session \"([^\"]+)\" with label \"([^\"]+)\"$"
+    (fn [[_ session-id label]]
+      {:pattern :session :session-id session-id :label label})]
+
+   [#"^session \"([^\"]+)\" has status \"([^\"]+)\" and age (\d+) seconds$"
+    (fn [[_ session-id status age]]
+      {:pattern :session-status :session-id session-id :status status :age-seconds (parse-long age)})]
+
+   [#"^bead \"([^\"]+)\" has status \"([^\"]+)\"$"
+    (fn [[_ bead-id status]]
+      {:pattern :bead-status :bead-id bead-id :status status})]
+
+   [#"^bead \"([^\"]+)\" has no recorded status$"
+    (fn [[_ bead-id]]
+      {:pattern :bead-no-status :bead-id bead-id})]
+
+   [#"^checking for zombies$"
+    (fn [_] {:pattern :check-zombies})]
+
+   [#"^session \"([^\"]+)\" should be a zombie with reason \"([^\"]+)\"$"
+    (fn [[_ session-id reason]]
+      {:pattern :assert-zombie :session-id session-id :reason reason})]
+
+   [#"^no zombies should be detected$"
+    (fn [_] {:pattern :assert-no-zombies})]
+
+   ;; --- Orch spawning patterns ---
+
+   [#"^a project \"([^\"]+)\" with max-workers (\d+)$"
+    (fn [[_ slug max-w]]
+      {:pattern :project-config :slug slug :max-workers (parse-long max-w)})]
+
+   [#"^project \"([^\"]+)\" has an active iteration \"([^\"]+)\"$"
+    (fn [[_ slug iteration]]
+      {:pattern :active-iteration :slug slug :iteration iteration})]
+
+   [#"^project \"([^\"]+)\" has no active iteration$"
+    (fn [[_ slug]]
+      {:pattern :no-active-iteration :slug slug})]
+
+   [#"^project \"([^\"]+)\" has (\d+) ready beads? with id \"([^\"]+)\"$"
+    (fn [[_ slug _count bead-id]]
+      {:pattern :ready-bead-with-id :slug slug :bead-id bead-id})]
+
+   [#"^project \"([^\"]+)\" has (\d+) ready beads?$"
+    (fn [[_ slug count]]
+      {:pattern :ready-beads :slug slug :count (parse-long count)})]
+
+   [#"^project \"([^\"]+)\" has (\d+) active workers?$"
+    (fn [[_ slug count]]
+      {:pattern :active-workers :slug slug :count (parse-long count)})]
+
+   [#"^the orchestrator ticks$"
+    (fn [_] {:pattern :orch-tick})]
+
+   [#"^the orchestrator ticks for project \"([^\"]+)\" only$"
+    (fn [[_ slug]]
+      {:pattern :orch-tick-project :slug slug})]
+
+   [#"^the action should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-action :expected expected})]
+
+   [#"^(\d+) workers? should be spawned$"
+    (fn [[_ count]]
+      {:pattern :assert-spawn-count :count (parse-long count)})]
+
+   [#"^the idle reason should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-idle-reason :expected expected})]
+
+   [#"^the spawn label should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-spawn-label :expected expected})]
+
+   ;; --- Worker session tracking patterns ---
+
+   [#"^a bead with id \"([^\"]+)\"$"
+    (fn [[_ bead-id]]
+      {:pattern :bead :bead-id bead-id})]
+
+   [#"^another bead with id \"([^\"]+)\"$"
+    (fn [[_ bead-id]]
+      {:pattern :bead :bead-id bead-id})]
+
+   [#"^a session ID \"([^\"]+)\"$"
+    (fn [[_ session-id]]
+      {:pattern :session-id-literal :session-id session-id})]
+
+   [#"^generating the session ID twice$"
+    (fn [_] {:pattern :generate-session-id-twice})]
+
+   [#"^generating the session ID$"
+    (fn [_] {:pattern :generate-session-id})]
+
+   [#"^generating session IDs for both$"
+    (fn [_] {:pattern :generate-session-ids-both})]
+
+   [#"^parsing the session ID$"
+    (fn [_] {:pattern :parse-session-id})]
+
+   [#"^the session ID should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-session-id :expected expected})]
+
+   [#"^both session IDs should be identical$"
+    (fn [_] {:pattern :assert-ids-identical})]
+
+   [#"^the session IDs should be different$"
+    (fn [_] {:pattern :assert-ids-different})]
+
+    [#"^the extracted bead ID should be \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-bead-id :expected expected})]
+
+   ;; --- Project lifecycle patterns ---
+
+   [#"^bd is not available$"
+    (fn [_] {:pattern :bd-not-available})]
+
+   [#"^bd is available$"
+    (fn [_] {:pattern :bd-available})]
+
+   [#"^no registry exists$"
+    (fn [_] {:pattern :no-registry})]
+
+   [#"^a registry already exists$"
+    (fn [_] {:pattern :registry-exists})]
+
+   [#"^force is not set$"
+    (fn [_] {:pattern :force-not-set})]
+
+   [#"^force is set$"
+    (fn [_] {:pattern :force-set})]
+
+   [#"^braids dir does not exist$"
+    (fn [_] {:pattern :braids-dir-not-exists})]
+
+   [#"^braids dir already exists$"
+    (fn [_] {:pattern :braids-dir-exists})]
+
+   [#"^braids home does not exist$"
+    (fn [_] {:pattern :braids-home-not-exists})]
+
+   [#"^braids home already exists$"
+    (fn [_] {:pattern :braids-home-exists})]
+
+   [#"^checking prerequisites$"
+    (fn [_] {:pattern :check-prerequisites})]
+
+   [#"^planning init$"
+    (fn [_] {:pattern :plan-init})]
+
+   [#"^prerequisites should fail with \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-prereq-fail :expected expected})]
+
+   [#"^prerequisites should pass$"
+    (fn [_] {:pattern :assert-prereq-pass})]
+
+   [#"^the plan should include \"([^\"]+)\"$"
+    (fn [[_ action]]
+      {:pattern :assert-plan-include :action action})]
+
+   [#"^the plan should not include \"([^\"]+)\"$"
+    (fn [[_ action]]
+      {:pattern :assert-plan-not-include :action action})]
+
+   [#"^a new project with slug \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:pattern :new-project-slug :slug slug})]
+
+   [#"^a new project with name \"([^\"]+)\"$"
+    (fn [[_ name]]
+      {:pattern :new-project-name :name name})]
+
+   [#"^name \"([^\"]+)\"$"
+    (fn [[_ name]]
+      {:pattern :set-name :name name})]
+
+   [#"^goal \"([^\"]+)\"$"
+    (fn [[_ goal]]
+      {:pattern :set-goal :goal goal})]
+
+   [#"^a registry with project \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:pattern :registry-with-project :slug slug})]
+
+   [#"^a new registry entry with slug \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:pattern :new-registry-entry :slug slug})]
+
+   [#"^validating new project params$"
+    (fn [_] {:pattern :validate-new-project})]
+
+   [#"^adding the entry to the registry$"
+    (fn [_] {:pattern :add-to-registry})]
+
+   [#"^building the project config$"
+    (fn [_] {:pattern :build-project-config})]
+
+   [#"^validation should fail with \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-validation-fail :expected expected})]
+
+   [#"^it should fail with \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-should-fail :expected expected})]
+
+   [#"^the config (\S+) should be \"([^\"]+)\"$"
+    (fn [[_ key expected]]
+      {:pattern :assert-config-value :key key :expected expected})]
+
+   [#"^the config (\S+) should be (\d+)$"
+    (fn [[_ key expected]]
+      {:pattern :assert-config-number :key key :expected (parse-long expected)})]
+
+     ;; --- Iteration management step patterns ---
+
+     [#"^iteration EDN with number \"([^\"]+)\" and status \"([^\"]+)\" and (\d+) stor(?:y|ies)$"
+      (fn [[_ number status count]]
+        {:pattern :iteration-edn :number number :status status :story-count (parse-long count)})]
+
+     [#"^the EDN has no guardrails or notes$"
+      (fn [_] {:pattern :edn-no-guardrails-or-notes})]
+
+     [#"^an iteration with number \"([^\"]+)\" and status \"([^\"]+)\" and stories$"
+      (fn [[_ number status]]
+        {:pattern :iteration-with-status :number number :status status})]
+
+     [#"^an iteration with no number$"
+      (fn [_] {:pattern :iteration-no-number})]
+
+     [#"^an iteration with stories \"([^\"]+)\" and \"([^\"]+)\"$"
+      (fn [[_ id1 id2]]
+        {:pattern :iteration-with-stories :story-ids [id1 id2]})]
+
+     [#"^an iteration with story \"([^\"]+)\"$"
+      (fn [[_ story-id]]
+        {:pattern :iteration-with-story :story-id story-id})]
+
+     [#"^bead \"([^\"]+)\" has status \"([^\"]+)\" and priority (\d+)$"
+      (fn [[_ bead-id status priority]]
+        {:pattern :iter-bead-status :bead-id bead-id :status status :priority (parse-long priority)})]
+
+     [#"^no bead data exists$"
+      (fn [_] {:pattern :no-bead-data})]
+
+     [#"^annotated stories with (\d+) closed and (\d+) open out of (\d+) total$"
+      (fn [[_ closed open total]]
+        {:pattern :annotated-stories :closed (parse-long closed) :open (parse-long open) :total (parse-long total)})]
+
+     [#"^an iteration with no stories$"
+      (fn [_] {:pattern :iteration-no-stories})]
+
+     [#"^an iteration \"([^\"]+)\" with status \"([^\"]+)\"$"
+      (fn [[_ number status]]
+        {:pattern :iteration-number-status :number number :status status})]
+
+     [#"^a story \"([^\"]+)\" with status \"([^\"]+)\"$"
+      (fn [[_ story-id status]]
+        {:pattern :story-with-status :story-id story-id :status status})]
+
+     [#"^completion stats of (\d+) closed out of (\d+)$"
+      (fn [[_ closed total]]
+        {:pattern :completion-stats :closed (parse-long closed) :total (parse-long total)})]
+
+     [#"^parsing the iteration EDN$"
+      (fn [_] {:pattern :parse-iteration-edn})]
+
+     [#"^validating the iteration$"
+      (fn [_] {:pattern :validate-iteration})]
+
+     [#"^annotating stories with bead data$"
+      (fn [_] {:pattern :annotate-stories})]
+
+     [#"^calculating completion stats$"
+      (fn [_] {:pattern :calculate-completion-stats})]
+
+     [#"^formatting the iteration$"
+      (fn [_] {:pattern :format-iteration})]
+
+     [#"^formatting the iteration as JSON$"
+      (fn [_] {:pattern :format-iteration-json})]
+
+     [#"^the iteration number should be \"([^\"]+)\"$"
+      (fn [[_ expected]]
+        {:pattern :assert-iteration-number :expected expected})]
+
+     [#"^the iteration status should be \"([^\"]+)\"$"
+      (fn [[_ expected]]
+        {:pattern :assert-iteration-status :expected expected})]
+
+     [#"^the iteration guardrails should be empty$"
+      (fn [_] {:pattern :assert-iteration-guardrails-empty})]
+
+     [#"^the iteration notes should be empty$"
+      (fn [_] {:pattern :assert-iteration-notes-empty})]
+
+     [#"^story \"([^\"]+)\" should have status \"([^\"]+)\"$"
+      (fn [[_ story-id expected]]
+        {:pattern :assert-story-status :story-id story-id :expected expected})]
+
+     [#"^the total should be (\d+)$"
+      (fn [[_ expected]]
+        {:pattern :assert-total :expected (parse-long expected)})]
+
+     [#"^the closed count should be (\d+)$"
+      (fn [[_ expected]]
+        {:pattern :assert-closed-count :expected (parse-long expected)})]
+
+     [#"^the completion percent should be (\d+)$"
+      (fn [[_ expected]]
+        {:pattern :assert-completion-percent :expected (parse-long expected)})]
+
+     [#"^the JSON should contain \"([^\"]+)\"$"
+      (fn [[_ expected]]
+        {:pattern :assert-json-contains :expected expected})]
+
+     ;; --- Ready beads step patterns ---
+
+    [#"^a registry with projects:$"
+     (fn [_] {:pattern :registry-with-projects-table})]
+
+    [#"^project \"([^\"]+)\" has config with status \"([^\"]+)\" and max-workers (\d+)$"
+     (fn [[_ slug status max-w]]
+       {:pattern :project-config-status-and-max-workers :slug slug :status status :max-workers (parse-long max-w)})]
+
+    [#"^project \"([^\"]+)\" has config with max-workers (\d+)$"
+     (fn [[_ slug max-w]]
+       {:pattern :project-config-max-workers :slug slug :max-workers (parse-long max-w)})]
+
+    [#"^project \"([^\"]+)\" has ready beads:$"
+     (fn [[_ slug]]
+       {:pattern :project-ready-beads-table :slug slug})]
+
+    [#"^no active workers$"
+     (fn [_] {:pattern :no-active-workers})]
+
+    [#"^computing ready beads$"
+     (fn [_] {:pattern :compute-ready-beads})]
+
+    [#"^the result should contain bead \"([^\"]+)\"$"
+     (fn [[_ bead-id]]
+       {:pattern :assert-result-contains-bead :bead-id bead-id})]
+
+    [#"^the result should not contain bead \"([^\"]+)\"$"
+     (fn [[_ bead-id]]
+       {:pattern :assert-result-not-contains-bead :bead-id bead-id})]
+
+    [#"^the result should be empty$"
+     (fn [_] {:pattern :assert-result-empty})]
+
+    [#"^the (first|second|third) result should be from project \"([^\"]+)\"$"
+     (fn [[_ ordinal slug]]
+       {:pattern :assert-nth-result-project
+        :position (case ordinal "first" 1 "second" 2 "third" 3)
+        :slug slug})]
+
+    [#"^ready beads to format:$"
+     (fn [_] {:pattern :ready-beads-to-format})]
+
+    [#"^no ready beads to format$"
+     (fn [_] {:pattern :no-ready-beads-to-format})]
+
+    [#"^formatting ready output$"
+     (fn [_] {:pattern :format-ready-output})]
+
+    [#"^the output should contain \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-output-contains :expected expected})]
+
+    ;; --- Project listing step patterns ---
+
+    [#"^a project list with the following projects:$"
+    (fn [_] {:pattern :project-list-with-table})]
+
+   [#"^an empty project list$"
+    (fn [_] {:pattern :empty-project-list})]
+
+   [#"^formatting the project list as JSON$"
+    (fn [_] {:pattern :format-list-json})]
+
+   [#"^formatting the project list$"
+    (fn [_] {:pattern :format-list})]
+
+   [#"^the output should contain column headers (.+)$"
+    (fn [[_ headers-str]]
+      {:pattern :assert-column-headers :headers (re-seq #"\"([^\"]+)\"" headers-str)})]
+
+   [#"^the output should contain slug \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:pattern :assert-output-contains-slug :slug slug})]
+
+   [#"^the output should contain iteration \"([^\"]+)\"$"
+    (fn [[_ iteration]]
+      {:pattern :assert-output-contains-iteration :iteration iteration})]
+
+   [#"^the output should contain progress \"([^\"]+)\"$"
+    (fn [[_ progress]]
+      {:pattern :assert-output-contains-progress :progress progress})]
+
+   [#"^the output should contain workers \"([^\"]+)\"$"
+    (fn [[_ workers]]
+      {:pattern :assert-output-contains-workers :workers workers})]
+
+   [#"^the line for \"([^\"]+)\" should contain a dash for (\S+)$"
+    (fn [[_ slug field]]
+      {:pattern :assert-dash-placeholder :slug slug :field field})]
+
+   [#"^the output should be \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-output-equals :expected expected})]
+
+   [#"^\"([^\"]+)\" status should be colorized (\w+)$"
+    (fn [[_ status color]]
+      {:pattern :assert-status-color :status status :color color})]
+
+   [#"^\"([^\"]+)\" priority should be colorized (\w+)$"
+    (fn [[_ priority color]]
+      {:pattern :assert-priority-color :priority priority :color color})]
+
+   [#"^(\d+) percent progress should be colorized (\w+)$"
+    (fn [[_ percent color]]
+      {:pattern :assert-progress-color :percent (parse-long percent) :color color})]
+
+   [#"^the JSON output should contain a project with slug \"([^\"]+)\"$"
+    (fn [[_ slug]]
+      {:pattern :assert-json-project-exists :slug slug})]
+
+   [#"^the JSON project \"([^\"]+)\" should have (\S+) \"([^\"]+)\"$"
+    (fn [[_ slug key expected]]
+      {:pattern :assert-json-project-string :slug slug :key key :expected expected})]
+
+   [#"^the JSON project \"([^\"]+)\" should have (\S+) (\d+)$"
+    (fn [[_ slug key expected]]
+      {:pattern :assert-json-project-number :slug slug :key key :expected (parse-long expected)})]
+
+   [#"^the JSON project \"([^\"]+)\" should have iteration number \"([^\"]+)\"$"
+    (fn [[_ slug number]]
+      {:pattern :assert-json-iteration-number :slug slug :number number})]
+
+   ;; --- Configuration step patterns ---
+
+   [#"^a config with values:$"
+    (fn [_] {:pattern :config-with-values})]
+
+   [#"^listing the config$"
+    (fn [_] {:pattern :list-config})]
+
+   [#"^getting config key \"([^\"]+)\"$"
+    (fn [[_ key]]
+      {:pattern :get-config-key :key key})]
+
+   [#"^setting config key \"([^\"]+)\" to \"([^\"]+)\"$"
+    (fn [[_ key value]]
+      {:pattern :set-config-key :key key :value value})]
+
+   [#"^an empty config string$"
+    (fn [_] {:pattern :empty-config-string})]
+
+   [#"^parsing the config$"
+    (fn [_] {:pattern :parse-config})]
+
+   [#"^requesting config help$"
+    (fn [_] {:pattern :request-config-help})]
+
+   [#"^the result should be ok with value \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-result-ok-with-value :expected expected})]
+
+   [#"^the result should be an error$"
+    (fn [_] {:pattern :assert-result-error})]
+
+   [#"^the error message should contain \"([^\"]+)\"$"
+    (fn [[_ expected]]
+      {:pattern :assert-error-message-contains :expected expected})]
+
+   [#"^the config should have \"([^\"]+)\" set to \"([^\"]+)\"$"
+    (fn [[_ key expected]]
+      {:pattern :assert-config-has-value :key key :expected expected})]
+
+    [#"^\"([^\"]+)\" should appear before \"([^\"]+)\" in the output$"
+     (fn [[_ first-item second-item]]
+       {:pattern :assert-appears-before :first first-item :second second-item})]
+
+    ;; --- Project status step patterns ---
+
+    [#"^project configs:$"
+     (fn [_] {:pattern :project-configs-table})]
+
+    [#"^active iterations:$"
+     (fn [_] {:pattern :active-iterations-table})]
+
+    [#"^active workers:$"
+     (fn [_] {:pattern :active-workers-table})]
+
+    [#"^no active iterations$"
+     (fn [_] {:pattern :no-active-iterations})]
+
+    [#"^building the dashboard$"
+     (fn [_] {:pattern :build-dashboard})]
+
+    [#"^the dashboard should have (\d+) projects?$"
+     (fn [[_ count]]
+       {:pattern :assert-dashboard-project-count :count (parse-long count)})]
+
+    [#"^project \"([^\"]+)\" should have status \"([^\"]+)\"$"
+     (fn [[_ slug expected]]
+       {:pattern :assert-project-status :slug slug :expected expected})]
+
+    [#"^project \"([^\"]+)\" should have iteration number \"([^\"]+)\"$"
+     (fn [[_ slug expected]]
+       {:pattern :assert-project-iteration-number :slug slug :expected expected})]
+
+    [#"^project \"([^\"]+)\" should have workers (\d+) of (\d+)$"
+     (fn [[_ slug workers max-workers]]
+       {:pattern :assert-project-workers :slug slug :workers (parse-long workers) :max-workers (parse-long max-workers)})]
+
+    [#"^project \"([^\"]+)\" should have no iteration$"
+     (fn [[_ slug]]
+       {:pattern :assert-project-no-iteration :slug slug})]
+
+    [#"^a dashboard project \"([^\"]+)\" with:$"
+     (fn [[_ slug]]
+       {:pattern :dashboard-project :slug slug})]
+
+    [#"^project \"([^\"]+)\" has iteration:$"
+     (fn [[_ slug]]
+       {:pattern :project-has-iteration :slug slug})]
+
+    [#"^project \"([^\"]+)\" has stories:$"
+     (fn [[_ slug]]
+       {:pattern :project-has-stories :slug slug})]
+
+    [#"^project \"([^\"]+)\" has no iteration$"
+     (fn [[_ slug]]
+       {:pattern :project-has-no-iteration :slug slug})]
+
+    [#"^formatting project detail for \"([^\"]+)\"$"
+     (fn [[_ slug]]
+       {:pattern :format-project-detail :slug slug})]
+
+    [#"^formatting the dashboard as JSON$"
+     (fn [_] {:pattern :format-dashboard-json})]
+
+    [#"^formatting the dashboard$"
+     (fn [_] {:pattern :format-dashboard})]
+
+    [#"^the JSON should contain (\d+) projects?$"
+     (fn [[_ count]]
+       {:pattern :assert-json-project-count :count (parse-long count)})]
+
+    [#"^the JSON project \"([^\"]+)\" should have iteration percent (\d+)$"
+     (fn [[_ slug percent]]
+       {:pattern :assert-json-project-iteration-percent :slug slug :percent (parse-long percent)})]
+
+    [#"^an empty registry$"
+     (fn [_] {:pattern :empty-registry})]
+
+    ;; --- Orch runner step patterns ---
+
+    [#"^a spawn entry with path \"([^\"]+)\" and bead \"([^\"]+)\"$"
+     (fn [[_ path bead]]
+       {:pattern :spawn-entry-path-bead :path path :bead bead})]
+
+    [#"^iteration \"([^\"]+)\" and channel \"([^\"]+)\"$"
+     (fn [[_ iteration channel]]
+       {:pattern :spawn-iteration-channel :iteration iteration :channel channel})]
+
+    [#"^a spawn entry with bead \"([^\"]+)\"$"
+     (fn [[_ bead]]
+       {:pattern :spawn-entry-bead :bead bead})]
+
+    [#"^no custom worker agent$"
+     (fn [_] {:pattern :no-worker-agent})]
+
+    [#"^worker agent \"([^\"]+)\"$"
+     (fn [[_ agent]]
+       {:pattern :worker-agent :agent agent})]
+
+    [#"^no CLI arguments$"
+     (fn [_] {:pattern :no-cli-args})]
+
+    [#"^CLI arguments \"([^\"]+)\"$"
+     (fn [[_ args]]
+       {:pattern :cli-args :args args})]
+
+    [#"^a spawn tick result with (\d+) workers?$"
+     (fn [[_ count]]
+       {:pattern :spawn-tick-result :count (parse-long count)})]
+
+    [#"^beads \"([^\"]+)\" and \"([^\"]+)\"$"
+     (fn [[_ b1 b2]]
+       {:pattern :spawn-beads :beads [b1 b2]})]
+
+    [#"^an idle tick result with reason \"([^\"]+)\"$"
+     (fn [[_ reason]]
+       {:pattern :idle-tick-result :reason reason})]
+
+    [#"^(\d+) zombie sessions with reasons \"([^\"]+)\" and \"([^\"]+)\"$"
+     (fn [[_ count r1 r2]]
+       {:pattern :zombie-sessions :count (parse-long count) :reasons [r1 r2]})]
+
+    [#"^building the worker task$"
+     (fn [_] {:pattern :build-worker-task})]
+
+    [#"^building the worker args$"
+     (fn [_] {:pattern :build-worker-args})]
+
+    [#"^parsing CLI args$"
+     (fn [_] {:pattern :parse-cli-args})]
+
+    [#"^formatting the spawn log$"
+     (fn [_] {:pattern :format-spawn-log})]
+
+    [#"^formatting the idle log$"
+     (fn [_] {:pattern :format-idle-log})]
+
+    [#"^formatting the zombie log$"
+     (fn [_] {:pattern :format-zombie-log})]
+
+    [#"^the task should contain \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-task-contains :expected expected})]
+
+    [#"^the args should include \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-args-include :expected expected})]
+
+    [#"^the args should not include \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-args-not-include :expected expected})]
+
+    [#"^the agent value should be \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-agent-value :expected expected})]
+
+    [#"^dry-run should be (true|false)$"
+     (fn [[_ val]]
+       {:pattern :assert-dry-run :expected (= val "true")})]
+
+    [#"^verbose should be (true|false)$"
+     (fn [[_ val]]
+       {:pattern :assert-verbose :expected (= val "true")})]
+
+    [#"^parsing should return an error$"
+     (fn [_] {:pattern :assert-parse-error})]
+
+    [#"^the error should contain \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-error-contains :expected expected})]
+
+    [#"^the log should contain \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:pattern :assert-log-contains :expected expected})]])
+
+(defn classify-step
+  "Pattern-match step text into a typed IR node map, or {:pattern :unrecognized :text text}."
+  [text]
+  (or (some (fn [[pattern handler]]
+              (when-let [match (re-matches pattern text)]
+                (handler match)))
+            step-patterns)
+      {:pattern :unrecognized :text text}))
+
+(defn- classify-node
+  "Classify a step node. If it already has a :pattern key, return as-is.
+   If it only has :text (new parser format), classify the text and merge."
+  [node]
+  (if (:pattern node)
+    node
+    (let [classified (classify-step (:text node))]
+      (-> (merge classified (select-keys node [:type :table]))
+          (assoc :text (:text node))))))
+
+(defn- classify-steps
+  "Classify all step nodes in a steps vector."
+  [steps]
+  (mapv classify-node steps))
+
 ;; --- Step registry: data-driven dispatch for text and code generation ---
 ;; Each IR :pattern maps to {:text (fn [node] ...) :code (fn [node] ...)}
 ;; :text produces human-readable step text for comments
@@ -687,14 +1377,17 @@
 
 (defn generate-scenario
   "Generate a (context ...) block for a scenario.
+   Classifies text-only nodes before generating code.
    If all steps are recognized, generates executable code.
    Otherwise generates a pending block with step comments."
   [scenario background]
-  (let [title (:scenario scenario)
-        executable? (all-recognized? scenario background)
+  (let [classified-scenario (update scenario :steps classify-steps)
+        classified-background (when background (update background :steps classify-steps))
+        title (:scenario classified-scenario)
+        executable? (all-recognized? classified-scenario classified-background)
         body (if executable?
-               (generate-executable-body scenario background)
-               (generate-pending-body scenario background))]
+               (generate-executable-body classified-scenario classified-background)
+               (generate-pending-body classified-scenario classified-background))]
     (str "  (context \"" title "\"\n"
          "    (it \"" title "\"\n"
          body "))")))
@@ -705,8 +1398,9 @@
   "Returns true if any non-wip scenario in the IR has all recognized steps."
   [ir]
   (let [{:keys [scenarios background]} ir
-        non-wip (remove :wip scenarios)]
-    (some #(all-recognized? % background) non-wip)))
+        non-wip (remove :wip scenarios)
+        classified-bg (when background (update background :steps classify-steps))]
+    (some #(all-recognized? (update % :steps classify-steps) classified-bg) non-wip)))
 
 (defn generate-spec
   "Generate a complete speclj spec file string from an IR map."
