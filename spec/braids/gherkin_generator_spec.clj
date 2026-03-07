@@ -146,7 +146,187 @@
 
     (it "formats assert-bead-id step"
       (should= "the extracted bead ID should be \"proj-abc\""
-               (gen/step-text {:type :assert-bead-id :expected "proj-abc"}))))
+               (gen/step-text {:type :assert-bead-id :expected "proj-abc"})))
+
+    ;; --- Ready beads step-text ---
+
+    (it "formats registry-with-projects-table step"
+      (should= "a registry with projects:"
+               (gen/step-text {:type :registry-with-projects-table})))
+
+    (it "formats project-config-max-workers step"
+      (should= "project \"alpha\" has config with max-workers 1"
+               (gen/step-text {:type :project-config-max-workers :slug "alpha" :max-workers 1})))
+
+    (it "formats project-config-status-and-max-workers step"
+      (should= "project \"proj\" has config with status \"paused\" and max-workers 1"
+               (gen/step-text {:type :project-config-status-and-max-workers :slug "proj" :status "paused" :max-workers 1})))
+
+    (it "formats project-ready-beads-table step"
+      (should= "project \"alpha\" has ready beads:"
+               (gen/step-text {:type :project-ready-beads-table :slug "alpha"})))
+
+    (it "formats no-active-workers step"
+      (should= "no active workers"
+               (gen/step-text {:type :no-active-workers})))
+
+    (it "formats compute-ready-beads step"
+      (should= "computing ready beads"
+               (gen/step-text {:type :compute-ready-beads})))
+
+    (it "formats assert-result-contains-bead step"
+      (should= "the result should contain bead \"alpha-aaa\""
+               (gen/step-text {:type :assert-result-contains-bead :bead-id "alpha-aaa"})))
+
+    (it "formats assert-result-not-contains-bead step"
+      (should= "the result should not contain bead \"beta-bbb\""
+               (gen/step-text {:type :assert-result-not-contains-bead :bead-id "beta-bbb"})))
+
+    (it "formats assert-result-empty step"
+      (should= "the result should be empty"
+               (gen/step-text {:type :assert-result-empty})))
+
+    (it "formats assert-nth-result-project step for first"
+      (should= "the first result should be from project \"high\""
+               (gen/step-text {:type :assert-nth-result-project :position 1 :slug "high"})))
+
+    (it "formats assert-nth-result-project step for second"
+      (should= "the second result should be from project \"norm\""
+               (gen/step-text {:type :assert-nth-result-project :position 2 :slug "norm"})))
+
+    (it "formats assert-nth-result-project step for third"
+      (should= "the third result should be from project \"low\""
+               (gen/step-text {:type :assert-nth-result-project :position 3 :slug "low"})))
+
+    (it "formats ready-beads-to-format step"
+      (should= "ready beads to format:"
+               (gen/step-text {:type :ready-beads-to-format})))
+
+    (it "formats no-ready-beads-to-format step"
+      (should= "no ready beads to format"
+               (gen/step-text {:type :no-ready-beads-to-format})))
+
+    (it "formats format-ready-output step"
+      (should= "formatting ready output"
+               (gen/step-text {:type :format-ready-output})))
+
+    (it "formats assert-output-contains step"
+      (should= "the output should contain \"proj-abc\""
+               (gen/step-text {:type :assert-output-contains :expected "proj-abc"})))
+
+    ;; --- Iteration management step-text ---
+
+    (it "formats iteration-edn step"
+      (should= "iteration EDN with number \"003\" and status \"active\" and 1 story"
+               (gen/step-text {:type :iteration-edn :number "003" :status "active" :story-count 1})))
+
+    (it "formats edn-no-guardrails-or-notes step"
+      (should= "the EDN has no guardrails or notes"
+               (gen/step-text {:type :edn-no-guardrails-or-notes})))
+
+    (it "formats iteration-with-status step"
+      (should= "an iteration with number \"001\" and status \"bogus\" and stories"
+               (gen/step-text {:type :iteration-with-status :number "001" :status "bogus"})))
+
+    (it "formats iteration-no-number step"
+      (should= "an iteration with no number"
+               (gen/step-text {:type :iteration-no-number})))
+
+    (it "formats iteration-with-stories step"
+      (should= "an iteration with stories \"proj-abc\" and \"proj-def\""
+               (gen/step-text {:type :iteration-with-stories :story-ids ["proj-abc" "proj-def"]})))
+
+    (it "formats iteration-with-story step"
+      (should= "an iteration with story \"proj-xyz\""
+               (gen/step-text {:type :iteration-with-story :story-id "proj-xyz"})))
+
+    (it "formats iter-bead-status step"
+      (should= "bead \"proj-abc\" has status \"open\" and priority 1"
+               (gen/step-text {:type :iter-bead-status :bead-id "proj-abc" :status "open" :priority 1})))
+
+    (it "formats no-bead-data step"
+      (should= "no bead data exists"
+               (gen/step-text {:type :no-bead-data})))
+
+    (it "formats annotated-stories step"
+      (should= "annotated stories with 2 closed and 2 open out of 4 total"
+               (gen/step-text {:type :annotated-stories :closed 2 :open 2 :total 4})))
+
+    (it "formats iteration-no-stories step"
+      (should= "an iteration with no stories"
+               (gen/step-text {:type :iteration-no-stories})))
+
+    (it "formats iteration-number-status step"
+      (should= "an iteration \"009\" with status \"active\""
+               (gen/step-text {:type :iteration-number-status :number "009" :status "active"})))
+
+    (it "formats story-with-status step"
+      (should= "a story \"proj-abc\" with status \"open\""
+               (gen/step-text {:type :story-with-status :story-id "proj-abc" :status "open"})))
+
+    (it "formats completion-stats step"
+      (should= "completion stats of 1 closed out of 2"
+               (gen/step-text {:type :completion-stats :closed 1 :total 2})))
+
+    (it "formats parse-iteration-edn step"
+      (should= "parsing the iteration EDN"
+               (gen/step-text {:type :parse-iteration-edn})))
+
+    (it "formats validate-iteration step"
+      (should= "validating the iteration"
+               (gen/step-text {:type :validate-iteration})))
+
+    (it "formats annotate-stories step"
+      (should= "annotating stories with bead data"
+               (gen/step-text {:type :annotate-stories})))
+
+    (it "formats calculate-completion-stats step"
+      (should= "calculating completion stats"
+               (gen/step-text {:type :calculate-completion-stats})))
+
+    (it "formats format-iteration step"
+      (should= "formatting the iteration"
+               (gen/step-text {:type :format-iteration})))
+
+    (it "formats format-iteration-json step"
+      (should= "formatting the iteration as JSON"
+               (gen/step-text {:type :format-iteration-json})))
+
+    (it "formats assert-iteration-number step"
+      (should= "the iteration number should be \"003\""
+               (gen/step-text {:type :assert-iteration-number :expected "003"})))
+
+    (it "formats assert-iteration-status step"
+      (should= "the iteration status should be \"active\""
+               (gen/step-text {:type :assert-iteration-status :expected "active"})))
+
+    (it "formats assert-iteration-guardrails-empty step"
+      (should= "the iteration guardrails should be empty"
+               (gen/step-text {:type :assert-iteration-guardrails-empty})))
+
+    (it "formats assert-iteration-notes-empty step"
+      (should= "the iteration notes should be empty"
+               (gen/step-text {:type :assert-iteration-notes-empty})))
+
+    (it "formats assert-story-status step"
+      (should= "story \"proj-abc\" should have status \"open\""
+               (gen/step-text {:type :assert-story-status :story-id "proj-abc" :expected "open"})))
+
+    (it "formats assert-total step"
+      (should= "the total should be 4"
+               (gen/step-text {:type :assert-total :expected 4})))
+
+    (it "formats assert-closed-count step"
+      (should= "the closed count should be 2"
+               (gen/step-text {:type :assert-closed-count :expected 2})))
+
+    (it "formats assert-completion-percent step"
+      (should= "the completion percent should be 50"
+               (gen/step-text {:type :assert-completion-percent :expected 50})))
+
+    (it "formats assert-json-contains step"
+      (should= "the JSON should contain \"number\""
+               (gen/step-text {:type :assert-json-contains :expected "number"}))))
 
   (context "generate-step-comments"
 
@@ -365,6 +545,86 @@
         (should-contain "(h/parse-session-id!)" output)
         (should-contain "(should= \"proj-abc\" (h/parsed-bead-id))" output)))
 
+    (it "generates executable code for ready beads filters active projects"
+      (let [scenario {:scenario "Ready beads filters to active projects only"
+                      :givens [{:type :registry-with-projects-table
+                                :table {:headers ["slug" "status" "priority"]
+                                        :rows [["alpha" "active" "normal"]
+                                               ["beta" "paused" "normal"]]}}
+                               {:type :project-config-max-workers :slug "alpha" :max-workers 1}
+                               {:type :project-config-max-workers :slug "beta" :max-workers 1}
+                               {:type :project-ready-beads-table :slug "alpha"
+                                :table {:headers ["id" "title" "priority"]
+                                        :rows [["alpha-aaa" "Task A" "P1"]]}}
+                               {:type :project-ready-beads-table :slug "beta"
+                                :table {:headers ["id" "title" "priority"]
+                                        :rows [["beta-bbb" "Task B" "P1"]]}}
+                               {:type :no-active-workers}]
+                      :whens [{:type :compute-ready-beads}]
+                      :thens [{:type :assert-result-contains-bead :bead-id "alpha-aaa"}
+                              {:type :assert-result-not-contains-bead :bead-id "beta-bbb"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/reset!)" output)
+        (should-contain "(h/set-registry-from-table" output)
+        (should-contain "(h/set-project-config" output)
+        (should-contain "(h/set-project-ready-beads" output)
+        (should-contain "(h/compute-ready-beads!)" output)
+        (should-contain "(should (h/result-contains-bead? \"alpha-aaa\"))" output)
+        (should-contain "(should-not (h/result-contains-bead? \"beta-bbb\"))" output)))
+
+    (it "generates executable code for ready beads result empty"
+      (let [scenario {:scenario "Result empty"
+                      :givens [{:type :no-active-workers}]
+                      :whens [{:type :compute-ready-beads}]
+                      :thens [{:type :assert-result-empty}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(should (empty? (h/ready-result)))" output)))
+
+    (it "generates executable code for nth result project assertion"
+      (let [scenario {:scenario "Ordered by priority"
+                      :givens [{:type :no-active-workers}]
+                      :whens [{:type :compute-ready-beads}]
+                      :thens [{:type :assert-nth-result-project :position 1 :slug "high"}
+                              {:type :assert-nth-result-project :position 2 :slug "norm"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(should= \"high\" (:project (nth (h/ready-result) 0)))" output)
+        (should-contain "(should= \"norm\" (:project (nth (h/ready-result) 1)))" output)))
+
+    (it "generates executable code for format ready output scenario"
+      (let [scenario {:scenario "Format output"
+                      :givens [{:type :ready-beads-to-format
+                                :table {:headers ["project" "id" "title" "priority"]
+                                        :rows [["proj" "proj-abc" "Do stuff" "P0"]]}}]
+                      :whens [{:type :format-ready-output}]
+                      :thens [{:type :assert-output-contains :expected "proj-abc"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-ready-beads-to-format" output)
+        (should-contain "(h/format-ready-output!)" output)
+        (should-contain "(should (clojure.string/includes? (h/output) \"proj-abc\"))" output)))
+
+    (it "generates executable code for no ready beads to format"
+      (let [scenario {:scenario "Empty format"
+                      :givens [{:type :no-ready-beads-to-format}]
+                      :whens [{:type :format-ready-output}]
+                      :thens [{:type :assert-output-equals :expected "No ready beads."}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-no-ready-beads-to-format)" output)))
+
+    (it "generates executable code for project-config-status-and-max-workers"
+      (let [scenario {:scenario "Config with status"
+                      :givens [{:type :project-config-status-and-max-workers :slug "proj" :status "paused" :max-workers 1}
+                               {:type :no-active-workers}]
+                      :whens [{:type :compute-ready-beads}]
+                      :thens [{:type :assert-result-empty}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-project-config \"proj\" {:status \"paused\" :max-workers 1})" output)))
+
     (it "generates executable code for bead-no-status"
       (let [scenario {:scenario "No bead status"
                       :givens [{:type :session :session-id "s5" :label "project:proj:proj-mno"}
@@ -376,7 +636,102 @@
             output (gen/generate-scenario scenario background)]
         ;; bead-no-status means no setup needed — skip that step
         (should-not-contain "bead-status" output)
-        (should-not-contain "pending" output))))
+        (should-not-contain "pending" output)))
+
+    ;; --- Iteration management scenario generation ---
+
+    (it "generates executable code for parse iteration EDN scenario"
+      (let [scenario {:scenario "Parse iteration EDN with defaults"
+                      :givens [{:type :iteration-edn :number "003" :status "active" :story-count 1}
+                               {:type :edn-no-guardrails-or-notes}]
+                      :whens [{:type :parse-iteration-edn}]
+                      :thens [{:type :assert-iteration-number :expected "003"}
+                              {:type :assert-iteration-status :expected "active"}
+                              {:type :assert-iteration-guardrails-empty}
+                              {:type :assert-iteration-notes-empty}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/reset!)" output)
+        (should-contain "(h/set-iteration-edn \"003\" \"active\" 1)" output)
+        (should-contain "(h/parse-iteration-edn!)" output)
+        (should-contain "(should= \"003\" (h/iteration-number))" output)
+        (should-contain "(should= \"active\" (h/iteration-status))" output)
+        (should-contain "(should (empty? (h/iteration-guardrails)))" output)
+        (should-contain "(should (empty? (h/iteration-notes)))" output)))
+
+    (it "generates executable code for annotate stories scenario"
+      (let [scenario {:scenario "Annotate stories with bead data"
+                      :givens [{:type :iteration-with-stories :story-ids ["proj-abc" "proj-def"]}
+                               {:type :iter-bead-status :bead-id "proj-abc" :status "open" :priority 1}
+                               {:type :iter-bead-status :bead-id "proj-def" :status "closed" :priority 2}]
+                      :whens [{:type :annotate-stories}]
+                      :thens [{:type :assert-story-status :story-id "proj-abc" :expected "open"}
+                              {:type :assert-story-status :story-id "proj-def" :expected "closed"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-iteration-stories [\"proj-abc\" \"proj-def\"])" output)
+        (should-contain "(h/add-iter-bead \"proj-abc\" \"open\" 1)" output)
+        (should-contain "(h/add-iter-bead \"proj-def\" \"closed\" 2)" output)
+        (should-contain "(h/annotate-stories!)" output)
+        (should-contain "(should= \"open\" (h/story-status \"proj-abc\"))" output)
+        (should-contain "(should= \"closed\" (h/story-status \"proj-def\"))" output)))
+
+    (it "generates executable code for completion stats scenario"
+      (let [scenario {:scenario "Completion stats calculation"
+                      :givens [{:type :annotated-stories :closed 2 :open 2 :total 4}]
+                      :whens [{:type :calculate-completion-stats}]
+                      :thens [{:type :assert-total :expected 4}
+                              {:type :assert-closed-count :expected 2}
+                              {:type :assert-completion-percent :expected 50}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-annotated-stories 2 2 4)" output)
+        (should-contain "(h/calculate-completion-stats!)" output)
+        (should-contain "(should= 4 (h/stats-total))" output)
+        (should-contain "(should= 2 (h/stats-closed))" output)
+        (should-contain "(should= 50 (h/stats-percent))" output)))
+
+    (it "generates executable code for format iteration scenario"
+      (let [scenario {:scenario "Format iteration with status icons"
+                      :givens [{:type :iteration-number-status :number "009" :status "active"}
+                               {:type :story-with-status :story-id "proj-abc" :status "open"}
+                               {:type :story-with-status :story-id "proj-def" :status "closed"}
+                               {:type :completion-stats :closed 1 :total 2}]
+                      :whens [{:type :format-iteration}]
+                      :thens [{:type :assert-output-contains :expected "Iteration 009"}
+                              {:type :assert-output-contains :expected "active"}
+                              {:type :assert-output-contains :expected "50%"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-iteration-number-status \"009\" \"active\")" output)
+        (should-contain "(h/add-story-with-status \"proj-abc\" \"open\")" output)
+        (should-contain "(h/set-completion-stats 1 2)" output)
+        (should-contain "(h/format-iteration!)" output)
+        (should-contain "(should (clojure.string/includes? (h/output) \"Iteration 009\"))" output)))
+
+    (it "generates executable code for format iteration JSON scenario"
+      (let [scenario {:scenario "Format iteration as JSON"
+                      :givens [{:type :iteration-number-status :number "001" :status "active"}
+                               {:type :story-with-status :story-id "a" :status "open"}
+                               {:type :completion-stats :closed 0 :total 1}]
+                      :whens [{:type :format-iteration-json}]
+                      :thens [{:type :assert-json-contains :expected "number"}
+                              {:type :assert-json-contains :expected "stories"}
+                              {:type :assert-json-contains :expected "percent"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/format-iteration-json!)" output)
+        (should-contain "(should (clojure.string/includes? (h/iter-json-output) \"number\"))" output)))
+
+    (it "generates executable code for validate iteration scenario"
+      (let [scenario {:scenario "Validate rejects invalid status"
+                      :givens [{:type :iteration-with-status :number "001" :status "bogus"}]
+                      :whens [{:type :validate-iteration}]
+                      :thens [{:type :assert-validation-fail :expected "Invalid status"}]}
+            output (gen/generate-scenario scenario nil)]
+        (should-not-contain "pending" output)
+        (should-contain "(h/set-iteration-with-status \"001\" \"bogus\")" output)
+        (should-contain "(h/validate-iteration!)" output))))
 
   (context "generate-spec"
 

@@ -151,6 +151,75 @@
                            :code (fn [{:keys [key expected]}]         (str "(should= " (if (re-matches #"^:.*" expected) expected (str ":" expected)) " (:" key " (h/project-config)))"))}
    :assert-config-number  {:text (fn [{:keys [key expected]}]         (str "the config " key " should be " expected))
                             :code (fn [{:keys [key expected]}]         (str "(should= " expected " (:" key " (h/project-config)))"))}
+   ;; Ready beads
+   :registry-with-projects-table
+                      {:text (constantly "a registry with projects:")
+                       :code (fn [{:keys [table]}]
+                               (when table
+                                 (let [{:keys [headers rows]} table]
+                                   (str "(h/set-registry-from-table\n"
+                                        "  " (pr-str headers) "\n"
+                                        "  " (pr-str rows) ")"))))}
+   :project-config-max-workers
+                      {:text (fn [{:keys [slug max-workers]}]
+                               (str "project \"" slug "\" has config with max-workers " max-workers))
+                       :code (fn [{:keys [slug max-workers]}]
+                               (str "(h/set-project-config \"" slug "\" {:max-workers " max-workers "})"))}
+   :project-config-status-and-max-workers
+                      {:text (fn [{:keys [slug status max-workers]}]
+                               (str "project \"" slug "\" has config with status \"" status "\" and max-workers " max-workers))
+                       :code (fn [{:keys [slug status max-workers]}]
+                               (str "(h/set-project-config \"" slug "\" {:status \"" status "\" :max-workers " max-workers "})"))}
+   :project-ready-beads-table
+                      {:text (fn [{:keys [slug]}]
+                               (str "project \"" slug "\" has ready beads:"))
+                       :code (fn [{:keys [slug table]}]
+                               (when table
+                                 (let [{:keys [headers rows]} table]
+                                   (str "(h/set-project-ready-beads \"" slug "\"\n"
+                                        "  " (pr-str headers) "\n"
+                                        "  " (pr-str rows) ")"))))}
+   :no-active-workers {:text (constantly "no active workers")
+                       :code (constantly nil)}
+   :compute-ready-beads {:text (constantly "computing ready beads")
+                         :code (constantly "(h/compute-ready-beads!)")}
+   :assert-result-contains-bead
+                      {:text (fn [{:keys [bead-id]}]
+                               (str "the result should contain bead \"" bead-id "\""))
+                       :code (fn [{:keys [bead-id]}]
+                               (str "(should (h/result-contains-bead? \"" bead-id "\"))"))}
+   :assert-result-not-contains-bead
+                      {:text (fn [{:keys [bead-id]}]
+                               (str "the result should not contain bead \"" bead-id "\""))
+                       :code (fn [{:keys [bead-id]}]
+                               (str "(should-not (h/result-contains-bead? \"" bead-id "\"))"))}
+   :assert-result-empty {:text (constantly "the result should be empty")
+                         :code (constantly "(should (empty? (h/ready-result)))")}
+   :assert-nth-result-project
+                      {:text (fn [{:keys [position slug]}]
+                               (let [ordinal (case position 1 "first" 2 "second" 3 "third")]
+                                 (str "the " ordinal " result should be from project \"" slug "\"")))
+                       :code (fn [{:keys [position slug]}]
+                               (str "(should= \"" slug "\" (:project (nth (h/ready-result) " (dec position) ")))"))}
+   :ready-beads-to-format
+                      {:text (constantly "ready beads to format:")
+                       :code (fn [{:keys [table]}]
+                               (when table
+                                 (let [{:keys [headers rows]} table]
+                                   (str "(h/set-ready-beads-to-format\n"
+                                        "  " (pr-str headers) "\n"
+                                        "  " (pr-str rows) ")"))))}
+   :no-ready-beads-to-format
+                      {:text (constantly "no ready beads to format")
+                       :code (constantly "(h/set-no-ready-beads-to-format)")}
+   :format-ready-output {:text (constantly "formatting ready output")
+                         :code (constantly "(h/format-ready-output!)")}
+   :assert-output-contains
+                      {:text (fn [{:keys [expected]}]
+                               (str "the output should contain \"" expected "\""))
+                       :code (fn [{:keys [expected]}]
+                               (str "(should (clojure.string/includes? (h/output) \"" expected "\"))"))}
+
    ;; Project listing
    :project-list-with-table {:text (constantly "a project list with the following projects:")
                              :code (fn [{:keys [table]}]
@@ -180,7 +249,7 @@
    :assert-dash-placeholder {:text (fn [{:keys [slug field]}]         (str "the line for \"" slug "\" should contain a dash for " field))
                              :code (fn [{:keys [slug]}]               (str "(should (h/line-contains-dash? \"" slug "\"))"))}
    :assert-output-equals  {:text (fn [{:keys [expected]}]             (str "the output should be \"" expected "\""))
-                           :code (fn [{:keys [expected]}]             (str "(should= \"" expected "\" (h/list-output))"))}
+                            :code (fn [{:keys [expected]}]             (str "(should= \"" expected "\" (h/output))"))}
    :assert-status-color   {:text (fn [{:keys [status color]}]        (str "\"" status "\" status should be colorized " color))
                            :code (fn [{:keys [status color]}]        (str "(should (h/colorized? (h/list-output) \"" status "\" \"" color "\"))"))}
    :assert-priority-color {:text (fn [{:keys [priority color]}]      (str "\"" priority "\" priority should be colorized " color))
@@ -194,7 +263,97 @@
    :assert-json-project-number {:text (fn [{:keys [slug key expected]}] (str "the JSON project \"" slug "\" should have " key " " expected))
                                 :code (fn [{:keys [slug key expected]}] (str "(should= " expected " (get (h/json-project \"" slug "\") \"" key "\"))"))}
    :assert-json-iteration-number {:text (fn [{:keys [slug number]}]  (str "the JSON project \"" slug "\" should have iteration number \"" number "\""))
-                                  :code (fn [{:keys [slug number]}]  (str "(should= \"" number "\" (get-in (h/json-project \"" slug "\") [\"iteration\" \"number\"]))"))}
+                                   :code (fn [{:keys [slug number]}]  (str "(should= \"" number "\" (get-in (h/json-project \"" slug "\") [\"iteration\" \"number\"]))"))}
+   ;; Iteration management
+   :iteration-edn         {:text (fn [{:keys [number status story-count]}]
+                                   (str "iteration EDN with number \"" number "\" and status \"" status "\" and " story-count " story"))
+                            :code (fn [{:keys [number status story-count]}]
+                                   (str "(h/set-iteration-edn \"" number "\" \"" status "\" " story-count ")"))}
+   :edn-no-guardrails-or-notes
+                           {:text (constantly "the EDN has no guardrails or notes")
+                            :code (constantly nil)}
+   :iteration-with-status {:text (fn [{:keys [number status]}]
+                                   (str "an iteration with number \"" number "\" and status \"" status "\" and stories"))
+                            :code (fn [{:keys [number status]}]
+                                   (str "(h/set-iteration-with-status \"" number "\" \"" status "\")"))}
+   :iteration-no-number   {:text (constantly "an iteration with no number")
+                            :code (constantly "(h/set-iteration-no-number)")}
+   :iteration-with-stories {:text (fn [{:keys [story-ids]}]
+                                    (str "an iteration with stories \"" (first story-ids) "\" and \"" (second story-ids) "\""))
+                             :code (fn [{:keys [story-ids]}]
+                                    (str "(h/set-iteration-stories " (pr-str story-ids) ")"))}
+   :iteration-with-story  {:text (fn [{:keys [story-id]}]
+                                   (str "an iteration with story \"" story-id "\""))
+                            :code (fn [{:keys [story-id]}]
+                                   (str "(h/set-iteration-stories [\"" story-id "\"])"))}
+   :iter-bead-status      {:text (fn [{:keys [bead-id status priority]}]
+                                   (str "bead \"" bead-id "\" has status \"" status "\" and priority " priority))
+                            :code (fn [{:keys [bead-id status priority]}]
+                                   (str "(h/add-iter-bead \"" bead-id "\" \"" status "\" " priority ")"))}
+   :no-bead-data          {:text (constantly "no bead data exists")
+                            :code (constantly nil)}
+   :annotated-stories     {:text (fn [{:keys [closed open total]}]
+                                   (str "annotated stories with " closed " closed and " open " open out of " total " total"))
+                            :code (fn [{:keys [closed open total]}]
+                                   (str "(h/set-annotated-stories " closed " " open " " total ")"))}
+   :iteration-no-stories  {:text (constantly "an iteration with no stories")
+                            :code (constantly "(h/set-iteration-stories [])")}
+   :iteration-number-status {:text (fn [{:keys [number status]}]
+                                     (str "an iteration \"" number "\" with status \"" status "\""))
+                              :code (fn [{:keys [number status]}]
+                                     (str "(h/set-iteration-number-status \"" number "\" \"" status "\")"))}
+   :story-with-status     {:text (fn [{:keys [story-id status]}]
+                                   (str "a story \"" story-id "\" with status \"" status "\""))
+                            :code (fn [{:keys [story-id status]}]
+                                   (str "(h/add-story-with-status \"" story-id "\" \"" status "\")"))}
+   :completion-stats      {:text (fn [{:keys [closed total]}]
+                                   (str "completion stats of " closed " closed out of " total))
+                            :code (fn [{:keys [closed total]}]
+                                   (str "(h/set-completion-stats " closed " " total ")"))}
+   :parse-iteration-edn   {:text (constantly "parsing the iteration EDN")
+                            :code (constantly "(h/parse-iteration-edn!)")}
+   :validate-iteration    {:text (constantly "validating the iteration")
+                            :code (constantly "(h/validate-iteration!)")}
+   :annotate-stories      {:text (constantly "annotating stories with bead data")
+                            :code (constantly "(h/annotate-stories!)")}
+   :calculate-completion-stats {:text (constantly "calculating completion stats")
+                                 :code (constantly "(h/calculate-completion-stats!)")}
+   :format-iteration      {:text (constantly "formatting the iteration")
+                            :code (constantly "(h/format-iteration!)")}
+   :format-iteration-json {:text (constantly "formatting the iteration as JSON")
+                            :code (constantly "(h/format-iteration-json!)")}
+   :assert-iteration-number {:text (fn [{:keys [expected]}]
+                                     (str "the iteration number should be \"" expected "\""))
+                              :code (fn [{:keys [expected]}]
+                                     (str "(should= \"" expected "\" (h/iteration-number))"))}
+   :assert-iteration-status {:text (fn [{:keys [expected]}]
+                                     (str "the iteration status should be \"" expected "\""))
+                              :code (fn [{:keys [expected]}]
+                                     (str "(should= \"" expected "\" (h/iteration-status))"))}
+   :assert-iteration-guardrails-empty {:text (constantly "the iteration guardrails should be empty")
+                                        :code (constantly "(should (empty? (h/iteration-guardrails)))")}
+   :assert-iteration-notes-empty {:text (constantly "the iteration notes should be empty")
+                                   :code (constantly "(should (empty? (h/iteration-notes)))")}
+   :assert-story-status   {:text (fn [{:keys [story-id expected]}]
+                                   (str "story \"" story-id "\" should have status \"" expected "\""))
+                            :code (fn [{:keys [story-id expected]}]
+                                   (str "(should= \"" expected "\" (h/story-status \"" story-id "\"))"))}
+   :assert-total          {:text (fn [{:keys [expected]}]
+                                   (str "the total should be " expected))
+                            :code (fn [{:keys [expected]}]
+                                   (str "(should= " expected " (h/stats-total))"))}
+   :assert-closed-count   {:text (fn [{:keys [expected]}]
+                                   (str "the closed count should be " expected))
+                            :code (fn [{:keys [expected]}]
+                                   (str "(should= " expected " (h/stats-closed))"))}
+   :assert-completion-percent {:text (fn [{:keys [expected]}]
+                                       (str "the completion percent should be " expected))
+                                :code (fn [{:keys [expected]}]
+                                       (str "(should= " expected " (h/stats-percent))"))}
+   :assert-json-contains  {:text (fn [{:keys [expected]}]
+                                   (str "the JSON should contain \"" expected "\""))
+                            :code (fn [{:keys [expected]}]
+                                   (str "(should (clojure.string/includes? (h/iter-json-output) \"" expected "\"))"))}
    })
 
 ;; --- Step text and code: thin dispatchers over the registry ---

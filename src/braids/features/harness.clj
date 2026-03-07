@@ -5,6 +5,8 @@
             [braids.init :as init]
             [braids.new :as new-proj]
             [braids.list :as list]
+            [braids.ready :as ready]
+            [braids.iteration :as iteration]
             [cheshire.core :as json]
             [clojure.string :as str]))
 
@@ -42,7 +44,27 @@
                                ;; Project listing state
                                :list-projects []
                                :list-output nil
-                               :list-json-output nil}))
+                               :list-json-output nil
+                               ;; Generic output (shared across features)
+                               :output nil
+                               ;; Iteration management state
+                               :iter-edn-str nil
+                               :iter-parsed nil
+                               :iter-data nil
+                               :iter-stories []
+                               :iter-beads []
+                               :iter-annotated nil
+                               :iter-stats nil
+                               :iter-format-data nil
+                               :iter-json-output nil
+                               ;; Ready beads state
+                               :ready-registry {:projects []}
+                               :ready-configs {}
+                               :ready-beads {}
+                               :ready-workers {}
+                               :ready-result nil
+                               :ready-format-beads nil
+                               :ready-output nil}))
 
 ;; --- State accessors ---
 
@@ -441,14 +463,14 @@
   []
   (let [projects (:list-projects @state)
         output (list/format-list {:projects projects})]
-    (swap! state assoc :list-output output)))
+    (swap! state assoc :list-output output :output output)))
 
 (defn format-list-json!
   "Format the project list as JSON using list/format-list-json."
   []
   (let [projects (:list-projects @state)
         output (list/format-list-json {:projects projects})]
-    (swap! state assoc :list-json-output output)))
+    (swap! state assoc :list-json-output output :output output)))
 
 (defn list-output
   "Returns the formatted list output."
@@ -483,3 +505,249 @@
   (when-let [output (:list-json-output @state)]
     (let [parsed (json/parse-string output)]
       (first (filter #(= slug (get % "slug")) parsed)))))
+
+;; --- Ready beads helpers ---
+
+(defn- table-row->ready-registry-project
+  "Convert a table row to a registry project entry."
+  [headers row]
+  (let [m (zipmap headers row)]
+    {:slug (get m "slug")
+     :status (keyword (get m "status"))
+     :priority (keyword (get m "priority"))
+     :path (str "/projects/" (get m "slug"))}))
+
+(defn set-registry-from-table
+  "Build ready-beads registry from table headers and rows."
+  [headers rows]
+  (let [projects (mapv #(table-row->ready-registry-project headers %) rows)]
+    (swap! state assoc :ready-registry {:projects projects})))
+
+(defn set-project-config
+  "Set ready-beads config for a project."
+  [slug config]
+  (let [parsed-config (reduce-kv
+                        (fn [m k v]
+                          (assoc m k (cond
+                                       (= k :status) (keyword v)
+                                       :else v)))
+                        {}
+                        config)]
+    (swap! state assoc-in [:ready-configs slug]
+           (merge {:status :active} parsed-config))))
+
+(defn- table-row->ready-bead
+  "Convert a table row to a ready bead map."
+  [headers row]
+  (let [m (zipmap headers row)]
+    {:id (get m "id")
+     :title (get m "title")
+     :priority (get m "priority")}))
+
+(defn set-project-ready-beads
+  "Set ready beads for a project from table data."
+  [slug headers rows]
+  (let [beads (mapv #(table-row->ready-bead headers %) rows)]
+    (swap! state assoc-in [:ready-beads slug] beads)))
+
+(defn compute-ready-beads!
+  "Run ready/ready-beads with accumulated ready-beads state.
+   Uses :workers from shared state (same as orch spawning)."
+  []
+  (let [{:keys [ready-registry ready-configs ready-beads workers]} @state
+        result (ready/ready-beads ready-registry ready-configs ready-beads workers)]
+    (swap! state assoc :ready-result result)))
+
+(defn ready-result
+  "Returns the ready beads result."
+  []
+  (:ready-result @state))
+
+(defn result-contains-bead?
+  "Returns true if the ready result contains a bead with the given id."
+  [bead-id]
+  (some #(= bead-id (:id %)) (:ready-result @state)))
+
+(defn set-ready-beads-to-format
+  "Build beads for format-ready-output from table data."
+  [headers rows]
+  (let [beads (mapv (fn [row]
+                      (let [m (zipmap headers row)]
+                        {:project (get m "project")
+                         :id (get m "id")
+                         :title (get m "title")
+                         :priority (get m "priority")}))
+                    rows)]
+    (swap! state assoc :ready-format-beads beads)))
+
+(defn set-no-ready-beads-to-format
+  "Set empty beads for formatting."
+  []
+  (swap! state assoc :ready-format-beads []))
+
+(defn format-ready-output!
+  "Format ready beads using ready/format-ready-output."
+  []
+  (let [beads (:ready-format-beads @state)
+        output (ready/format-ready-output beads)]
+    (swap! state assoc :ready-output output :output output)))
+
+(defn ready-output
+  "Returns the formatted ready output."
+  []
+  (:ready-output @state))
+
+(defn output
+  "Returns the most recent output (generic accessor for any feature)."
+  []
+  (:output @state))
+
+;; --- Iteration management helpers ---
+
+;; Given step builders
+
+(defn set-iteration-edn
+  "Build an iteration EDN string with the given number, status, and story count."
+  [number status story-count]
+  (let [stories (vec (repeat story-count (str "story-" (rand-int 10000))))
+        edn-str (pr-str {:number number :status (keyword status) :stories stories})]
+    (swap! state assoc :iter-edn-str edn-str)))
+
+(defn set-iteration-with-status
+  "Store an iteration map with a given status for validation."
+  [number status]
+  (swap! state assoc :iter-data {:number number :status (keyword status) :stories []}))
+
+(defn set-iteration-no-number
+  "Store an iteration with no number for validation."
+  []
+  (swap! state assoc :iter-data {:status :planning :stories []}))
+
+(defn set-iteration-stories
+  "Store story IDs for annotation."
+  [story-ids]
+  (swap! state assoc :iter-stories story-ids))
+
+(defn add-iter-bead
+  "Add a bead with status and priority for annotation."
+  [bead-id status priority]
+  (swap! state update :iter-beads conj
+         {"id" bead-id "status" status "priority" priority}))
+
+(defn set-annotated-stories
+  "Build pre-annotated stories for completion stats testing."
+  [closed open total]
+  (let [closed-stories (repeat closed {:id "c" :status "closed"})
+        open-stories (repeat open {:id "o" :status "open"})
+        stories (vec (concat closed-stories open-stories))]
+    (swap! state assoc :iter-annotated stories)))
+
+(defn set-iteration-number-status
+  "Set up iteration data for formatting."
+  [number status]
+  (swap! state assoc :iter-format-data {:number number :status status :stories [] :stats nil}))
+
+(defn add-story-with-status
+  "Add a story with status to the iteration format data."
+  [story-id status]
+  (swap! state update-in [:iter-format-data :stories] conj
+         {:id story-id :title story-id :status status :priority nil :deps []}))
+
+(defn set-completion-stats
+  "Set completion stats for formatting."
+  [closed total]
+  (let [percent (if (zero? total) 0 (int (* 100 (/ closed total))))]
+    (swap! state assoc-in [:iter-format-data :stats]
+           {:total total :closed closed :percent percent})))
+
+;; When step actions
+
+(defn parse-iteration-edn!
+  "Parse the stored EDN string using iteration/parse-iteration-edn."
+  []
+  (let [edn-str (:iter-edn-str @state)
+        result (iteration/parse-iteration-edn edn-str)]
+    (swap! state assoc :iter-parsed result)))
+
+(defn validate-iteration!
+  "Validate the stored iteration data."
+  []
+  (let [data (:iter-data @state)
+        errors (iteration/validate-iteration data)]
+    (swap! state assoc :validation-result errors)))
+
+(defn annotate-stories!
+  "Annotate stored stories with stored bead data."
+  []
+  (let [stories (:iter-stories @state)
+        beads (:iter-beads @state)
+        result (iteration/annotate-stories stories beads)]
+    (swap! state assoc :iter-annotated result)))
+
+(defn calculate-completion-stats!
+  "Calculate completion stats for the annotated stories."
+  []
+  (let [stories (:iter-annotated @state)
+        result (iteration/completion-stats stories)]
+    (swap! state assoc :iter-stats result)))
+
+(defn format-iteration!
+  "Format the iteration for human display."
+  []
+  (let [data (:iter-format-data @state)
+        result (iteration/format-iteration data)]
+    (swap! state assoc :output result)))
+
+(defn format-iteration-json!
+  "Format the iteration as JSON."
+  []
+  (let [data (:iter-format-data @state)
+        result (iteration/format-iteration-json data)]
+    (swap! state assoc :iter-json-output result)))
+
+;; Then step accessors
+
+(defn iteration-number
+  "Returns the parsed iteration number."
+  []
+  (:number (:iter-parsed @state)))
+
+(defn iteration-status
+  "Returns the parsed iteration status as a string."
+  []
+  (name (:status (:iter-parsed @state))))
+
+(defn iteration-guardrails
+  "Returns the parsed iteration guardrails."
+  []
+  (:guardrails (:iter-parsed @state)))
+
+(defn iteration-notes
+  "Returns the parsed iteration notes."
+  []
+  (:notes (:iter-parsed @state)))
+
+(defn story-status
+  "Returns the status of a specific story after annotation."
+  [story-id]
+  (:status (first (filter #(= story-id (:id %)) (:iter-annotated @state)))))
+
+(defn stats-total
+  "Returns the total from completion stats."
+  []
+  (:total (:iter-stats @state)))
+
+(defn stats-closed
+  "Returns the closed count from completion stats."
+  []
+  (:closed (:iter-stats @state)))
+
+(defn stats-percent
+  "Returns the completion percentage from completion stats."
+  []
+  (:percent (:iter-stats @state)))
+
+(defn iter-json-output
+  "Returns the JSON output from format-iteration-json."
+  []
+  (:iter-json-output @state))

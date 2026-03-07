@@ -266,5 +266,262 @@
     (it "parsed-bead-id returns the extracted bead id"
       (h/set-session-id-literal "braids-proj-abc-worker")
       (h/parse-session-id!)
-      (should= "proj-abc" (h/parsed-bead-id)))))
+      (should= "proj-abc" (h/parsed-bead-id))))
+
+  ;; --- Ready beads harness ---
+
+  (context "set-registry-from-table"
+
+    (it "builds registry from table headers and rows"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["alpha" "active" "normal"]
+         ["beta" "paused" "normal"]])
+      (h/set-project-config "alpha" {:max-workers 1})
+      (h/set-project-ready-beads "alpha"
+        ["id" "title" "priority"]
+        [["alpha-aaa" "Task A" "P1"]])
+      (h/compute-ready-beads!)
+      (should (h/result-contains-bead? "alpha-aaa"))))
+
+  (context "set-project-config"
+
+    (it "sets config for a project"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["proj" "active" "normal"]])
+      (h/set-project-config "proj" {:max-workers 1})
+      (h/set-project-ready-beads "proj"
+        ["id" "title" "priority"]
+        [["proj-abc" "Task" "P1"]])
+      (h/compute-ready-beads!)
+      (should (h/result-contains-bead? "proj-abc")))
+
+    (it "respects paused status in config"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["proj" "active" "normal"]])
+      (h/set-project-config "proj" {:status "paused" :max-workers 1})
+      (h/set-project-ready-beads "proj"
+        ["id" "title" "priority"]
+        [["proj-abc" "Task" "P1"]])
+      (h/compute-ready-beads!)
+      (should (empty? (h/ready-result)))))
+
+  (context "set-project-ready-beads"
+
+    (it "builds bead list from table data"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["proj" "active" "normal"]])
+      (h/set-project-config "proj" {:max-workers 2})
+      (h/set-project-ready-beads "proj"
+        ["id" "title" "priority"]
+        [["proj-abc" "Task A" "P0"]
+         ["proj-def" "Task B" "P1"]])
+      (h/compute-ready-beads!)
+      (should= 2 (count (h/ready-result)))))
+
+  (context "compute-ready-beads!"
+
+    (it "filters to active projects only"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["alpha" "active" "normal"]
+         ["beta" "paused" "normal"]])
+      (h/set-project-config "alpha" {:max-workers 1})
+      (h/set-project-config "beta" {:max-workers 1})
+      (h/set-project-ready-beads "alpha"
+        ["id" "title" "priority"]
+        [["alpha-aaa" "Task A" "P1"]])
+      (h/set-project-ready-beads "beta"
+        ["id" "title" "priority"]
+        [["beta-bbb" "Task B" "P1"]])
+      (h/compute-ready-beads!)
+      (should (h/result-contains-bead? "alpha-aaa"))
+      (should-not (h/result-contains-bead? "beta-bbb")))
+
+    (it "respects worker capacity"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["proj" "active" "normal"]])
+      (h/set-project-config "proj" {:max-workers 1})
+      (h/set-project-ready-beads "proj"
+        ["id" "title" "priority"]
+        [["proj-abc" "Task A" "P1"]])
+      (h/set-active-workers "proj" 1)
+      (h/compute-ready-beads!)
+      (should (empty? (h/ready-result)))))
+
+  (context "result-contains-bead?"
+
+    (it "returns true when bead is in result"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["proj" "active" "normal"]])
+      (h/set-project-config "proj" {:max-workers 1})
+      (h/set-project-ready-beads "proj"
+        ["id" "title" "priority"]
+        [["proj-abc" "Task" "P1"]])
+      (h/compute-ready-beads!)
+      (should (h/result-contains-bead? "proj-abc")))
+
+    (it "returns false when bead is not in result"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["proj" "active" "normal"]])
+      (h/set-project-config "proj" {:max-workers 1})
+      (h/compute-ready-beads!)
+      (should-not (h/result-contains-bead? "proj-abc"))))
+
+  (context "ready-result ordering"
+
+    (it "orders by project priority"
+      (h/set-registry-from-table
+        ["slug" "status" "priority"]
+        [["low" "active" "low"]
+         ["high" "active" "high"]
+         ["norm" "active" "normal"]])
+      (h/set-project-config "low" {:max-workers 1})
+      (h/set-project-config "high" {:max-workers 1})
+      (h/set-project-config "norm" {:max-workers 1})
+      (h/set-project-ready-beads "low"
+        ["id" "title" "priority"]
+        [["low-aaa" "Low task" "P2"]])
+      (h/set-project-ready-beads "high"
+        ["id" "title" "priority"]
+        [["high-bbb" "High task" "P0"]])
+      (h/set-project-ready-beads "norm"
+        ["id" "title" "priority"]
+        [["norm-ccc" "Norm task" "P1"]])
+      (h/compute-ready-beads!)
+      (should= "high" (:project (nth (h/ready-result) 0)))
+      (should= "norm" (:project (nth (h/ready-result) 1)))
+      (should= "low" (:project (nth (h/ready-result) 2)))))
+
+  (context "set-ready-beads-to-format"
+
+    (it "builds beads for formatting from table data"
+      (h/set-ready-beads-to-format
+        ["project" "id" "title" "priority"]
+        [["proj" "proj-abc" "Do stuff" "P0"]])
+      (h/format-ready-output!)
+      (should (clojure.string/includes? (h/ready-output) "proj-abc"))
+      (should (clojure.string/includes? (h/ready-output) "Do stuff"))))
+
+  (context "set-no-ready-beads-to-format"
+
+    (it "sets empty beads for formatting"
+      (h/set-no-ready-beads-to-format)
+      (h/format-ready-output!)
+      (should= "No ready beads." (h/ready-output))))
+
+  (context "format-ready-output!"
+
+    (it "formats beads using ready/format-ready-output"
+      (h/set-ready-beads-to-format
+        ["project" "id" "title" "priority"]
+        [["proj" "proj-abc" "Do stuff" "P0"]])
+      (h/format-ready-output!)
+      (should (clojure.string/includes? (h/ready-output) "proj"))))
+
+  (context "ready-output"
+
+    (it "returns the formatted output"
+      (h/set-no-ready-beads-to-format)
+      (h/format-ready-output!)
+      (should= "No ready beads." (h/ready-output))))
+
+  ;; --- Iteration management harness ---
+
+  (context "set-iteration-edn"
+
+    (it "builds iteration EDN string and stores it"
+      (h/set-iteration-edn "003" "active" 1)
+      (h/parse-iteration-edn!)
+      (should= "003" (h/iteration-number))))
+
+  (context "parse-iteration-edn!"
+
+    (it "parses stored EDN and stores the result"
+      (h/set-iteration-edn "003" "active" 1)
+      (h/parse-iteration-edn!)
+      (should= "003" (h/iteration-number))
+      (should= "active" (h/iteration-status))
+      (should= [] (h/iteration-guardrails))
+      (should= [] (h/iteration-notes))))
+
+  (context "set-iteration-with-status"
+
+    (it "stores an iteration map with status for validation"
+      (h/set-iteration-with-status "001" "bogus")
+      (h/validate-iteration!)
+      (should-not (empty? (h/validation-errors)))
+      (should (some #(clojure.string/includes? % "Invalid status") (h/validation-errors)))))
+
+  (context "set-iteration-no-number"
+
+    (it "stores an iteration with no number for validation"
+      (h/set-iteration-no-number)
+      (h/validate-iteration!)
+      (should-not (empty? (h/validation-errors)))
+      (should (some #(clojure.string/includes? % "Missing :number") (h/validation-errors)))))
+
+  (context "set-iteration-stories"
+
+    (it "stores story ids for annotation"
+      (h/set-iteration-stories ["proj-abc" "proj-def"])
+      (h/add-iter-bead "proj-abc" "open" 1)
+      (h/add-iter-bead "proj-def" "closed" 2)
+      (h/annotate-stories!)
+      (should= "open" (h/story-status "proj-abc"))
+      (should= "closed" (h/story-status "proj-def"))))
+
+  (context "annotate-stories!"
+
+    (it "annotates with unknown when no bead data"
+      (h/set-iteration-stories ["proj-xyz"])
+      (h/annotate-stories!)
+      (should= "unknown" (h/story-status "proj-xyz"))))
+
+  (context "set-annotated-stories"
+
+    (it "builds annotated stories for completion stats"
+      (h/set-annotated-stories 2 2 4)
+      (h/calculate-completion-stats!)
+      (should= 4 (h/stats-total))
+      (should= 2 (h/stats-closed))
+      (should= 50 (h/stats-percent))))
+
+  (context "calculate-completion-stats!"
+
+    (it "handles empty stories"
+      (h/set-annotated-stories 0 0 0)
+      (h/calculate-completion-stats!)
+      (should= 0 (h/stats-total))
+      (should= 0 (h/stats-closed))
+      (should= 0 (h/stats-percent))))
+
+  (context "format-iteration!"
+
+    (it "formats iteration for human display"
+      (h/set-iteration-number-status "009" "active")
+      (h/add-story-with-status "proj-abc" "open")
+      (h/add-story-with-status "proj-def" "closed")
+      (h/set-completion-stats 1 2)
+      (h/format-iteration!)
+      (should (clojure.string/includes? (h/output) "Iteration 009"))
+      (should (clojure.string/includes? (h/output) "active"))
+      (should (clojure.string/includes? (h/output) "50%"))))
+
+  (context "format-iteration-json!"
+
+    (it "formats iteration as JSON"
+      (h/set-iteration-number-status "001" "active")
+      (h/add-story-with-status "a" "open")
+      (h/set-completion-stats 0 1)
+      (h/format-iteration-json!)
+      (should (clojure.string/includes? (h/iter-json-output) "number"))
+      (should (clojure.string/includes? (h/iter-json-output) "stories"))
+      (should (clojure.string/includes? (h/iter-json-output) "percent")))))
 

@@ -264,6 +264,72 @@
       (should= {:type :assert-config-number :key "max-workers" :expected 1}
                (gherkin/classify-step "the config max-workers should be 1")))
 
+    ;; --- Ready beads step patterns ---
+
+    (it "classifies registry-with-projects-table"
+      (should= {:type :registry-with-projects-table}
+               (gherkin/classify-step "a registry with projects:")))
+
+    (it "classifies project-config-max-workers"
+      (should= {:type :project-config-max-workers :slug "alpha" :max-workers 1}
+               (gherkin/classify-step "project \"alpha\" has config with max-workers 1")))
+
+    (it "classifies project-config-status-and-max-workers"
+      (should= {:type :project-config-status-and-max-workers :slug "proj" :status "paused" :max-workers 1}
+               (gherkin/classify-step "project \"proj\" has config with status \"paused\" and max-workers 1")))
+
+    (it "classifies project-ready-beads-table"
+      (should= {:type :project-ready-beads-table :slug "alpha"}
+               (gherkin/classify-step "project \"alpha\" has ready beads:")))
+
+    (it "classifies no-active-workers"
+      (should= {:type :no-active-workers}
+               (gherkin/classify-step "no active workers")))
+
+    (it "classifies compute-ready-beads"
+      (should= {:type :compute-ready-beads}
+               (gherkin/classify-step "computing ready beads")))
+
+    (it "classifies assert-result-contains-bead"
+      (should= {:type :assert-result-contains-bead :bead-id "alpha-aaa"}
+               (gherkin/classify-step "the result should contain bead \"alpha-aaa\"")))
+
+    (it "classifies assert-result-not-contains-bead"
+      (should= {:type :assert-result-not-contains-bead :bead-id "beta-bbb"}
+               (gherkin/classify-step "the result should not contain bead \"beta-bbb\"")))
+
+    (it "classifies assert-result-empty"
+      (should= {:type :assert-result-empty}
+               (gherkin/classify-step "the result should be empty")))
+
+    (it "classifies assert-first-result-project"
+      (should= {:type :assert-nth-result-project :position 1 :slug "high"}
+               (gherkin/classify-step "the first result should be from project \"high\"")))
+
+    (it "classifies assert-second-result-project"
+      (should= {:type :assert-nth-result-project :position 2 :slug "norm"}
+               (gherkin/classify-step "the second result should be from project \"norm\"")))
+
+    (it "classifies assert-third-result-project"
+      (should= {:type :assert-nth-result-project :position 3 :slug "low"}
+               (gherkin/classify-step "the third result should be from project \"low\"")))
+
+    (it "classifies ready-beads-to-format"
+      (should= {:type :ready-beads-to-format}
+               (gherkin/classify-step "ready beads to format:")))
+
+    (it "classifies no-ready-beads-to-format"
+      (should= {:type :no-ready-beads-to-format}
+               (gherkin/classify-step "no ready beads to format")))
+
+    (it "classifies format-ready-output"
+      (should= {:type :format-ready-output}
+               (gherkin/classify-step "formatting ready output")))
+
+    (it "classifies assert-output-contains"
+      (should= {:type :assert-output-contains :expected "proj-abc"}
+               (gherkin/classify-step "the output should contain \"proj-abc\"")))
+
     ;; --- Project listing step patterns ---
 
     (it "classifies project-list-with-table"
@@ -312,7 +378,121 @@
 
     (it "classifies assert-json-iteration-number"
       (should= {:type :assert-json-iteration-number :slug "alpha" :number "009"}
-               (gherkin/classify-step "the JSON project \"alpha\" should have iteration number \"009\""))))
+               (gherkin/classify-step "the JSON project \"alpha\" should have iteration number \"009\"")))
+
+    ;; --- Iteration management step patterns ---
+
+    (it "classifies iteration-edn-with-stories"
+      (should= {:type :iteration-edn :number "003" :status "active" :story-count 1}
+               (gherkin/classify-step "iteration EDN with number \"003\" and status \"active\" and 1 story")))
+
+    (it "classifies edn-no-guardrails-or-notes"
+      (should= {:type :edn-no-guardrails-or-notes}
+               (gherkin/classify-step "the EDN has no guardrails or notes")))
+
+    (it "classifies iteration-with-status-and-stories"
+      (should= {:type :iteration-with-status :number "001" :status "bogus"}
+               (gherkin/classify-step "an iteration with number \"001\" and status \"bogus\" and stories")))
+
+    (it "classifies iteration-with-no-number"
+      (should= {:type :iteration-no-number}
+               (gherkin/classify-step "an iteration with no number")))
+
+    (it "classifies iteration-with-two-stories"
+      (should= {:type :iteration-with-stories :story-ids ["proj-abc" "proj-def"]}
+               (gherkin/classify-step "an iteration with stories \"proj-abc\" and \"proj-def\"")))
+
+    (it "classifies iteration-with-single-story"
+      (should= {:type :iteration-with-story :story-id "proj-xyz"}
+               (gherkin/classify-step "an iteration with story \"proj-xyz\"")))
+
+    (it "classifies bead-status-with-priority"
+      (should= {:type :iter-bead-status :bead-id "proj-abc" :status "open" :priority 1}
+               (gherkin/classify-step "bead \"proj-abc\" has status \"open\" and priority 1")))
+
+    (it "classifies no-bead-data-exists"
+      (should= {:type :no-bead-data}
+               (gherkin/classify-step "no bead data exists")))
+
+    (it "classifies annotated-stories-with-counts"
+      (should= {:type :annotated-stories :closed 2 :open 2 :total 4}
+               (gherkin/classify-step "annotated stories with 2 closed and 2 open out of 4 total")))
+
+    (it "classifies iteration-with-no-stories"
+      (should= {:type :iteration-no-stories}
+               (gherkin/classify-step "an iteration with no stories")))
+
+    (it "classifies iteration-number-with-status"
+      (should= {:type :iteration-number-status :number "009" :status "active"}
+               (gherkin/classify-step "an iteration \"009\" with status \"active\"")))
+
+    (it "classifies story-with-status"
+      (should= {:type :story-with-status :story-id "proj-abc" :status "open"}
+               (gherkin/classify-step "a story \"proj-abc\" with status \"open\"")))
+
+    (it "classifies completion-stats"
+      (should= {:type :completion-stats :closed 1 :total 2}
+               (gherkin/classify-step "completion stats of 1 closed out of 2")))
+
+    (it "classifies parsing-iteration-edn"
+      (should= {:type :parse-iteration-edn}
+               (gherkin/classify-step "parsing the iteration EDN")))
+
+    (it "classifies validating-iteration"
+      (should= {:type :validate-iteration}
+               (gherkin/classify-step "validating the iteration")))
+
+    (it "classifies annotating-stories"
+      (should= {:type :annotate-stories}
+               (gherkin/classify-step "annotating stories with bead data")))
+
+    (it "classifies calculating-completion-stats"
+      (should= {:type :calculate-completion-stats}
+               (gherkin/classify-step "calculating completion stats")))
+
+    (it "classifies formatting-iteration"
+      (should= {:type :format-iteration}
+               (gherkin/classify-step "formatting the iteration")))
+
+    (it "classifies formatting-iteration-json"
+      (should= {:type :format-iteration-json}
+               (gherkin/classify-step "formatting the iteration as JSON")))
+
+    (it "classifies assert-iteration-number"
+      (should= {:type :assert-iteration-number :expected "003"}
+               (gherkin/classify-step "the iteration number should be \"003\"")))
+
+    (it "classifies assert-iteration-status"
+      (should= {:type :assert-iteration-status :expected "active"}
+               (gherkin/classify-step "the iteration status should be \"active\"")))
+
+    (it "classifies assert-iteration-guardrails-empty"
+      (should= {:type :assert-iteration-guardrails-empty}
+               (gherkin/classify-step "the iteration guardrails should be empty")))
+
+    (it "classifies assert-iteration-notes-empty"
+      (should= {:type :assert-iteration-notes-empty}
+               (gherkin/classify-step "the iteration notes should be empty")))
+
+    (it "classifies assert-story-status"
+      (should= {:type :assert-story-status :story-id "proj-abc" :expected "open"}
+               (gherkin/classify-step "story \"proj-abc\" should have status \"open\"")))
+
+    (it "classifies assert-total"
+      (should= {:type :assert-total :expected 4}
+               (gherkin/classify-step "the total should be 4")))
+
+    (it "classifies assert-closed-count"
+      (should= {:type :assert-closed-count :expected 2}
+               (gherkin/classify-step "the closed count should be 2")))
+
+    (it "classifies assert-completion-percent"
+      (should= {:type :assert-completion-percent :expected 50}
+               (gherkin/classify-step "the completion percent should be 50")))
+
+    (it "classifies assert-json-contains"
+      (should= {:type :assert-json-contains :expected "number"}
+               (gherkin/classify-step "the JSON should contain \"number\""))))
 
   (context "parse-feature"
 

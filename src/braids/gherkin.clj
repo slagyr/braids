@@ -1,6 +1,7 @@
 (ns braids.gherkin
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [braids.edn-format :refer [edn-format]]))
 
 ;; --- Step classification: pattern-match step text into typed IR nodes ---
 
@@ -228,9 +229,164 @@
     (fn [[_ key expected]]
       {:type :assert-config-number :key key :expected (parse-long expected)})]
 
-   ;; --- Project listing step patterns ---
+     ;; --- Iteration management step patterns ---
 
-   [#"^a project list with the following projects:$"
+     [#"^iteration EDN with number \"([^\"]+)\" and status \"([^\"]+)\" and (\d+) stor(?:y|ies)$"
+      (fn [[_ number status count]]
+        {:type :iteration-edn :number number :status status :story-count (parse-long count)})]
+
+     [#"^the EDN has no guardrails or notes$"
+      (fn [_] {:type :edn-no-guardrails-or-notes})]
+
+     [#"^an iteration with number \"([^\"]+)\" and status \"([^\"]+)\" and stories$"
+      (fn [[_ number status]]
+        {:type :iteration-with-status :number number :status status})]
+
+     [#"^an iteration with no number$"
+      (fn [_] {:type :iteration-no-number})]
+
+     [#"^an iteration with stories \"([^\"]+)\" and \"([^\"]+)\"$"
+      (fn [[_ id1 id2]]
+        {:type :iteration-with-stories :story-ids [id1 id2]})]
+
+     [#"^an iteration with story \"([^\"]+)\"$"
+      (fn [[_ story-id]]
+        {:type :iteration-with-story :story-id story-id})]
+
+     [#"^bead \"([^\"]+)\" has status \"([^\"]+)\" and priority (\d+)$"
+      (fn [[_ bead-id status priority]]
+        {:type :iter-bead-status :bead-id bead-id :status status :priority (parse-long priority)})]
+
+     [#"^no bead data exists$"
+      (fn [_] {:type :no-bead-data})]
+
+     [#"^annotated stories with (\d+) closed and (\d+) open out of (\d+) total$"
+      (fn [[_ closed open total]]
+        {:type :annotated-stories :closed (parse-long closed) :open (parse-long open) :total (parse-long total)})]
+
+     [#"^an iteration with no stories$"
+      (fn [_] {:type :iteration-no-stories})]
+
+     [#"^an iteration \"([^\"]+)\" with status \"([^\"]+)\"$"
+      (fn [[_ number status]]
+        {:type :iteration-number-status :number number :status status})]
+
+     [#"^a story \"([^\"]+)\" with status \"([^\"]+)\"$"
+      (fn [[_ story-id status]]
+        {:type :story-with-status :story-id story-id :status status})]
+
+     [#"^completion stats of (\d+) closed out of (\d+)$"
+      (fn [[_ closed total]]
+        {:type :completion-stats :closed (parse-long closed) :total (parse-long total)})]
+
+     [#"^parsing the iteration EDN$"
+      (fn [_] {:type :parse-iteration-edn})]
+
+     [#"^validating the iteration$"
+      (fn [_] {:type :validate-iteration})]
+
+     [#"^annotating stories with bead data$"
+      (fn [_] {:type :annotate-stories})]
+
+     [#"^calculating completion stats$"
+      (fn [_] {:type :calculate-completion-stats})]
+
+     [#"^formatting the iteration$"
+      (fn [_] {:type :format-iteration})]
+
+     [#"^formatting the iteration as JSON$"
+      (fn [_] {:type :format-iteration-json})]
+
+     [#"^the iteration number should be \"([^\"]+)\"$"
+      (fn [[_ expected]]
+        {:type :assert-iteration-number :expected expected})]
+
+     [#"^the iteration status should be \"([^\"]+)\"$"
+      (fn [[_ expected]]
+        {:type :assert-iteration-status :expected expected})]
+
+     [#"^the iteration guardrails should be empty$"
+      (fn [_] {:type :assert-iteration-guardrails-empty})]
+
+     [#"^the iteration notes should be empty$"
+      (fn [_] {:type :assert-iteration-notes-empty})]
+
+     [#"^story \"([^\"]+)\" should have status \"([^\"]+)\"$"
+      (fn [[_ story-id expected]]
+        {:type :assert-story-status :story-id story-id :expected expected})]
+
+     [#"^the total should be (\d+)$"
+      (fn [[_ expected]]
+        {:type :assert-total :expected (parse-long expected)})]
+
+     [#"^the closed count should be (\d+)$"
+      (fn [[_ expected]]
+        {:type :assert-closed-count :expected (parse-long expected)})]
+
+     [#"^the completion percent should be (\d+)$"
+      (fn [[_ expected]]
+        {:type :assert-completion-percent :expected (parse-long expected)})]
+
+     [#"^the JSON should contain \"([^\"]+)\"$"
+      (fn [[_ expected]]
+        {:type :assert-json-contains :expected expected})]
+
+     ;; --- Ready beads step patterns ---
+
+    [#"^a registry with projects:$"
+     (fn [_] {:type :registry-with-projects-table})]
+
+    [#"^project \"([^\"]+)\" has config with status \"([^\"]+)\" and max-workers (\d+)$"
+     (fn [[_ slug status max-w]]
+       {:type :project-config-status-and-max-workers :slug slug :status status :max-workers (parse-long max-w)})]
+
+    [#"^project \"([^\"]+)\" has config with max-workers (\d+)$"
+     (fn [[_ slug max-w]]
+       {:type :project-config-max-workers :slug slug :max-workers (parse-long max-w)})]
+
+    [#"^project \"([^\"]+)\" has ready beads:$"
+     (fn [[_ slug]]
+       {:type :project-ready-beads-table :slug slug})]
+
+    [#"^no active workers$"
+     (fn [_] {:type :no-active-workers})]
+
+    [#"^computing ready beads$"
+     (fn [_] {:type :compute-ready-beads})]
+
+    [#"^the result should contain bead \"([^\"]+)\"$"
+     (fn [[_ bead-id]]
+       {:type :assert-result-contains-bead :bead-id bead-id})]
+
+    [#"^the result should not contain bead \"([^\"]+)\"$"
+     (fn [[_ bead-id]]
+       {:type :assert-result-not-contains-bead :bead-id bead-id})]
+
+    [#"^the result should be empty$"
+     (fn [_] {:type :assert-result-empty})]
+
+    [#"^the (first|second|third) result should be from project \"([^\"]+)\"$"
+     (fn [[_ ordinal slug]]
+       {:type :assert-nth-result-project
+        :position (case ordinal "first" 1 "second" 2 "third" 3)
+        :slug slug})]
+
+    [#"^ready beads to format:$"
+     (fn [_] {:type :ready-beads-to-format})]
+
+    [#"^no ready beads to format$"
+     (fn [_] {:type :no-ready-beads-to-format})]
+
+    [#"^formatting ready output$"
+     (fn [_] {:type :format-ready-output})]
+
+    [#"^the output should contain \"([^\"]+)\"$"
+     (fn [[_ expected]]
+       {:type :assert-output-contains :expected expected})]
+
+    ;; --- Project listing step patterns ---
+
+    [#"^a project list with the following projects:$"
     (fn [_] {:type :project-list-with-table})]
 
    [#"^an empty project list$"
@@ -513,7 +669,7 @@
 (defn write-edn
   "Write an IR map to an .edn file."
   [path data]
-  (spit path (pr-str data)))
+  (spit path (edn-format data)))
 
 (defn parse-features!
   "Parse all .feature files in source-dir and write .edn files to output-dir."
