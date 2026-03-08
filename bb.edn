@@ -1,6 +1,6 @@
 {:deps  {speclj/speclj                {:mvn/version "3.12.0"}
          io.github.slagyr/clj-mutate {:git/url "https://github.com/slagyr/clj-mutate"
-                                      :git/sha "9192067315f12b9d681e213fcbb738d2c8670d0d"}
+                                      :git/sha "a970794fc362fe0e8124fa82c23195208657f0b8"}
          org.clojure/tools.reader    {:mvn/version "1.4.2"}}
  :paths ["src" "spec"]
  :tasks {spec              {:doc      "Run unit specs"
