@@ -1186,11 +1186,14 @@
   []
   (:tick-output @state))
 
+(defn- strip-ansi [s]
+  (str/replace s #"\033\[[0-9;]*m" ""))
+
 (defn output-contains-line?
   "Returns true if any line in the output contains the given text as a substring."
   [text]
   (when-let [output (:tick-output @state)]
-    (some #(str/includes? % text) (str/split-lines output))))
+    (some #(str/includes? (strip-ansi %) text) (str/split-lines output))))
 
 (defn output-contains?
   "Returns true if the text appears anywhere in the tick output."

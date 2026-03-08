@@ -128,20 +128,18 @@
 
     (it "parses orch_spawning.feature with raw step text"
       (let [result (gherkin/parse-feature-file "features/orch_spawning.feature")]
-        (should= {:steps [{:type :given :text "a project \"alpha\" with max-workers 2"}
-                          {:type :and   :text "project \"alpha\" has an active iteration \"003\""}]}
+        (should= {:steps [{:type :given :text "configured projects:"}]}
                  (:background result))
-        (should= 7 (count (:scenarios result)))
+        (should= 11 (count (:scenarios result)))
         (let [first-scenario (first (:scenarios result))]
-          (should= "Spawn workers when beads ready and capacity available" (:scenario first-scenario))
-          (should= [{:type :given :text "project \"alpha\" has 3 ready beads"}
-                    {:type :and   :text "project \"alpha\" has 0 active workers"}]
-                   (take 2 (:steps first-scenario)))
+          (should= "Spawn includes all invocation attributes" (:scenario first-scenario))
+          (should= :given (-> first-scenario :steps first :type))
+          (should= "configured projects:" (-> first-scenario :steps first :text))
+          (should (-> first-scenario :steps first :table))
           (should= {:type :when :text "the orchestrator ticks"}
                    (nth (:steps first-scenario) 2))
-          (should= [{:type :then :text "the action should be \"spawn\""}
-                    {:type :and  :text "2 workers should be spawned"}]
-                   (drop 3 (:steps first-scenario))))))
+          (should= {:type :then :text "the action should be \"spawn\""}
+                   (nth (:steps first-scenario) 3)))))
 
     (it "parses worker_session_tracking.feature with raw text and @wip tags"
       (let [result (gherkin/parse-feature-file "features/worker_session_tracking.feature")]
@@ -186,14 +184,14 @@
 
     (it "preserves feature description text from files"
       (let [result (gherkin/parse-feature-file "features/orch_spawning.feature")]
-        (should= "The orchestrator tick examines project state and decides whether\nto spawn workers or remain idle. It respects max-workers capacity,\nrequires active iterations, and reports idle reasons."
+        (should= "The orchestrator tick examines project state and decides whether\nto spawn workers or remain idle. It respects max-workers capacity,\nrequires active iterations, and reports idle reasons. When spawning,\nit produces a list of spawn entries with all attributes needed to\ninvoke the worker agents."
                  (:description result)))))
 
   (context "parse-features-dir"
 
     (it "parses all .feature files in a directory"
       (let [results (gherkin/parse-features-dir "features")]
-        (should= 10 (count results))
+        (should= 11 (count results))
         (should (every? :source results))
         (should (every? :feature results))
         (should (every? :scenarios results)))))

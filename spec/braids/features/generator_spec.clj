@@ -1236,19 +1236,13 @@
     ;; Note: These tests require running bb features:parse first to generate the .edn IR files
     ;; with the new typed IR format.
 
-    (it "generates spec from orch_spawning IR with all executable scenarios"
+    (it "generates spec from orch_spawning IR with all @wip scenarios skipped"
       (let [ir (read-string (slurp "features/edn/orch_spawning.edn"))
             output (gen/generate-spec ir)]
         (should-contain "(ns braids.features.orch-spawning-spec" output)
         (should-contain "(describe \"Orchestrator spawning behavior\"" output)
-        ;; All 7 scenarios should be present
-        (should= 7 (count (re-seq #"\(context " output)))
-        ;; All orch_spawning steps are now recognized — no pending
-        (should-not-contain "pending" output)
-        ;; Should have harness calls
-        (should-contain "(h/reset!)" output)
-        (should-contain "(h/orch-tick!)" output)
-        (should-contain "[braids.features.harness :as h]" output)))
+        ;; All 11 scenarios are @wip, so 0 contexts should be generated
+        (should= 0 (count (re-seq #"\(context " output)))))
 
     (it "generates spec from worker_session_tracking IR with all executable scenarios"
       (let [ir (read-string (slurp "features/edn/worker_session_tracking.edn"))
@@ -1286,6 +1280,7 @@
         (let [files (->> (io/file tmp-dir) .listFiles (map #(.getName %)) sort vec)]
           (should= ["configuration_spec.clj"
                     "iteration_management_spec.clj"
+                    "orch_output_spec.clj"
                     "orch_runner_spec.clj"
                     "orch_spawning_spec.clj"
                     "project_lifecycle_spec.clj"

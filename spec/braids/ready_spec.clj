@@ -77,7 +77,39 @@
             workers {}]
         (should= "high" (:project (first (ready/ready-beads registry configs beads workers))))
         (should= "norm" (:project (second (ready/ready-beads registry configs beads workers))))
-        (should= "low" (:project (nth (ready/ready-beads registry configs beads workers) 2))))))
+        (should= "low" (:project (nth (ready/ready-beads registry configs beads workers) 2)))))
+
+    (it "high priority sorts before normal when only those two exist"
+      (let [registry {:projects [{:slug "norm" :status :active :priority :normal :path "/tmp/norm"}
+                                  {:slug "high" :status :active :priority :high :path "/tmp/high"}]}
+            configs {"norm" {:name "Norm" :status :active :max-workers 1}
+                     "high" {:name "High" :status :active :max-workers 1}}
+            beads {"norm" [{:id "norm-aaa" :title "Norm task" :priority "P1"}]
+                   "high" [{:id "high-bbb" :title "High task" :priority "P0"}]}
+            workers {}
+            result (ready/ready-beads registry configs beads workers)]
+        (should= "high" (:project (first result)))
+        (should= "norm" (:project (second result)))))
+
+    (it "unknown priority sorts as normal"
+      (let [registry {:projects [{:slug "unknown" :status :active :priority :mystery :path "/tmp/u"}
+                                  {:slug "high" :status :active :priority :high :path "/tmp/h"}]}
+            configs {"unknown" {:name "Unknown" :status :active :max-workers 1}
+                     "high" {:name "High" :status :active :max-workers 1}}
+            beads {"unknown" [{:id "unk-aaa" :title "Unknown task" :priority "P1"}]
+                   "high" [{:id "high-bbb" :title "High task" :priority "P0"}]}
+            workers {}
+            result (ready/ready-beads registry configs beads workers)]
+        (should= "high" (:project (first result)))
+        (should= "unknown" (:project (second result)))))
+
+    (it "returns beads when default max-workers allows capacity"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:name "Proj" :status :active}}
+            beads {"proj" [{:id "proj-abc" :title "Do stuff" :priority "P1"}]}
+            workers {}]
+        (should= [{:project "proj" :id "proj-abc" :title "Do stuff" :priority "P1"}]
+                 (ready/ready-beads registry configs beads workers)))))
 
   (context "format-ready-output"
 
@@ -117,4 +149,11 @@
     (it "colorizes project name in cyan"
       (let [beads [{:project "proj" :id "proj-abc" :title "Task" :priority "P1"}]
             output (ready/format-ready-output beads)]
-        (should-contain "\033[36mproj\033[0m" output)))))
+        (should-contain "\033[36mproj\033[0m" output)))
+
+    (it "numbers beads starting at 1"
+      (let [beads [{:project "proj" :id "proj-abc" :title "Task A" :priority "P1"}
+                   {:project "proj" :id "proj-def" :title "Task B" :priority "P2"}]
+            output (ready/format-ready-output beads)]
+        (should-contain "1)" output)
+        (should-contain "2)" output)))))
