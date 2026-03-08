@@ -11,7 +11,6 @@ Feature: Orchestrator spawning behavior
       | slug  | status | priority | max-workers | active-iteration | active-workers | path            |
       | alpha | active | normal   | 2           | 003              | 0              | /projects/alpha |
 
-  @wip
   Scenario: Spawn includes all invocation attributes
     Given configured projects:
       | slug  | worker-timeout | worker-agent | worker-model | worker-thinking | channel |
@@ -25,7 +24,6 @@ Feature: Orchestrator spawning behavior
       | project | bead      | iteration | channel | path            | label                  | worker-timeout | worker-thinking | worker-agent | worker-model |
       | alpha   | alpha-aa1 | 003       | #alpha  | /projects/alpha | project:alpha:alpha-aa1 | 7200           | high            | agent-abc    | opus         |
 
-  @wip
   Scenario: Spawn uses default config values when not specified
     And project "alpha" has beads:
       | id        | title  | status |
@@ -36,7 +34,6 @@ Feature: Orchestrator spawning behavior
       | project | bead      | iteration | channel | path            | label                  | worker-timeout | worker-thinking |
       | alpha   | alpha-aa1 | 003       |         | /projects/alpha | project:alpha:alpha-aa1 | 1800           | high            |
 
-  @wip
   Scenario: Spawn multiple workers up to capacity
     Given configured projects:
       | slug  | max-workers | active-iteration | active-workers |
@@ -54,7 +51,6 @@ Feature: Orchestrator spawning behavior
       | alpha   | alpha-aa2 | project:alpha:alpha-aa2 |
     And the spawns should not include bead "alpha-aa3"
 
-  @wip
   Scenario: Spawn across multiple projects respects per-project capacity
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers | path           |
@@ -75,13 +71,11 @@ Feature: Orchestrator spawning behavior
       | beta    | beta-bb1  | /projects/beta  |
       | beta    | beta-bb2  | /projects/beta  |
 
-  @wip
   Scenario: Idle when no ready beads
     When the orchestrator ticks
     Then the action should be "idle"
     And the idle reason should be "no-ready-beads"
 
-  @wip
   Scenario: Idle when at capacity
     Given configured projects:
       | slug  | active-workers |
@@ -93,7 +87,6 @@ Feature: Orchestrator spawning behavior
     Then the action should be "idle"
     And the idle reason should be "all-at-capacity"
 
-  @wip
   Scenario: Idle when no active iterations
     Given configured projects:
       | slug  | active-iteration |
@@ -105,7 +98,6 @@ Feature: Orchestrator spawning behavior
     Then the action should be "idle"
     And the idle reason should be "no-active-iterations"
 
-  @wip
   Scenario: Paused projects are not spawned
     Given configured projects:
       | slug | status | max-workers | active-iteration | active-workers | path           |
@@ -123,7 +115,6 @@ Feature: Orchestrator spawning behavior
       | alpha   | alpha-aa1 |
     And the spawns should not include bead "beta-bb1"
 
-  @wip
   Scenario: Only ready beads are spawned
     And project "alpha" has beads:
       | id        | title  | status      |
@@ -140,7 +131,6 @@ Feature: Orchestrator spawning behavior
     And the spawns should not include bead "alpha-aa3"
     And the spawns should not include bead "alpha-aa4"
 
-  @wip
   Scenario: Spawn omits worker-agent and worker-model when not configured
     And project "alpha" has beads:
       | id        | title  | status |
@@ -153,7 +143,6 @@ Feature: Orchestrator spawning behavior
     And the spawn for "alpha-aa1" should not have key "worker-agent"
     And the spawn for "alpha-aa1" should not have key "worker-model"
 
-  @wip
   Scenario: High priority projects spawn before lower priority
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers | path           |

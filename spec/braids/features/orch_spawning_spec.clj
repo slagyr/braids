@@ -159,4 +159,33 @@
         [["alpha-aa1" "Task 1" "ready"]])
       (h/orch-tick!)
       (should= "high" (:project (h/spawn-at 1)))
-      (should= "alpha" (:project (h/spawn-at 2))))))
+      (should= "alpha" (:project (h/spawn-at 2)))))
+
+  (context "configure-projects-from-table replaces existing registry entries"
+    (it "does not duplicate registry entries when same slug is added twice with status column"
+      (h/reset!)
+      ;; First call adds alpha (simulates Background step)
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path"]
+        [["alpha" "active" "normal" "2" "003" "0" "/projects/alpha"]])
+      ;; Second call re-adds alpha with different priority (simulates Scenario step)
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path"]
+        [["low" "active" "low" "1" "001" "0" "/projects/low"]
+         ["high" "active" "high" "1" "001" "0" "/projects/high"]
+         ["alpha" "active" "normal" "1" "003" "0" "/projects/alpha"]])
+      (h/set-project-beads "high"
+        ["id" "title" "status"]
+        [["high-h1" "Task 1" "ready"]])
+      (h/set-project-beads "alpha"
+        ["id" "title" "status"]
+        [["alpha-aa1" "Task 1" "ready"]])
+      (h/set-project-beads "low"
+        ["id" "title" "status"]
+        [["low-l1" "Task 1" "ready"]])
+      (h/orch-tick!)
+      (should= "spawn" (h/tick-action))
+      (should= 3 (h/spawn-count))
+      (should= "high" (:project (h/spawn-at 1)))
+      (should= "alpha" (:project (h/spawn-at 2)))
+      (should= "low" (:project (h/spawn-at 3))))))

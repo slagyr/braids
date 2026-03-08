@@ -128,6 +128,10 @@
           (recur rest-lines :background false
                  (update result :background-lines conj trimmed))
 
+          (and (= state :background) (table-line? trimmed))
+          (recur rest-lines :background false
+                 (update result :background-lines conj trimmed))
+
           (and (= state :scenario) (step-keyword? trimmed))
           (let [scenarios (:scenarios result)
                 current (peek scenarios)
@@ -170,12 +174,7 @@
       (assoc :description (str/join "\n" description-lines))
 
       (seq background-lines)
-      (assoc :background {:steps (vec (map-indexed
-                                        (fn [_i line]
-                                          (let [gherkin-type (gherkin-type-for-keyword line)
-                                                text (strip-keyword line)]
-                                            {:type gherkin-type :text text}))
-                                        background-lines))}))))
+      (assoc :background (parse-scenario-lines background-lines)))))
 
 (defn parse-feature-file
   "Parse a .feature file into an EDN IR map with :source."

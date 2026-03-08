@@ -1156,10 +1156,14 @@
           worker-thinking (when (some #(= "worker-thinking" %) headers) (get m "worker-thinking"))
           channel (when (some #(= "channel" %) headers) (get m "channel"))]
       ;; Add to registry (only when status column is present)
+      ;; Replace existing entry with same slug to avoid duplicates
       (when has-status?
-        (swap! state update-in [:registry :projects] conj
-               {:slug slug :status (or status :active) :priority (or priority :normal)
-                :path (or path (str "/projects/" slug))}))
+        (let [new-entry {:slug slug :status (or status :active) :priority (or priority :normal)
+                         :path (or path (str "/projects/" slug))}]
+          (swap! state update-in [:registry :projects]
+                 (fn [projects]
+                   (let [without (filterv #(not= slug (:slug %)) projects)]
+                     (conj without new-entry))))))
       ;; When path is provided without status, update existing registry entry's path
       (when (and path (not has-status?))
         (swap! state update-in [:registry :projects]

@@ -128,8 +128,11 @@
 
     (it "parses orch_spawning.feature with raw step text"
       (let [result (gherkin/parse-feature-file "features/orch_spawning.feature")]
-        (should= {:steps [{:type :given :text "configured projects:"}]}
-                 (:background result))
+        (should= :given (-> result :background :steps first :type))
+        (should= "configured projects:" (-> result :background :steps first :text))
+        (should (-> result :background :steps first :table))
+        (should= ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path"]
+                 (-> result :background :steps first :table :headers))
         (should= 11 (count (:scenarios result)))
         (let [first-scenario (first (:scenarios result))]
           (should= "Spawn includes all invocation attributes" (:scenario first-scenario))

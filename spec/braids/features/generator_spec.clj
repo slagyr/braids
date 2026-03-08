@@ -104,7 +104,25 @@
 
     (it "classifies output-has-before"
       (should= {:pattern :output-has-before :first "high" :second "low"}
-               (gen/classify-step "the output has \"high\" before \"low\""))))
+               (gen/classify-step "the output has \"high\" before \"low\"")))
+
+    ;; --- Orch spawning new step patterns ---
+
+    (it "classifies spawns-should-include"
+      (should= {:pattern :spawns-should-include}
+               (gen/classify-step "the spawns should include")))
+
+    (it "classifies spawns-not-include-bead"
+      (should= {:pattern :spawns-not-include-bead :bead-id "alpha-aa3"}
+               (gen/classify-step "the spawns should not include bead \"alpha-aa3\"")))
+
+    (it "classifies spawn-missing-key"
+      (should= {:pattern :spawn-missing-key :bead-id "alpha-aa1" :key "worker-agent"}
+               (gen/classify-step "the spawn for \"alpha-aa1\" should not have key \"worker-agent\"")))
+
+    (it "classifies spawn-at-project"
+      (should= {:pattern :spawn-at-project :index 1 :project "high"}
+               (gen/classify-step "spawn 1 should be for project \"high\""))))
 
   (context "source->ns-name"
 
@@ -173,6 +191,34 @@
     (it "formats assert-idle-reason step"
       (should= "the idle reason should be \"no-ready-beads\""
                (gen/step-text {:pattern :assert-idle-reason :expected "no-ready-beads"})))
+
+    ;; --- Orch spawning new step-text ---
+
+    (it "formats spawns-should-include step"
+      (should= "the spawns should include"
+               (gen/step-text {:pattern :spawns-should-include})))
+
+    (it "formats spawns-not-include-bead step"
+      (should= "the spawns should not include bead \"alpha-aa3\""
+               (gen/step-text {:pattern :spawns-not-include-bead :bead-id "alpha-aa3"})))
+
+    (it "formats spawn-missing-key step"
+      (should= "the spawn for \"alpha-aa1\" should not have key \"worker-agent\""
+               (gen/step-text {:pattern :spawn-missing-key :bead-id "alpha-aa1" :key "worker-agent"})))
+
+    (it "formats spawn-at-project step"
+      (should= "spawn 1 should be for project \"high\""
+               (gen/step-text {:pattern :spawn-at-project :index 1 :project "high"})))
+
+    ;; --- Orch output shared step-text ---
+
+    (it "formats configured-projects-table step"
+      (should= "configured projects:"
+               (gen/step-text {:pattern :configured-projects-table})))
+
+    (it "formats project-has-beads-table step"
+      (should= "project \"alpha\" has beads:"
+               (gen/step-text {:pattern :project-has-beads-table :slug "alpha"})))
 
     ;; --- Worker session tracking step-text ---
 
@@ -1236,13 +1282,20 @@
     ;; Note: These tests require running bb features:parse first to generate the .edn IR files
     ;; with the new typed IR format.
 
-    (it "generates spec from orch_spawning IR with all @wip scenarios skipped"
+    (it "generates spec from orch_spawning IR with all 11 scenarios executable"
       (let [ir (read-string (slurp "features/edn/orch_spawning.edn"))
             output (gen/generate-spec ir)]
         (should-contain "(ns braids.features.orch-spawning-spec" output)
         (should-contain "(describe \"Orchestrator spawning behavior\"" output)
-        ;; All 11 scenarios are @wip, so 0 contexts should be generated
-        (should= 0 (count (re-seq #"\(context " output)))))
+        ;; All 11 scenarios should be generated (no @wip)
+        (should= 11 (count (re-seq #"\(context " output)))
+        ;; All should be executable — no pending
+        (should-not-contain "pending" output)
+        ;; Should have harness calls
+        (should-contain "(h/reset!)" output)
+        (should-contain "(h/configure-projects-from-table" output)
+        (should-contain "(h/spawn-includes?" output)
+        (should-contain "(h/orch-tick!)" output)))
 
     (it "generates spec from worker_session_tracking IR with all executable scenarios"
       (let [ir (read-string (slurp "features/edn/worker_session_tracking.edn"))
