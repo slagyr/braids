@@ -87,6 +87,29 @@
         (should= "spawn" (:action result))
         (should= 2 (count (:spawns result)))))
 
+    (it "high priority project spawns before normal"
+      (let [registry {:projects [{:slug "norm" :status :active :priority :normal :path "/tmp/n"}
+                                  {:slug "high" :status :active :priority :high :path "/tmp/h"}]}
+            configs {"norm" {:name "Norm" :status :active :max-workers 1 :channel "111"}
+                     "high" {:name "High" :status :active :max-workers 1 :channel "222"}}
+            iterations {"norm" "001" "high" "002"}
+            beads {"norm" [{:id "norm-a" :title "Norm task" :priority "P1"}]
+                   "high" [{:id "high-b" :title "High task" :priority "P0"}]}
+            workers {}
+            result (orch/tick registry configs iterations beads workers {})]
+        (should= "high" (:project (first (:spawns result))))
+        (should= "norm" (:project (second (:spawns result))))))
+
+    (it "spawns with default max-workers of 1 when not in config"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:name "Proj" :status :active :channel "123"}}
+            iterations {"proj" "008"}
+            beads {"proj" [{:id "proj-abc" :title "Do stuff" :priority "P1"}]}
+            workers {}
+            result (orch/tick registry configs iterations beads workers {})]
+        (should= "spawn" (:action result))
+        (should= 1 (count (:spawns result)))))
+
     (it "skips paused projects from config"
       (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
             configs {"proj" {:name "Proj" :status :paused :max-workers 1 :channel "123"}}
@@ -268,6 +291,22 @@
             iterations {"proj" "008"}
             beads {"proj" []}
             workers {}]
+        (should= ["proj"] (orch/no-ready-beads-projects registry configs iterations beads workers))))
+
+    (it "excludes projects at exactly max capacity"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:name "Proj" :status :active :max-workers 2}}
+            iterations {"proj" "008"}
+            beads {"proj" []}
+            workers {"proj" 2}]
+        (should= [] (orch/no-ready-beads-projects registry configs iterations beads workers))))
+
+    (it "includes projects under capacity with default max-workers"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:name "Proj" :status :active}}
+            iterations {"proj" "008"}
+            beads {"proj" []}
+            workers {}]
         (should= ["proj"] (orch/no-ready-beads-projects registry configs iterations beads workers)))))
 
   (context "detect-zombies"
@@ -305,6 +344,13 @@
     (it "does not flag running session with open bead within timeout"
       (let [sessions [{:label "project:proj:proj-abc" :status "running" :age-seconds 100}]
             configs {"proj" {:worker-timeout 1800}}
+            bead-statuses {"proj-abc" "open"}
+            result (orch/detect-zombies sessions configs bead-statuses)]
+        (should= 0 (count result))))
+
+    (it "does not flag session at exactly the timeout boundary"
+      (let [sessions [{:label "project:proj:proj-abc" :status "running" :age-seconds 3600}]
+            configs {"proj" {:worker-timeout 3600}}
             bead-statuses {"proj-abc" "open"}
             result (orch/detect-zombies sessions configs bead-statuses)]
         (should= 0 (count result))))
@@ -581,6 +627,15 @@
             output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
         (should-contain "This Title Is Way..." output)
         (should-not-contain "Too Long" output)))
+
+    (it "shows workers:0/1 when no workers map entry and no max-workers config"
+      (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}
+            configs {"proj" {:status :active}}
+            iterations {"proj" "001"}
+            open-beads {"proj" []}
+            tick-result {:action "idle" :reason "no-ready-beads" :disable-cron false}
+            output (orch/format-debug-output reg configs iterations open-beads tick-result {})]
+        (should-contain "workers:0/1" output)))
 
     (it "does not truncate titles of exactly 20 characters"
       (let [reg {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/proj"}]}

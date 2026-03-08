@@ -1,3 +1,4 @@
+;; mutation-tested: 2026-03-07
 (ns braids.config
   "Pure functions for braids config.edn management."
   (:require [clojure.string :as str]

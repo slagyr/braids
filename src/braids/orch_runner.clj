@@ -1,3 +1,4 @@
+;; mutation-tested: 2026-03-07
 (ns braids.orch-runner
   "Pure functions for the braids orch runner.
    Converts orchestrator tick results into openclaw agent spawn commands."
