@@ -1,5 +1,5 @@
 {:number "028"
- :status :active
+ :status :complete
  :stories [;; Test suite health (closed)
            {:id "braids-03k" :title "Fix parse-steps forward reference in gherkin.clj — bb test broken"}
            {:id "braids-pai" :title "Sideline gherkin tests — separate bb test:features task, exclude from bb test"}
