@@ -95,71 +95,19 @@
               parsed)))
     (catch Exception _ [])))
 
-(defn gather-and-tick
-  "Full IO pipeline for orch tick: load everything, compute spawn decisions."
-  ([] (gather-and-tick {}))
-  ([{:keys [braids-home state-home session-labels]
-     :or {session-labels []}}]
-   (let [home (or state-home (rio/resolve-state-home))
-         reg (rio/load-registry home)
-         active-projects (filter #(= :active (:status %)) (:projects reg))
-         configs (into {} (map (fn [{:keys [slug path]}]
-                                 [slug (rio/load-project-config path)])
-                               active-projects))
-         iterations (into {} (keep (fn [{:keys [slug path]}]
-                                     (when-let [iter (find-active-iteration path)]
-                                       [slug iter]))
-                                   active-projects))
-         beads (into {} (map (fn [{:keys [slug path]}]
-                               [slug (if (contains? iterations slug)
-                                       (rio/load-ready-beads path)
-                                       [])])
-                             active-projects))
-         workers (rio/count-workers session-labels)
-         notifications (into {} (map (fn [{:keys [slug]}]
-                                       [slug (select-keys (get configs slug)
-                                                          [:notifications :notification-mentions])])
-                                     active-projects))
-         open-beads (into {} (map (fn [{:keys [slug path]}]
-                                    [slug (if (contains? iterations slug)
-                                            (load-open-beads path)
-                                            [])])
-                                  active-projects))]
-     (orch/tick reg configs iterations beads workers notifications open-beads))))
+;; ── Shared IO-loading helpers ──
 
-
-(defn gather-and-tick-with-zombies
-  "Enhanced orch pipeline with zombie detection. Accepts session-info as JSON string.
-   Returns tick result with :zombies key included."
-  [session-info-json]
-  (let [sessions (parse-session-labels session-info-json)
-        labels (mapv :label sessions)
-        home (rio/resolve-state-home)
+(defn- load-project-data
+  "Load all project data needed for an orch tick.
+   Returns a map with :reg, :active-projects, :configs, :iterations,
+   :beads, :notifications, and :open-beads."
+  []
+  (let [home (rio/resolve-state-home)
         reg (rio/load-registry home)
         active-projects (filter #(= :active (:status %)) (:projects reg))
         configs (into {} (map (fn [{:keys [slug path]}]
                                 [slug (rio/load-project-config path)])
                               active-projects))
-        ;; Only load bead statuses for projects that have active sessions
-        project-labels (filter #(str/starts-with? (:label %) "project:") sessions)
-        projects-with-sessions (set (keep (fn [{:keys [label]}]
-                                            (let [parts (str/split label #":" 3)]
-                                              (when (>= (count parts) 2) (second parts))))
-                                          project-labels))
-        ;; Batch load bead statuses per project (one bd list call per project, not per bead)
-        bead-statuses (if (empty? projects-with-sessions)
-                        {}
-                        (reduce (fn [acc {:keys [slug path]}]
-                                  (if (contains? projects-with-sessions slug)
-                                    (merge acc (load-bead-statuses path))
-                                    acc))
-                                {} active-projects))
-        ;; Detect zombies
-        zombies (orch/detect-zombies sessions configs bead-statuses)
-        zombie-labels (set (map :label zombies))
-        ;; Filter out zombie labels from worker count
-        clean-labels (vec (remove zombie-labels labels))
-        ;; Now run normal tick with clean labels
         iterations (into {} (keep (fn [{:keys [slug path]}]
                                     (when-let [iter (find-active-iteration path)]
                                       [slug iter]))
@@ -169,17 +117,79 @@
                                       (rio/load-ready-beads path)
                                       [])])
                             active-projects))
-        workers (rio/count-workers clean-labels)
         notifications (into {} (map (fn [{:keys [slug]}]
                                       [slug (select-keys (get configs slug)
                                                          [:notifications :notification-mentions])])
                                     active-projects))
         open-beads (into {} (map (fn [{:keys [slug path]}]
-                              [slug (if (contains? iterations slug)
-                                      (load-open-beads path)
-                                      [])])
-                            active-projects))
-        tick-result (orch/tick reg configs iterations beads workers notifications open-beads)]
+                                   [slug (if (contains? iterations slug)
+                                           (load-open-beads path)
+                                           [])])
+                                 active-projects))]
+    {:reg reg :active-projects active-projects :configs configs
+     :iterations iterations :beads beads :notifications notifications
+     :open-beads open-beads}))
+
+(defn- tick-with-data
+  "Run orch/tick with loaded project data and worker labels."
+  [{:keys [reg configs iterations beads notifications open-beads]} worker-labels]
+  (orch/tick reg configs iterations beads (rio/count-workers worker-labels) notifications open-beads))
+
+(defn- load-bead-statuses-for-projects
+  "Batch load bead statuses only for projects that have active sessions."
+  [projects-with-sessions active-projects]
+  (if (empty? projects-with-sessions)
+    {}
+    (reduce (fn [acc {:keys [slug path]}]
+              (if (contains? projects-with-sessions slug)
+                (merge acc (load-bead-statuses path))
+                acc))
+            {} active-projects)))
+
+(defn- extract-project-slugs-from-labels
+  "Extract project slugs from session labels (strings like 'project:slug:bead')."
+  [labels]
+  (set (keep (fn [label]
+               (let [parts (str/split (if (map? label) (:label label) label) #":" 3)]
+                 (when (>= (count parts) 2) (second parts))))
+             labels)))
+
+(defn- filter-zombie-labels
+  "Remove zombie labels from a label list, returning clean labels."
+  [labels zombies]
+  (let [zombie-labels (set (map :label zombies))]
+    (vec (remove zombie-labels labels))))
+
+(defn- wrap-debug
+  "Wrap a tick result with debug context from loaded project data."
+  [result {:keys [reg configs iterations open-beads beads] :as _data} workers]
+  {:result result
+   :debug-ctx {:registry reg :configs configs :iterations iterations
+               :open-beads open-beads :ready-beads beads :workers workers}})
+
+;; ── Public API ──
+
+(defn gather-and-tick
+  "Full IO pipeline for orch tick: load everything, compute spawn decisions."
+  ([] (gather-and-tick {}))
+  ([{:keys [state-home session-labels]
+     :or {session-labels []}}]
+   (let [data (load-project-data)]
+     (tick-with-data data session-labels))))
+
+(defn gather-and-tick-with-zombies
+  "Enhanced orch pipeline with zombie detection. Accepts session-info as JSON string.
+   Returns tick result with :zombies key included."
+  [session-info-json]
+  (let [sessions (parse-session-labels session-info-json)
+        labels (mapv :label sessions)
+        data (load-project-data)
+        project-labels (filter #(str/starts-with? (:label %) "project:") sessions)
+        projects-with-sessions (extract-project-slugs-from-labels project-labels)
+        bead-statuses (load-bead-statuses-for-projects projects-with-sessions (:active-projects data))
+        zombies (orch/detect-zombies sessions (:configs data) bead-statuses)
+        clean-labels (filter-zombie-labels labels zombies)
+        tick-result (tick-with-data data clean-labels)]
     (cond-> tick-result
       (seq zombies) (assoc :zombies zombies))))
 
@@ -189,187 +199,14 @@
    Returns tick result with :zombies key if any found."
   [sessions-str]
   (let [labels (orch/parse-session-labels-string sessions-str)
-        home (rio/resolve-state-home)
-        reg (rio/load-registry home)
-        active-projects (filter #(= :active (:status %)) (:projects reg))
-        configs (into {} (map (fn [{:keys [slug path]}]
-                                [slug (rio/load-project-config path)])
-                              active-projects))
-        ;; Extract projects with active sessions for batch bead status loading
-        projects-with-sessions (set (keep (fn [label]
-                                            (let [parts (str/split label #":" 3)]
-                                              (when (>= (count parts) 2) (second parts))))
-                                          labels))
-        ;; Batch load bead statuses per project
-        bead-statuses (if (empty? projects-with-sessions)
-                        {}
-                        (reduce (fn [acc {:keys [slug path]}]
-                                  (if (contains? projects-with-sessions slug)
-                                    (merge acc (load-bead-statuses path))
-                                    acc))
-                                {} active-projects))
-        ;; Detect bead-closed zombies
+        data (load-project-data)
+        projects-with-sessions (extract-project-slugs-from-labels labels)
+        bead-statuses (load-bead-statuses-for-projects projects-with-sessions (:active-projects data))
         zombies (orch/detect-zombies-from-labels labels bead-statuses)
-        zombie-labels (set (map :label zombies))
-        ;; Filter out zombie labels from worker count
-        clean-labels (vec (remove zombie-labels labels))
-        ;; Normal tick computation
-        iterations (into {} (keep (fn [{:keys [slug path]}]
-                                    (when-let [iter (find-active-iteration path)]
-                                      [slug iter]))
-                                  active-projects))
-        beads (into {} (map (fn [{:keys [slug path]}]
-                              [slug (if (contains? iterations slug)
-                                      (rio/load-ready-beads path)
-                                      [])])
-                            active-projects))
-        workers (rio/count-workers clean-labels)
-        notifications (into {} (map (fn [{:keys [slug]}]
-                                      [slug (select-keys (get configs slug)
-                                                         [:notifications :notification-mentions])])
-                                    active-projects))
-        open-beads (into {} (map (fn [{:keys [slug path]}]
-                              [slug (if (contains? iterations slug)
-                                      (load-open-beads path)
-                                      [])])
-                            active-projects))
-        tick-result (orch/tick reg configs iterations beads workers notifications open-beads)]
+        clean-labels (filter-zombie-labels labels zombies)
+        tick-result (tick-with-data data clean-labels)]
     (cond-> tick-result
       (seq zombies) (assoc :zombies zombies))))
-
-(defn gather-and-tick-debug
-  "Like gather-and-tick but returns {:result tick-result :debug-ctx {...}} for debug output."
-  ([] (gather-and-tick-debug {}))
-  ([{:keys [braids-home state-home session-labels]
-     :or {session-labels []}}]
-   (let [home (or state-home (rio/resolve-state-home))
-         reg (rio/load-registry home)
-         active-projects (filter #(= :active (:status %)) (:projects reg))
-         configs (into {} (map (fn [{:keys [slug path]}]
-                                 [slug (rio/load-project-config path)])
-                               active-projects))
-         iterations (into {} (keep (fn [{:keys [slug path]}]
-                                     (when-let [iter (find-active-iteration path)]
-                                       [slug iter]))
-                                   active-projects))
-         beads (into {} (map (fn [{:keys [slug path]}]
-                               [slug (if (contains? iterations slug)
-                                       (rio/load-ready-beads path)
-                                       [])])
-                             active-projects))
-         workers (rio/count-workers session-labels)
-         notifications (into {} (map (fn [{:keys [slug]}]
-                                       [slug (select-keys (get configs slug)
-                                                          [:notifications :notification-mentions])])
-                                     active-projects))
-         open-beads (into {} (map (fn [{:keys [slug path]}]
-                                    [slug (if (contains? iterations slug)
-                                            (load-open-beads path)
-                                            [])])
-                                  active-projects))
-         result (orch/tick reg configs iterations beads workers notifications open-beads)]
-     {:result result
-      :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads :ready-beads beads :workers workers}})))
-
-(defn gather-and-tick-from-session-labels-debug
-  "Like gather-and-tick-from-session-labels but returns {:result :debug-ctx}."
-  [sessions-str]
-  (let [labels (orch/parse-session-labels-string sessions-str)
-        home (rio/resolve-state-home)
-        reg (rio/load-registry home)
-        active-projects (filter #(= :active (:status %)) (:projects reg))
-        configs (into {} (map (fn [{:keys [slug path]}]
-                                [slug (rio/load-project-config path)])
-                              active-projects))
-        projects-with-sessions (set (keep (fn [label]
-                                            (let [parts (str/split label #":" 3)]
-                                              (when (>= (count parts) 2) (second parts))))
-                                          labels))
-        bead-statuses (if (empty? projects-with-sessions)
-                        {}
-                        (reduce (fn [acc {:keys [slug path]}]
-                                  (if (contains? projects-with-sessions slug)
-                                    (merge acc (load-bead-statuses path))
-                                    acc))
-                                {} active-projects))
-        zombies (orch/detect-zombies-from-labels labels bead-statuses)
-        zombie-labels (set (map :label zombies))
-        clean-labels (vec (remove zombie-labels labels))
-        iterations (into {} (keep (fn [{:keys [slug path]}]
-                                    (when-let [iter (find-active-iteration path)]
-                                      [slug iter]))
-                                  active-projects))
-        beads (into {} (map (fn [{:keys [slug path]}]
-                              [slug (if (contains? iterations slug)
-                                      (rio/load-ready-beads path)
-                                      [])])
-                            active-projects))
-        workers (rio/count-workers clean-labels)
-        notifications (into {} (map (fn [{:keys [slug]}]
-                                      [slug (select-keys (get configs slug)
-                                                         [:notifications :notification-mentions])])
-                                    active-projects))
-        open-beads (into {} (map (fn [{:keys [slug path]}]
-                              [slug (if (contains? iterations slug)
-                                      (load-open-beads path)
-                                      [])])
-                            active-projects))
-        tick-result (orch/tick reg configs iterations beads workers notifications open-beads)
-        result (cond-> tick-result
-                 (seq zombies) (assoc :zombies zombies))]
-    {:result result
-     :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads :ready-beads beads :workers workers}}))
-
-(defn gather-and-tick-with-zombies-debug
-  "Like gather-and-tick-with-zombies but returns {:result :debug-ctx}."
-  [session-info-json]
-  (let [sessions (parse-session-labels session-info-json)
-        labels (mapv :label sessions)
-        home (rio/resolve-state-home)
-        reg (rio/load-registry home)
-        active-projects (filter #(= :active (:status %)) (:projects reg))
-        configs (into {} (map (fn [{:keys [slug path]}]
-                                [slug (rio/load-project-config path)])
-                              active-projects))
-        project-labels (filter #(str/starts-with? (:label %) "project:") sessions)
-        projects-with-sessions (set (keep (fn [{:keys [label]}]
-                                            (let [parts (str/split label #":" 3)]
-                                              (when (>= (count parts) 2) (second parts))))
-                                          project-labels))
-        bead-statuses (if (empty? projects-with-sessions)
-                        {}
-                        (reduce (fn [acc {:keys [slug path]}]
-                                  (if (contains? projects-with-sessions slug)
-                                    (merge acc (load-bead-statuses path))
-                                    acc))
-                                {} active-projects))
-        zombies (orch/detect-zombies sessions configs bead-statuses)
-        zombie-labels (set (map :label zombies))
-        clean-labels (vec (remove zombie-labels labels))
-        iterations (into {} (keep (fn [{:keys [slug path]}]
-                                    (when-let [iter (find-active-iteration path)]
-                                      [slug iter]))
-                                  active-projects))
-        beads (into {} (map (fn [{:keys [slug path]}]
-                              [slug (if (contains? iterations slug)
-                                      (rio/load-ready-beads path)
-                                      [])])
-                            active-projects))
-        workers (rio/count-workers clean-labels)
-        notifications (into {} (map (fn [{:keys [slug]}]
-                                      [slug (select-keys (get configs slug)
-                                                         [:notifications :notification-mentions])])
-                                    active-projects))
-        open-beads (into {} (map (fn [{:keys [slug path]}]
-                              [slug (if (contains? iterations slug)
-                                      (load-open-beads path)
-                                      [])])
-                            active-projects))
-        tick-result (orch/tick reg configs iterations beads workers notifications open-beads)
-        result (cond-> tick-result
-                 (seq zombies) (assoc :zombies zombies))]
-    {:result result
-     :debug-ctx {:registry reg :configs configs :iterations iterations :open-beads open-beads :ready-beads beads :workers workers}}))
 
 (defn load-sessions-from-stores
   "Read all agent session store files under openclaw-home/agents/*/sessions/sessions.json.
@@ -412,6 +249,18 @@
                               (catch Exception _ []))))))
               vec))))))
 
+(defn- build-synthetic-labels
+  "Build synthetic project labels from session-id matched worker sessions."
+  [sessions active-projects]
+  (keep (fn [{:keys [worker-bead-id]}]
+          (when worker-bead-id
+            (let [sorted-projects (sort-by #(- (count (:slug %))) active-projects)]
+              (some (fn [{:keys [slug]}]
+                      (when (str/starts-with? worker-bead-id (str slug "-"))
+                        (str "project:" slug ":" worker-bead-id)))
+                    sorted-projects))))
+        sessions))
+
 (defn gather-and-tick-from-stores
   "Full orch pipeline that reads session info directly from openclaw session stores.
    No external session input needed. Returns tick result with :zombies."
@@ -419,56 +268,14 @@
   ([openclaw-home]
    (let [sessions (load-sessions-from-stores openclaw-home)
          labels (mapv :label sessions)
-         home (rio/resolve-state-home)
-         reg (rio/load-registry home)
-         active-projects (filter #(= :active (:status %)) (:projects reg))
-         configs (into {} (map (fn [{:keys [slug path]}]
-                                 [slug (rio/load-project-config path)])
-                               active-projects))
-         projects-with-sessions (set (keep (fn [{:keys [label]}]
-                                             (let [parts (str/split label #":" 3)]
-                                               (when (>= (count parts) 2) (second parts))))
-                                           sessions))
-         bead-statuses (if (empty? projects-with-sessions)
-                         {}
-                         (reduce (fn [acc {:keys [slug path]}]
-                                   (if (contains? projects-with-sessions slug)
-                                     (merge acc (load-bead-statuses path))
-                                     acc))
-                                 {} active-projects))
-         zombies (orch/detect-zombies sessions configs bead-statuses)
-         zombie-labels (set (map :label zombies))
-         clean-labels (vec (remove zombie-labels labels))
-         ;; Build synthetic labels from session-id matched worker sessions
-         sid-labels (keep (fn [{:keys [worker-bead-id]}]
-                            (when worker-bead-id
-                              (let [sorted-projects (sort-by #(- (count (:slug %))) active-projects)]
-                                (some (fn [{:keys [slug]}]
-                                        (when (str/starts-with? worker-bead-id (str slug "-"))
-                                          (str "project:" slug ":" worker-bead-id)))
-                                      sorted-projects))))
-                          sessions)
+         data (load-project-data)
+         projects-with-sessions (extract-project-slugs-from-labels sessions)
+         bead-statuses (load-bead-statuses-for-projects projects-with-sessions (:active-projects data))
+         zombies (orch/detect-zombies sessions (:configs data) bead-statuses)
+         clean-labels (filter-zombie-labels labels zombies)
+         sid-labels (build-synthetic-labels sessions (:active-projects data))
          all-labels (into clean-labels sid-labels)
-         iterations (into {} (keep (fn [{:keys [slug path]}]
-                                     (when-let [iter (find-active-iteration path)]
-                                       [slug iter]))
-                                   active-projects))
-         beads (into {} (map (fn [{:keys [slug path]}]
-                               [slug (if (contains? iterations slug)
-                                       (rio/load-ready-beads path)
-                                       [])])
-                             active-projects))
-         workers (rio/count-workers all-labels)
-         notifications (into {} (map (fn [{:keys [slug]}]
-                                       [slug (select-keys (get configs slug)
-                                                          [:notifications :notification-mentions])])
-                                     active-projects))
-         open-beads (into {} (map (fn [{:keys [slug path]}]
-                                    [slug (if (contains? iterations slug)
-                                            (load-open-beads path)
-                                            [])])
-                                  active-projects))
-         tick-result (orch/tick reg configs iterations beads workers notifications open-beads)]
+         tick-result (tick-with-data data all-labels)]
      (cond-> tick-result
        (seq zombies) (assoc :zombies zombies)))))
 
@@ -478,58 +285,16 @@
   ([openclaw-home]
    (let [sessions (load-sessions-from-stores openclaw-home)
          labels (mapv :label sessions)
-         home (rio/resolve-state-home)
-         reg (rio/load-registry home)
-         active-projects (filter #(= :active (:status %)) (:projects reg))
-         configs (into {} (map (fn [{:keys [slug path]}]
-                                 [slug (rio/load-project-config path)])
-                               active-projects))
-         projects-with-sessions (set (keep (fn [{:keys [label]}]
-                                             (let [parts (str/split label #":" 3)]
-                                               (when (>= (count parts) 2) (second parts))))
-                                           sessions))
-         bead-statuses (if (empty? projects-with-sessions)
-                         {}
-                         (reduce (fn [acc {:keys [slug path]}]
-                                   (if (contains? projects-with-sessions slug)
-                                     (merge acc (load-bead-statuses path))
-                                     acc))
-                                 {} active-projects))
-         zombies (orch/detect-zombies sessions configs bead-statuses)
-         zombie-labels (set (map :label zombies))
-         clean-labels (vec (remove zombie-labels labels))
-         ;; Build synthetic labels from session-id matched worker sessions
-         sid-labels (keep (fn [{:keys [worker-bead-id]}]
-                            (when worker-bead-id
-                              (let [sorted-projects (sort-by #(- (count (:slug %))) active-projects)]
-                                (some (fn [{:keys [slug]}]
-                                        (when (str/starts-with? worker-bead-id (str slug "-"))
-                                          (str "project:" slug ":" worker-bead-id)))
-                                      sorted-projects))))
-                          sessions)
+         data (load-project-data)
+         projects-with-sessions (extract-project-slugs-from-labels sessions)
+         bead-statuses (load-bead-statuses-for-projects projects-with-sessions (:active-projects data))
+         zombies (orch/detect-zombies sessions (:configs data) bead-statuses)
+         clean-labels (filter-zombie-labels labels zombies)
+         sid-labels (build-synthetic-labels sessions (:active-projects data))
          all-labels (into clean-labels sid-labels)
-         iterations (into {} (keep (fn [{:keys [slug path]}]
-                                     (when-let [iter (find-active-iteration path)]
-                                       [slug iter]))
-                                   active-projects))
-         beads (into {} (map (fn [{:keys [slug path]}]
-                               [slug (if (contains? iterations slug)
-                                       (rio/load-ready-beads path)
-                                       [])])
-                             active-projects))
          workers (rio/count-workers all-labels)
-         notifications (into {} (map (fn [{:keys [slug]}]
-                                       [slug (select-keys (get configs slug)
-                                                          [:notifications :notification-mentions])])
-                                     active-projects))
-         open-beads (into {} (map (fn [{:keys [slug path]}]
-                                    [slug (if (contains? iterations slug)
-                                            (load-open-beads path)
-                                            [])])
-                                  active-projects))
-         tick-result (orch/tick reg configs iterations beads workers notifications open-beads)
+         tick-result (orch/tick (:reg data) (:configs data) (:iterations data)
+                               (:beads data) workers (:notifications data) (:open-beads data))
          result (cond-> tick-result
                   (seq zombies) (assoc :zombies zombies))]
-     {:result result
-      :debug-ctx {:registry reg :configs configs :iterations iterations
-                  :open-beads open-beads :ready-beads beads :workers workers}})))
+     (wrap-debug result data workers))))
