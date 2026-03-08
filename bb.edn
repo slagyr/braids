@@ -1,6 +1,6 @@
 {:paths ["src" "spec"]
  :tasks {spec              {:doc        "Run unit specs"
-                            :extra-deps {speclj/speclj {:mvn/version "3.12.0"}}
+                            :extra-deps {speclj/speclj {:mvn/version "3.12.1"}}
                             :requires   ([speclj.main :as speclj])
                             :task       (apply speclj/-main "-c"
                                           "spec/braids"
@@ -17,7 +17,7 @@
                                             output (or (second *command-line-args*) "features/generated")]
                                         (gen/generate-features! edn-dir output))}
          features          {:doc        "Parse, generate, and run feature specs"
-                            :extra-deps {speclj/speclj {:mvn/version "3.12.0"}}
+                            :extra-deps {speclj/speclj {:mvn/version "3.12.1"}}
                             :requires   ([braids.features.pipeline :as pipeline]
                                          [speclj.main :as speclj])
                             :task       (do
