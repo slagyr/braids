@@ -1,3 +1,4 @@
+;; mutation-tested: 2026-03-07
 (ns braids.project-config
   (:require [clojure.edn :as edn]
             [braids.edn-format :refer [edn-format]]))
