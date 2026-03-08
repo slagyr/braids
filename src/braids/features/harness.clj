@@ -1133,28 +1133,67 @@
 ;; --- Orch output helpers ---
 
 (defn configure-projects-from-table
-  "Set up projects from table data with columns: slug, status, priority,
-   max-workers, active-iteration, active-workers."
+  "Set up projects from table data. Supports two usage patterns:
+   1. Full setup: columns slug, status, priority, max-workers, active-iteration, active-workers, path
+   2. Config overlay: columns slug plus optional worker-timeout, worker-agent, worker-model, worker-thinking, channel
+   When status/priority/max-workers columns are present, adds to registry and sets base config.
+   When config-only columns are present, merges into existing config."
   [headers rows]
   (doseq [row rows]
     (let [m (zipmap headers row)
           slug (get m "slug")
-          status (keyword (get m "status"))
-          priority (keyword (get m "priority"))
-          max-workers (parse-long (get m "max-workers"))
+          has-status? (some #(= "status" %) headers)
+          status (when has-status? (keyword (get m "status")))
+          priority (when (some #(= "priority" %) headers) (keyword (get m "priority")))
+          max-workers (when (some #(= "max-workers" %) headers) (parse-long (get m "max-workers")))
           active-iteration (get m "active-iteration")
-          active-workers (parse-long (get m "active-workers"))]
-      ;; Add to registry
-      (swap! state update-in [:registry :projects] conj
-             {:slug slug :status status :priority priority :path (str "/projects/" slug)})
-      ;; Set config
-      (swap! state assoc-in [:configs slug]
-             {:status status :max-workers max-workers})
+          active-workers (when (some #(= "active-workers" %) headers) (parse-long (get m "active-workers")))
+          path (get m "path")
+          ;; Extended config columns
+          worker-timeout (when (some #(= "worker-timeout" %) headers) (get m "worker-timeout"))
+          worker-agent (when (some #(= "worker-agent" %) headers) (get m "worker-agent"))
+          worker-model (when (some #(= "worker-model" %) headers) (get m "worker-model"))
+          worker-thinking (when (some #(= "worker-thinking" %) headers) (get m "worker-thinking"))
+          channel (when (some #(= "channel" %) headers) (get m "channel"))]
+      ;; Add to registry (only when status column is present)
+      (when has-status?
+        (swap! state update-in [:registry :projects] conj
+               {:slug slug :status (or status :active) :priority (or priority :normal)
+                :path (or path (str "/projects/" slug))}))
+      ;; When path is provided without status, update existing registry entry's path
+      (when (and path (not has-status?))
+        (swap! state update-in [:registry :projects]
+               (fn [projects]
+                 (mapv (fn [p]
+                         (if (= slug (:slug p))
+                           (assoc p :path path)
+                           p))
+                       projects))))
+      ;; Set config (merge, don't replace)
+      (let [base-config (cond-> {}
+                          status (assoc :status status)
+                          max-workers (assoc :max-workers max-workers)
+                          (and worker-timeout (seq worker-timeout))
+                          (assoc :worker-timeout (parse-long worker-timeout))
+                          (and worker-agent (seq worker-agent))
+                          (assoc :worker-agent worker-agent)
+                          (and worker-model (seq worker-model))
+                          (assoc :worker-model worker-model)
+                          (and worker-thinking (seq worker-thinking))
+                          (assoc :worker-thinking worker-thinking)
+                          channel
+                          (assoc :channel channel))]
+        (swap! state update-in [:configs slug] merge base-config))
       ;; Set active iteration (if non-empty)
       (when (and active-iteration (seq active-iteration))
         (swap! state assoc-in [:iterations slug] active-iteration))
+      ;; Clear iteration when explicitly empty
+      (when (and (some #(= "active-iteration" %) headers)
+                 (or (nil? active-iteration) (empty? active-iteration)))
+        (swap! state update :iterations dissoc slug))
       ;; Set active workers
-      (swap! state assoc-in [:workers slug] active-workers))))
+      (when active-workers
+        (swap! state assoc-in [:workers slug] active-workers)))))
 
 (defn set-project-beads
   "Set beads with id, title, status for a project.
@@ -1180,6 +1219,38 @@
         all-open-beads (or open-beads {})
         output (orch/format-debug-output registry configs iterations all-open-beads result workers)]
     (swap! state assoc :tick-result result :tick-output output :output output)))
+
+(defn spawn-includes?
+  "Returns true if the spawn list contains an entry matching all key-value pairs
+   in the expected map. Keys and values are strings (matching feature table format).
+   Numeric values in spawns are coerced to strings for comparison."
+  [expected]
+  (let [spawns (:spawns (:tick-result @state))]
+    (some (fn [spawn]
+            (every? (fn [[k v]]
+                      (let [spawn-val (get spawn (keyword k))]
+                        (= (str v) (str spawn-val))))
+                    expected))
+          spawns)))
+
+(defn spawn-excludes-bead?
+  "Returns true if no spawn entry has the given bead ID."
+  [bead-id]
+  (let [spawns (:spawns (:tick-result @state))]
+    (not (some #(= bead-id (:bead %)) spawns))))
+
+(defn spawn-missing-key?
+  "Returns true if the spawn entry for the given bead ID does not contain the specified key."
+  [bead-id key-name]
+  (let [spawns (:spawns (:tick-result @state))
+        spawn (first (filter #(= bead-id (:bead %)) spawns))]
+    (when spawn
+      (not (contains? spawn (keyword key-name))))))
+
+(defn spawn-at
+  "Returns the nth spawn entry (1-indexed)."
+  [n]
+  (nth (:spawns (:tick-result @state)) (dec n) nil))
 
 (defn tick-output
   "Returns the formatted tick output."

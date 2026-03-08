@@ -85,4 +85,78 @@
       (h/set-active-workers "alpha" 0)
       (h/orch-tick!)
       (should= "spawn" (h/tick-action))
-      (should= "project:alpha:alpha-abc" (h/spawn-label)))))
+      (should= "project:alpha:alpha-abc" (h/spawn-label))))
+
+  ;; --- Feature-driven specs using configure-projects-from-table ---
+
+  (context "configure-projects-from-table handles extended config columns"
+    (it "passes worker-timeout, worker-agent, worker-model, worker-thinking, channel to config"
+      (h/reset!)
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path"]
+        [["alpha" "active" "normal" "2" "003" "0" "/projects/alpha"]])
+      (h/configure-projects-from-table
+        ["slug" "worker-timeout" "worker-agent" "worker-model" "worker-thinking" "channel"]
+        [["alpha" "7200" "agent-abc" "opus" "high" "#alpha"]])
+      (h/set-project-beads "alpha"
+        ["id" "title" "status"]
+        [["alpha-aa1" "Implement auth" "ready"]])
+      (h/orch-tick!)
+      (should= "spawn" (h/tick-action))
+      (should (h/spawn-includes? {"project" "alpha" "bead" "alpha-aa1"
+                                  "worker-timeout" "7200" "worker-agent" "agent-abc"
+                                  "worker-model" "opus" "worker-thinking" "high"
+                                  "channel" "#alpha"}))))
+
+  (context "spawn-includes? checks that spawn entries match expected rows"
+    (it "returns true when spawn contains matching entry"
+      (h/reset!)
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path"]
+        [["alpha" "active" "normal" "2" "003" "0" "/projects/alpha"]])
+      (h/set-project-beads "alpha"
+        ["id" "title" "status"]
+        [["alpha-aa1" "Task 1" "ready"]])
+      (h/orch-tick!)
+      (should (h/spawn-includes? {"project" "alpha" "bead" "alpha-aa1"}))))
+
+  (context "spawn-excludes-bead? checks bead not in spawns"
+    (it "returns true when bead is not in any spawn"
+      (h/reset!)
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path"]
+        [["alpha" "active" "normal" "2" "003" "0" "/projects/alpha"]])
+      (h/set-project-beads "alpha"
+        ["id" "title" "status"]
+        [["alpha-aa1" "Task 1" "ready"]])
+      (h/orch-tick!)
+      (should (h/spawn-excludes-bead? "alpha-aa2"))))
+
+  (context "spawn-missing-key? checks key absence on specific spawn"
+    (it "returns true when key is absent from spawn entry"
+      (h/reset!)
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path"]
+        [["alpha" "active" "normal" "2" "003" "0" "/projects/alpha"]])
+      (h/set-project-beads "alpha"
+        ["id" "title" "status"]
+        [["alpha-aa1" "Task 1" "ready"]])
+      (h/orch-tick!)
+      (should (h/spawn-missing-key? "alpha-aa1" "worker-agent"))))
+
+  (context "spawn-at returns nth spawn entry (1-indexed)"
+    (it "returns the correct spawn by index"
+      (h/reset!)
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path"]
+        [["high" "active" "high" "1" "001" "0" "/projects/high"]
+         ["alpha" "active" "normal" "1" "003" "0" "/projects/alpha"]])
+      (h/set-project-beads "high"
+        ["id" "title" "status"]
+        [["high-h1" "Task 1" "ready"]])
+      (h/set-project-beads "alpha"
+        ["id" "title" "status"]
+        [["alpha-aa1" "Task 1" "ready"]])
+      (h/orch-tick!)
+      (should= "high" (:project (h/spawn-at 1)))
+      (should= "alpha" (:project (h/spawn-at 2))))))
