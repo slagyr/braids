@@ -11,12 +11,12 @@
                        {:git/url "https://github.com/unclebob/crap4clj"
                         :git/sha "9f12da1b09bc1177f8f058108cf22a73bc9a97a0"}}
          :main-opts ["-m" "crap4clj.core"]}
-  :mutate {:extra-deps {io.github.unclebob/clj-mutate
-                         {:git/url "https://github.com/unclebob/clj-mutate"
-                          :git/sha "223da6c1a814265d0a714417def997ce7878a8da"}
-                        org.clojure/tools.reader {:mvn/version "1.4.2"}}
-           :extra-paths ["spec"]
-           :main-opts ["-m" "clj-mutate.core"]}
+   :mutate {:extra-deps {io.github.slagyr/clj-mutate
+                          {:git/url "https://github.com/slagyr/clj-mutate"
+                           :git/sha "a970794fc362fe0e8124fa82c23195208657f0b8"}
+                         org.clojure/tools.reader {:mvn/version "1.4.2"}}
+            :extra-paths ["spec"]
+            :main-opts ["-m" "clj-mutate.core"]}
   :spec-structure-check {:extra-deps {io.github.unclebob/speclj-structure-check
                                        {:git/url "https://github.com/unclebob/speclj-structure-check"
                                         :git/sha "7cc804c4e99b3482ca1d8a26b735ed41751a03ab"}}
