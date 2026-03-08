@@ -1,8 +1,9 @@
 Feature: Orchestrator tick output
 
-  The orchestrator prints a summary of each active project and its
-  open beads when it ticks. Ready, in-progress, and blocked beads
-  are shown with status icons. Closed beads are excluded.
+  The orchestrator prints a mode banner, a summary of each active
+  project and its open beads, and log lines for spawns, idles, and
+  zombies. Ready, in-progress, and blocked beads are shown with
+  status icons. Closed beads are excluded.
 
   Scenario: ready, in-progress, and blocked beads are printed
     Given configured projects:
@@ -112,3 +113,65 @@ Feature: Orchestrator tick output
     And the output does not contain
       | text |
       | beta |
+
+  @wip
+  Scenario: dry-run mode shows DRY-RUN banner
+    Given configured projects:
+      | slug  | status | priority | max-workers | active-iteration | active-workers |
+      | alpha | active | normal   | 1           | 001              | 0              |
+    When the orchestrator ticks in dry-run mode
+    Then the output contains lines matching
+      | expression     |
+      | ── DRY-RUN ── |
+
+  @wip
+  Scenario: confirmed mode shows CONFIRMED banner
+    Given configured projects:
+      | slug  | status | priority | max-workers | active-iteration | active-workers |
+      | alpha | active | normal   | 1           | 001              | 0              |
+    When the orchestrator ticks in confirmed mode
+    Then the output contains lines matching
+      | expression        |
+      | ── CONFIRMED ── |
+
+  @wip
+  Scenario: spawn log shows worker count and bead IDs
+    Given configured projects:
+      | slug  | status | priority | max-workers | active-iteration | active-workers | path            |
+      | alpha | active | normal   | 2           | 001              | 0              | /projects/alpha |
+    And project "alpha" has beads:
+      | id        | title  | status |
+      | alpha-aa1 | Task 1 | ready  |
+      | alpha-aa2 | Task 2 | ready  |
+    When the orchestrator ticks
+    Then the output contains lines matching
+      | expression            |
+      | Spawning 2 worker(s) |
+      | → bead=alpha-aa1     |
+      | → bead=alpha-aa2     |
+
+  @wip
+  Scenario: idle log shows reason
+    Given configured projects:
+      | slug  | status | priority | max-workers | active-iteration | active-workers |
+      | alpha | active | normal   | 1           | 001              | 0              |
+    When the orchestrator ticks
+    Then the output contains lines matching
+      | expression              |
+      | Idle: no-ready-beads |
+
+  @wip
+  Scenario: zombie log shows zombie count and reasons
+    Given configured projects:
+      | slug  | status | priority | max-workers | active-iteration | active-workers |
+      | alpha | active | normal   | 1           | 001              | 0              |
+    And zombie sessions:
+      | bead      | reason      |
+      | alpha-aa1 | bead-closed |
+      | alpha-aa2 | timeout     |
+    When the orchestrator ticks
+    Then the output contains lines matching
+      | expression              |
+      | Found 2 zombie(s)      |
+      | zombie: alpha-aa1 reason=bead-closed |
+      | zombie: alpha-aa2 reason=timeout     |
