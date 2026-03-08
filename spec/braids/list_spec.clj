@@ -93,7 +93,36 @@
     (it "colorizes 100% progress as green"
       (let [output (list/format-list {:projects [(nth sample-projects 2)]})]
         ;; gamma has 100% progress - should be green
-        (should-contain "\033[32m" output))))
+        (should-contain "\033[32m" output)))
+
+    (it "slug appears before status in each row"
+      (let [output (strip-ansi (list/format-list {:projects sample-projects}))
+            lines (str/split-lines output)
+            alpha-line (first (filter #(str/includes? % "alpha") lines))]
+        (should (< (.indexOf alpha-line "alpha") (.indexOf alpha-line "active")))))
+
+    (it "slug column uses slug width, not status width"
+      (let [proj {:slug "x" :status :active :priority :normal :path "/tmp"
+                  :workers 0 :max-workers 1}
+            output (strip-ansi (list/format-list {:projects [proj]}))
+            lines (str/split-lines output)
+            data-line (nth lines 2)
+            ;; With correct widths, slug "x" is padded to SLUG width (4),
+            ;; not STATUS width (6). Check that slug field ends before status starts.
+            slug-end (+ (.indexOf data-line "x") 4)]
+        ;; "active" should start at or after the slug column width
+        (should (>= (.indexOf data-line "active") slug-end))))
+
+    (it "colors exactly-100% progress green, not red"
+      (let [proj {:slug "done" :status :paused :priority :normal :path "/tmp"
+                  :iteration {:number "001" :stats {:total 5 :closed 5 :percent 100}}
+                  :workers 0 :max-workers 1}
+            output (list/format-list {:projects [proj]})
+            lines (str/split-lines output)
+            data-line (nth lines 2)]
+        ;; progress cell should be green (32), not red (31)
+        (should-contain "\033[32m" data-line)
+        (should-not-contain "\033[31m" data-line))))
 
   (context "format-list-json"
 
