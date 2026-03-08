@@ -110,9 +110,8 @@
     (it "calculates completion percentage"
       (let [stories [{:id "a" :status "closed"}
                      {:id "b" :status "open"}
-                     {:id "c" :status "closed"}
-                     {:id "d" :status "in_progress"}]]
-        (should= {:total 4 :closed 2 :percent 50}
+                     {:id "c" :status "in_progress"}]]
+        (should= {:total 3 :closed 1 :percent 33}
                  (iter/completion-stats stories))))
 
     (it "handles empty stories"
@@ -134,7 +133,8 @@
         (should-contain "proj-abc" output)
         (should-contain "proj-def" output)
         (should-contain "open" output)
-        (should-contain "closed" output)))
+        (should-contain "closed" output)
+        (should-contain "P1" output)))
 
     (it "shows dependencies"
       (let [data {:number "001"
