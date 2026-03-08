@@ -1,14 +1,11 @@
-{:deps  {speclj/speclj                {:mvn/version "3.12.0"}
-         io.github.slagyr/clj-mutate {:git/url "https://github.com/slagyr/clj-mutate"
-                                      :git/sha "a970794fc362fe0e8124fa82c23195208657f0b8"}
-         org.clojure/tools.reader    {:mvn/version "1.4.2"}}
- :paths ["src" "spec"]
- :tasks {spec              {:doc      "Run unit specs"
-                            :requires ([speclj.main :as speclj])
-                            :task     (apply speclj/-main "-c"
-                                        "spec/braids"
-                                        "-s" "src"
-                                        *command-line-args*)}
+{:paths ["src" "spec"]
+ :tasks {spec              {:doc        "Run unit specs"
+                            :extra-deps {speclj/speclj {:mvn/version "3.12.0"}}
+                            :requires   ([speclj.main :as speclj])
+                            :task       (apply speclj/-main "-c"
+                                          "spec/braids"
+                                          "-s" "src"
+                                          *command-line-args*)}
          features:parse    {:doc      "Parse .feature files to .edn IR"
                             :requires ([braids.features.parser :as parser])
                             :task     (let [source (or (first *command-line-args*) "features")
@@ -19,22 +16,25 @@
                             :task     (let [edn-dir (or (first *command-line-args*) "features/edn")
                                             output (or (second *command-line-args*) "features/generated")]
                                         (gen/generate-features! edn-dir output))}
-         features          {:doc      "Parse, generate, and run feature specs"
-                            :requires ([braids.features.pipeline :as pipeline]
-                                       [speclj.main :as speclj])
-                            :task     (do
-                                        (pipeline/run-pipeline!)
-                                        (apply speclj/-main "-c"
-                                          "features/generated"
-                                          "-s" "src"
-                                          *command-line-args*))}
+         features          {:doc        "Parse, generate, and run feature specs"
+                            :extra-deps {speclj/speclj {:mvn/version "3.12.0"}}
+                            :requires   ([braids.features.pipeline :as pipeline]
+                                         [speclj.main :as speclj])
+                            :task       (do
+                                          (pipeline/run-pipeline!)
+                                          (apply speclj/-main "-c"
+                                            "features/generated"
+                                            "-s" "src"
+                                            *command-line-args*))}
          test:all          {:doc  "Run unit specs + feature specs"
                             :task (do
                                     (shell "bb spec")
                                     (shell "bb features"))}
-         mutate            {:doc      "Run mutation testing"
-                            :requires ([clj-mutate.core :as mutate])
-                            :task     (apply mutate/-main *command-line-args*)}
+         mutate            {:doc        "Run mutation testing"
+                            :extra-deps {io.github.slagyr/clj-mutate {:git/url "https://github.com/slagyr/clj-mutate"
+                                                                      :git/sha "a970794fc362fe0e8124fa82c23195208657f0b8"}}
+                            :requires   ([clj-mutate.core :as mutate])
+                            :task       (apply mutate/-main *command-line-args*)}
          braids            {:doc      "Run the braids CLI"
                             :requires ([braids.core :as braids])
                             :task     (System/exit (braids/run *command-line-args*))}}}
