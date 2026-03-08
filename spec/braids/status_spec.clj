@@ -53,6 +53,25 @@
         (should= 1 (:workers alpha))
         (should= 2 (:max-workers alpha))))
 
+    (it "defaults worker count to 0 when not in workers map"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/p"}]}
+            configs {"proj" {:status :active :max-workers 3}}
+            dash (status/build-dashboard registry configs {} {})
+            proj (first (:projects dash))]
+        (should= 0 (:workers proj))))
+
+    (it "defaults max-workers to 1 when not in config"
+      (let [registry {:projects [{:slug "proj" :status :active :priority :normal :path "/tmp/p"}]}
+            configs {"proj" {:status :active}}
+            dash (status/build-dashboard registry configs {} {})
+            proj (first (:projects dash))]
+        (should= 1 (:max-workers proj))))
+
+    (it "uses actual priority name in dashboard"
+      (let [dash (status/build-dashboard sample-registry sample-configs sample-iterations sample-workers)
+            alpha (first (filter #(= "alpha" (:slug %)) (:projects dash)))]
+        (should= "high" (:priority alpha))))
+
     (it "returns empty dashboard for empty registry"
       (let [dash (status/build-dashboard {:projects []} {} {} {})]
         (should= [] (:projects dash)))))
