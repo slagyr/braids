@@ -1,0 +1,65 @@
+{:source-paths ["src"],
+ :component-rules
+ [{:component :orch-runner, :match "braids.orch-runner*"}
+  {:component :features, :match "braids.features*"}
+  {:component :list-io, :match "braids.list-io*"}
+  {:component :ready, :match "braids.ready*"}
+  {:component :init, :match "braids.init*"}
+  {:component :status-io, :match "braids.status-io*"}
+  {:component :orch, :match "braids.orch*"}
+  {:component :config, :match "braids.config*"}
+  {:component :new, :match "braids.new*"}
+  {:component :registry, :match "braids.registry*"}
+  {:component :new-io, :match "braids.new-io*"}
+  {:component :iteration, :match "braids.iteration*"}
+  {:component :init-io, :match "braids.init-io*"}
+  {:component :iteration-io, :match "braids.iteration-io*"}
+  {:component :orch-log, :match "braids.orch-log*"}
+  {:component :list, :match "braids.list*"}
+  {:component :status, :match "braids.status*"}
+  {:component :orch-runner-io, :match "braids.orch-runner-io*"}
+  {:component :core, :match "braids.core*"}
+  {:component :project-config, :match "braids.project-config*"}
+  {:component :ready-io, :match "braids.ready-io*"}
+  {:component :edn-format, :match "braids.edn-format*"}
+  {:component :sys, :match "braids.sys*"}
+  {:component :config-io, :match "braids.config-io*"}
+  {:component :orch-io, :match "braids.orch-io*"}],
+ :allowed-dependencies
+ {:orch-runner [:config :orch :sys],
+  :features
+  [:config
+   :edn-format
+   :init
+   :iteration
+   :list
+   :new
+   :orch
+   :orch-runner
+   :ready
+   :status],
+  :list-io [:list :ready :status-io],
+  :ready [:config :project-config :registry :sys],
+  :init [:config :edn-format :registry],
+  :status-io [:iteration :orch :ready :status],
+  :orch [:config :project-config :ready :sys],
+  :config [:edn-format],
+  :new [:config :edn-format :project-config :registry],
+  :registry [:edn-format],
+  :new-io [],
+  :iteration [:edn-format :orch :ready],
+  :init-io [],
+  :iteration-io [],
+  :orch-log [],
+  :list [],
+  :status [],
+  :orch-runner-io [],
+  :core [:config :init :iteration :list-io :new :orch-runner :ready],
+  :project-config [:edn-format],
+  :ready-io [],
+  :edn-format [],
+  :sys [],
+  :config-io [],
+  :orch-io []},
+ :fail-on-cycles true,
+ :fail-on-violations true}
