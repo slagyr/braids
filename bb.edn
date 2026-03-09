@@ -35,6 +35,11 @@
                                                                       :git/sha "a970794fc362fe0e8124fa82c23195208657f0b8"}}
                             :requires   ([clj-mutate.core :as mutate])
                             :task       (apply mutate/-main *command-line-args*)}
+         check-deps        {:doc        "Run dependency checker"
+                            :extra-deps {io.github.slagyr/dependency-checker {:git/url "https://github.com/slagyr/dependency-checker"
+                                                                              :git/sha "522860174b787a9b5892d70a69fff5b35013f419"}}
+                            :requires   ([dependency-checker.core :as dc])
+                            :task       (apply dc/-main *command-line-args*)}
          braids            {:doc      "Run the braids CLI"
                             :requires ([braids.core :as braids])
                             :task     (System/exit (braids/run *command-line-args*))}}}

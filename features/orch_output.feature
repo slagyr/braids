@@ -115,24 +115,22 @@ Feature: Orchestrator tick output
       | beta |
 
   @wip
-  Scenario: dry-run mode shows DRY-RUN banner
+  Scenario: dry-run mode shows DRY-RUN header and footer
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
       | alpha | active | normal   | 1           | 001              | 0              |
     When the orchestrator ticks in dry-run mode
-    Then the output contains lines matching
-      | expression     |
-      | ── DRY-RUN ── |
+    Then the first line matches "-- DRY-RUN started at"
+    And the last line matches "-- DRY-RUN completed at"
 
   @wip
-  Scenario: confirmed mode shows CONFIRMED banner
+  Scenario: live-run mode shows LIVE-RUN header and footer
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
       | alpha | active | normal   | 1           | 001              | 0              |
     When the orchestrator ticks in confirmed mode
-    Then the output contains lines matching
-      | expression        |
-      | ── CONFIRMED ── |
+    Then the first line matches "-- LIVE-RUN started at"
+    And the last line matches "-- LIVE-RUN completed at"
 
   @wip
   Scenario: spawn log shows worker count and bead IDs
