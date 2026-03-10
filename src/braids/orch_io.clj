@@ -229,6 +229,7 @@
                                      (keep (fn [[_key session]]
                                        (let [label (or (:label session) "")
                                              session-id-val (or (:sessionId session) (name _key))
+                                             key-str (if (keyword? _key) (str (when-let [ns (namespace _key)] (str ns "/")) (name _key)) (str _key))
                                              age (long (/ (- now (or (:updatedAt session) now)) 1000))]
                                          (cond
                                            ;; Match by project: label
@@ -244,7 +245,15 @@
                                             :status "running"
                                             :age-seconds age
                                             :session-id session-id-val
-                                            :worker-bead-id (orch/parse-worker-session-id session-id-val)}))))
+                                            :worker-bead-id (orch/parse-worker-session-id session-id-val)}
+
+                                           ;; Match by session key pattern (cron-based workers)
+                                           (orch/parse-worker-session-key key-str)
+                                           {:label label
+                                            :status "running"
+                                            :age-seconds age
+                                            :session-id (or (:sessionId session) key-str)
+                                            :worker-bead-id (orch/parse-worker-session-key key-str)}))))
                                      vec))
                               (catch Exception _ []))))))
               vec))))))

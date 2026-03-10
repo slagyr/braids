@@ -15,16 +15,17 @@
       (should (clojure.string/includes? (h/worker-task) "001"))
       (should (clojure.string/includes? (h/worker-task) "worker.md"))))
 
-  (context "Build worker CLI args with session ID"
-    (it "Build worker CLI args with session ID"
+  (context "Build worker CLI args with isolated session key"
+    (it "Build worker CLI args with isolated session key"
       (h/reset!)
       (h/set-spawn-entry {:bead "proj-abc"})
       (h/build-worker-args!)
       (should (some #(= "--message" %) (h/worker-args)))
-      (should (some #(= "--session-id" %) (h/worker-args)))
-      (should= "braids-proj-abc-worker" (h/session-id-result))
+      (should (some #(= "--session-key" %) (h/worker-args)))
+      (should (some #(= "cron" %) (h/worker-args)))
+      (should (some #(= "add" %) (h/worker-args)))
       (should (some #(= "--thinking" %) (h/worker-args)))
-      (should (some #(= "--timeout" %) (h/worker-args)))
+      (should (some #(= "--timeout-seconds" %) (h/worker-args)))
       (should-not (some #(= "--agent" %) (h/worker-args)))))
 
   (context "Build args with custom agent"

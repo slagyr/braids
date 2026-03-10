@@ -414,6 +414,32 @@
     (it "returns nil for empty bead-id"
       (should-be-nil (orch/parse-worker-session-id "braids--worker"))))
 
+  (context "parse-worker-session-key"
+
+    (it "extracts bead-id from valid session key"
+      (should= "proj-abc" (orch/parse-worker-session-key "agent:scrapper:braids-proj-abc-worker")))
+
+    (it "extracts bead-id with main agent"
+      (should= "proj-abc" (orch/parse-worker-session-key "agent:main:braids-proj-abc-worker")))
+
+    (it "handles bead-ids with hyphens"
+      (should= "my-proj-x1" (orch/parse-worker-session-key "agent:scrapper:braids-my-proj-x1-worker")))
+
+    (it "returns nil for non-agent session key"
+      (should-be-nil (orch/parse-worker-session-key "cron:some-uuid")))
+
+    (it "returns nil for nil input"
+      (should-be-nil (orch/parse-worker-session-key nil)))
+
+    (it "returns nil for main session key"
+      (should-be-nil (orch/parse-worker-session-key "agent:scrapper:main")))
+
+    (it "returns nil for non-string input"
+      (should-be-nil (orch/parse-worker-session-key 42)))
+
+    (it "returns nil for key with wrong suffix"
+      (should-be-nil (orch/parse-worker-session-key "agent:scrapper:braids-abc"))))
+
   (context "parse-session-labels-string"
 
     (it "parses space-separated labels into list"

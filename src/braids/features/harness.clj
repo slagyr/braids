@@ -1064,16 +1064,16 @@
 
 (defn build-worker-args!
   "Build the worker args from the spawn entry.
-   Also extracts the session ID from args for assert-session-id compatibility."
+   Also extracts the session key from args for assert-session-key compatibility."
   []
   (let [entry (:runner-spawn-entry @state)
         config (:runner-config @state)
         args (orch-runner/build-worker-args config entry)
-        sid-idx (when args (.indexOf ^java.util.List args "--session-id"))
-        session-id (when (and sid-idx (>= sid-idx 0) (< (inc sid-idx) (count args)))
-                     (nth args (inc sid-idx)))]
+        key-idx (when args (.indexOf ^java.util.List args "--session-key"))
+        session-key (when (and key-idx (>= key-idx 0) (< (inc key-idx) (count args)))
+                      (nth args (inc key-idx)))]
     (swap! state assoc :runner-worker-args args
-           :session-id-result session-id)))
+           :session-id-result session-key)))
 
 (defn worker-args
   "Returns the built worker args."

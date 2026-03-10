@@ -23,21 +23,35 @@ Announcement-Prefix: %s")
         prefix (str "Braids worker " agent " | " model " | " bead ":")]
     (format worker-task-template path bead iteration channel agent model prefix)))
 
+(defn build-worker-session-key
+  "Build the isolated session key for a worker spawn.
+   Pattern: agent:<agent-id>:braids-<bead>-worker
+   This creates a session in the agent's store that is isolated
+   from the main DM session (which may carry Discord channel context)."
+  [worker-agent bead]
+  (let [agent-id (or worker-agent "main")]
+    (str "agent:" agent-id ":braids-" bead "-worker")))
+
 (defn build-worker-args
-  "Build the openclaw agent CLI args for a spawn entry.
+  "Build the openclaw cron add CLI args for a spawn entry.
+   Uses one-shot cron jobs with isolated session keys to avoid
+   inheriting Discord channel context from the agent's main session.
    Returns a vector of strings."
   [config {:keys [bead path iteration channel worker-agent thinking worker-timeout] :as spawn}]
   (let [task (build-worker-task spawn)
-        session-id (str "braids-" bead "-worker")
+        session-key (build-worker-session-key worker-agent bead)
         thinking (or thinking (:worker-thinking config) "high")
         timeout (str (or worker-timeout 1800))
-        base-args ["agent"
+        base-args ["cron" "add"
+                   "--name" (str "braids-" bead "-worker")
                    "--message" task
-                   "--session-id" session-id
+                   "--session-key" session-key
+                   "--at" "+0s"
+                   "--delete-after-run"
                    "--thinking" thinking
-                   "--timeout" timeout]]
+                   "--timeout-seconds" timeout]]
     (if (and worker-agent (not (str/blank? worker-agent)))
-      (vec (concat ["agent" "--agent" worker-agent] (rest base-args)))
+      (into base-args ["--agent" worker-agent])
       (vec base-args))))
 
 (defn log-line

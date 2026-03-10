@@ -766,7 +766,7 @@
       (h/set-spawn-entry {:bead "proj-abc"})
       (h/build-worker-args!)
       (should (some #(= "--message" %) (h/worker-args)))
-      (should (some #(= "--session-id" %) (h/worker-args)))))
+      (should (some #(= "--session-key" %) (h/worker-args)))))
 
   (context "set-cli-args"
 

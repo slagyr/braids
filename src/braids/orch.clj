@@ -32,6 +32,16 @@
              (> (count session-id) 14))
     (subs session-id 7 (- (count session-id) 7))))
 
+(defn parse-worker-session-key
+  "Parse a session key like 'agent:<agent-id>:braids-<bead>-worker' to extract bead-id.
+   Returns bead-id or nil. Supports keys from cron-based worker spawning."
+  [session-key]
+  (when (and session-key (string? session-key))
+    (let [parts (clojure.string/split session-key #":" 3)]
+      (when (and (= 3 (count parts))
+                 (= "agent" (first parts)))
+        (parse-worker-session-id (nth parts 2))))))
+
 (defn- eligible-projects
   "Returns active projects that have active iterations and aren't paused by config."
   [registry configs iterations]
