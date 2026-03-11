@@ -46,6 +46,7 @@ Announcement-Prefix: %s")
                    "--name" (str "braids-" bead "-worker")
                    "--message" task
                    "--session-key" session-key
+                   "--session" "isolated"
                    "--at" "+0s"
                    "--delete-after-run"
                    "--thinking" thinking

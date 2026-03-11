@@ -67,11 +67,20 @@
             args (runner/build-worker-args {} spawn)]
         (should (some #{"--message"} args))
         (should (some #{"--session-key"} args))
+        (should (some #{"--session"} args))
         (should (some #{"--name"} args))
         (should (some #{"--at"} args))
         (should (some #{"--delete-after-run"} args))
         (should (some #{"--thinking"} args))
         (should (some #{"--timeout-seconds"} args))))
+
+    (it "includes --session isolated for fresh session without channel context"
+      (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
+                   :channel "12345" :worker-timeout 1800}
+            args (runner/build-worker-args {} spawn)
+            session-idx (.indexOf args "--session")]
+        (should (>= session-idx 0))
+        (should= "isolated" (nth args (inc session-idx)))))
 
     (it "includes --agent when worker-agent is set"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
