@@ -1,0 +1,15 @@
+{:number "029"
+ :status :active
+ :stories [{:id "braids-tnfp" :title "Implement zombie_detection WIP scenarios — cleanup and multi-project detection"}
+           {:id "braids-wz6k" :title "Implement worker_session_tracking WIP scenarios — duplicate spawning and missing bead cleanup"}
+           {:id "braids-0wdv" :title "Update orch header/footer format — DRY-RUN/LIVE-RUN started/completed at timestamp"}
+           {:id "braids-u8gx" :title "Implement orch_output banner, spawn/idle/zombie log scenarios"}
+           {:id "braids-nh42" :title "Implement fixed-width 5-char bead suffix display in orchestrator output"}
+           {:id "braids-v4qt" :title "Rename --confirmed to --live-run, remove --confirmed, update system cron"}
+           {:id "braids-oct" :title "Document label-based agent routing in SKILL.md"}]
+ :notes ["Theme: Orchestrator output polish, feature coverage, and CLI cleanup"
+         "Carried forward from iteration 014: tnfp, wz6k, 0wdv, v4qt (incomplete at 014 close)"
+         "New additions: u8gx, nh42, oct"
+         "tnfp and wz6k are independent feature implementations — can run in parallel"
+         "v4qt should land before 0wdv (0wdv references --live-run naming from v4qt)"
+         "u8gx blocked by vzqf"]}
