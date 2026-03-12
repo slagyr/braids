@@ -106,14 +106,13 @@
           (should-contain "DRY-RUN" output)
           (should-contain "test-bead-1" output))))
 
-    (it "prints spawned message in live mode"
+    (it "does not print spawned message in live mode"
       (with-redefs [config-io/load-config (fn [] sample-config)
                     sys/subprocess-env (fn [_] {"PATH" "/usr/local/bin"})
                     sys/openclaw-bin (fn [_] "openclaw")
                     proc/process (fn [& _] nil)]
         (let [output (with-out-str (rio/spawn-worker! sample-spawn {:dry-run false}))]
-          (should-contain "Spawned worker" output)
-          (should-contain "test-bead-1" output))))
+          (should-not-contain "Spawned worker" output))))
 
     (it "respects OPENCLAW_BIN environment variable"
       (let [process-args (atom nil)]

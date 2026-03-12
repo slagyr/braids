@@ -69,12 +69,11 @@ Announcement-Prefix: %s")
   (let [spawns (:spawns tick-result)
         n (count spawns)]
     (into [(log-line (str "Spawning " n " worker(s)"))]
-          (mapcat (fn [{:keys [bead worker-agent] :as spawn}]
-                    (let [args (build-worker-args config spawn)
-                          redacted (redact-message-arg args)]
-                      [(log-line (str "  → bead=" bead " agent=" (or worker-agent "default")))
-                       (log-line (str "  spawn cmd: openclaw " (str/join " " redacted)))]))
-                  spawns))))
+          (map (fn [spawn]
+                 (let [args (build-worker-args config spawn)
+                       redacted (redact-message-arg args)]
+                   (log-line (str "  → openclaw " (str/join " " redacted)))))
+               spawns))))
 
 (defn format-idle-log
   "Format log lines for an idle action. Returns vector of strings."

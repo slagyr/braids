@@ -150,12 +150,12 @@
             lines (runner/format-spawn-log {} result)]
         (should (some #(str/includes? % "my-bead-123") lines))))
 
-    (it "includes spawn cmd line with openclaw agent"
+    (it "includes openclaw agent command line"
       (let [result {:action "spawn"
                     :spawns [{:bead "proj-x1" :iteration "1" :channel "c" :path "/p"
                               :worker-agent "scrapper" :worker-timeout 1800}]}
             lines (runner/format-spawn-log {} result)]
-        (should (some #(str/includes? % "spawn cmd: openclaw agent") lines))))
+        (should (some #(str/includes? % "→ openclaw agent") lines))))
 
     (it "redacts --message value to <task>"
       (let [result {:action "spawn"

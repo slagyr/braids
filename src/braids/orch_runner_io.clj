@@ -21,8 +21,7 @@
       (do
         (proc/process (into [bin] args)
                       {:out :discard :err :discard
-                       :extra-env (sys/subprocess-env cfg)})
-        (println (runner/log-line (str "Spawned worker: bead=" bead)))))))
+                       :extra-env (sys/subprocess-env cfg)})))))
 
 (defn run-orch!
   "Run one orchestrator tick. Gathers state, computes decisions, acts.

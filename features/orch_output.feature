@@ -140,8 +140,14 @@ Feature: Orchestrator tick output
       | id        | title  | status |
       | alpha-aa1 | Task 1 | ready  |
     When the orchestrator ticks
-    Then the output contains a line matching
-      "spawn cmd: openclaw agent --message .+ --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper"
+    Then the output contains lines matching
+      | expression                                                                                          |
+      | Spawning 1 worker(s)                                                                                |
+      | → openclaw agent --message <task> --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper |
+    And the output does not contain
+      | text            |
+      | → bead=         |
+      | Spawned worker: |
 
   @wip
   Scenario: spawn log shows worker count and bead IDs
