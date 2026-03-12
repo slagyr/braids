@@ -70,8 +70,9 @@
                    (println (runner/log-line (str "Failed to kill zombie session: " (:session-id zombie) " " (.getMessage e)))))))))
 
          (when (= "spawn" action)
-           (let [spawns (:spawns result)]
-             (doseq [line (runner/format-spawn-log result)]
+           (let [spawns (:spawns result)
+                 cfg (config-io/load-config)]
+             (doseq [line (runner/format-spawn-log cfg result)]
                (println line))
              (doseq [spawn spawns]
                (spawn-worker! spawn opts))))

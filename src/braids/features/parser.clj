@@ -33,6 +33,10 @@
 (defn- table-line? [trimmed]
   (str/starts-with? trimmed "|"))
 
+(defn- doc-string-line? [trimmed]
+  (and (str/starts-with? trimmed "\"")
+       (str/ends-with? trimmed "\"")))
+
 (defn- attach-table
   "Attach parsed table data to an IR node, if table-lines are present."
   [ir-node table-lines]
@@ -46,8 +50,19 @@
   (update scenario :steps (fnil conj []) ir-node))
 
 (defn- process-step-entry [state entry]
-  (if (table-line? entry)
+  (cond
+    (table-line? entry)
     (update state :pending-table (fnil conj []) entry)
+
+    (doc-string-line? entry)
+    (let [steps (get-in state [:scenario :steps])
+          last-step (peek steps)
+          doc-str (subs entry 1 (dec (count entry)))
+          updated-step (assoc last-step :doc-string doc-str)
+          updated-steps (conj (pop steps) updated-step)]
+      (assoc-in state [:scenario :steps] updated-steps))
+
+    :else
     (let [state (if (seq (:pending-table state))
                   (let [steps (get-in state [:scenario :steps])
                         last-step (peek steps)
@@ -141,6 +156,14 @@
                           (conj (pop scenarios) updated))))
 
           (and (= state :scenario) (table-line? trimmed))
+          (let [scenarios (:scenarios result)
+                current (peek scenarios)
+                updated (update current :lines conj trimmed)]
+            (recur rest-lines :scenario false
+                   (assoc result :scenarios
+                          (conj (pop scenarios) updated))))
+
+          (and (= state :scenario) (doc-string-line? trimmed))
           (let [scenarios (:scenarios result)
                 current (peek scenarios)
                 updated (update current :lines conj trimmed)]

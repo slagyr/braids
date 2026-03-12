@@ -132,6 +132,17 @@ Feature: Orchestrator tick output
     Then the first line matches "-- LIVE-RUN started at"
     And the last line matches "-- LIVE-RUN completed at"
 
+  Scenario: spawn log prints full worker command
+    Given configured projects:
+      | slug  | status | priority | max-workers | active-iteration | active-workers | path            | worker-agent | worker-timeout | channel |
+      | alpha | active | normal   | 1           | 001              | 0              | /projects/alpha | scrapper     | 1800           | #alpha  |
+    And project "alpha" has beads:
+      | id        | title  | status |
+      | alpha-aa1 | Task 1 | ready  |
+    When the orchestrator ticks
+    Then the output contains a line matching
+      "spawn cmd: openclaw agent --message .+ --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper"
+
   @wip
   Scenario: spawn log shows worker count and bead IDs
     Given configured projects:

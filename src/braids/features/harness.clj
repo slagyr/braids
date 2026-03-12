@@ -186,12 +186,27 @@
 
 (defn orch-tick!
   "Run orch/tick with all accumulated state, store the result.
-   Also captures formatted debug output if open-beads data is available."
+   Also captures formatted debug output if open-beads data is available.
+   Appends spawn log lines when the action is 'spawn'."
   []
   (let [{:keys [registry configs iterations beads workers open-beads]} @state
         result (orch/tick registry configs iterations beads workers {})
         all-open-beads (or open-beads {})
-        output (orch/format-debug-output registry configs iterations all-open-beads result workers)]
+        debug-output (orch/format-debug-output registry configs iterations all-open-beads result workers)
+        spawn-lines (when (= "spawn" (:action result))
+                      (let [;; Build a merged config for each spawn from project configs
+                            spawn-config (reduce (fn [cfg spawn]
+                                                   ;; Find matching project config by slug prefix
+                                                   (let [slug (some (fn [[s _]]
+                                                                      (when (str/starts-with? (:bead spawn) (str s "-")) s))
+                                                                    configs)]
+                                                     (merge cfg (get configs slug))))
+                                                 {}
+                                                 (:spawns result))]
+                        (orch-runner/format-spawn-log spawn-config result)))
+        output (if spawn-lines
+                 (str debug-output "\n" (str/join "\n" spawn-lines))
+                 debug-output)]
     (swap! state assoc :tick-result result :tick-output output :output output)))
 
 (defn orch-tick-project!
@@ -1064,16 +1079,16 @@
 
 (defn build-worker-args!
   "Build the worker args from the spawn entry.
-   Also extracts the session key from args for assert-session-key compatibility."
+   Also extracts the session-id from args for assert-session-key compatibility."
   []
   (let [entry (:runner-spawn-entry @state)
         config (:runner-config @state)
         args (orch-runner/build-worker-args config entry)
-        key-idx (when args (.indexOf ^java.util.List args "--session-key"))
-        session-key (when (and key-idx (>= key-idx 0) (< (inc key-idx) (count args)))
-                      (nth args (inc key-idx)))]
+        sid-idx (when args (.indexOf ^java.util.List args "--session-id"))
+        session-id (when (and sid-idx (>= sid-idx 0) (< (inc sid-idx) (count args)))
+                     (nth args (inc sid-idx)))]
     (swap! state assoc :runner-worker-args args
-           :session-id-result session-key)))
+           :session-id-result session-id)))
 
 (defn worker-args
   "Returns the built worker args."
@@ -1096,7 +1111,8 @@
   "Format the spawn log from the tick result."
   []
   (let [result (:runner-tick-result @state)
-        log (orch-runner/format-spawn-log result)]
+        config (:runner-config @state)
+        log (orch-runner/format-spawn-log (or config {}) result)]
     (swap! state assoc :runner-log log)))
 
 (defn format-idle-log!
@@ -1269,6 +1285,13 @@
   [text]
   (when-let [output (:tick-output @state)]
     (some #(str/includes? (strip-ansi %) text) (str/split-lines output))))
+
+(defn output-contains-line-matching?
+  "Returns true if any line in the output matches the given regex pattern."
+  [pattern-str]
+  (when-let [output (:tick-output @state)]
+    (let [pattern (re-pattern pattern-str)]
+      (some #(re-find pattern (strip-ansi %)) (str/split-lines output)))))
 
 (defn output-contains?
   "Returns true if the text appears anywhere in the tick output."

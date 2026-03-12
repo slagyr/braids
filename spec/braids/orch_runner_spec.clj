@@ -54,33 +54,28 @@
 
   (context "build-worker-args"
 
-    (it "uses cron add subcommand for isolated sessions"
+    (it "uses agent subcommand"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
                    :channel "12345" :worker-timeout 1800}
             args (runner/build-worker-args {} spawn)]
-        (should= "cron" (first args))
-        (should= "add" (second args))))
+        (should= "agent" (first args))))
 
-    (it "includes required cron add args"
+    (it "includes required agent args"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
                    :channel "12345" :worker-timeout 1800}
             args (runner/build-worker-args {} spawn)]
         (should (some #{"--message"} args))
-        (should (some #{"--session-key"} args))
-        (should (some #{"--session"} args))
-        (should (some #{"--name"} args))
-        (should (some #{"--at"} args))
-        (should (some #{"--delete-after-run"} args))
+        (should (some #{"--session-id"} args))
         (should (some #{"--thinking"} args))
-        (should (some #{"--timeout-seconds"} args))))
+        (should (some #{"--timeout"} args))))
 
-    (it "includes --session isolated for fresh session without channel context"
+    (it "sets session-id based on bead-id"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
                    :channel "12345" :worker-timeout 1800}
             args (runner/build-worker-args {} spawn)
-            session-idx (.indexOf args "--session")]
-        (should (>= session-idx 0))
-        (should= "isolated" (nth args (inc session-idx)))))
+            sid-idx (.indexOf args "--session-id")]
+        (should (>= sid-idx 0))
+        (should= "braids-test-abc-worker" (nth args (inc sid-idx)))))
 
     (it "includes --agent when worker-agent is set"
       (let [spawn {:path "~/Projects/test" :bead "test-abc" :iteration "001"
@@ -95,13 +90,6 @@
                    :channel "12345" :worker-timeout 1800}
             args (runner/build-worker-args {} spawn)]
         (should-not (some #{"--agent"} args))))
-
-    (it "sets session-key with agent namespace for isolation"
-      (let [spawn {:path "~/p" :bead "test-abc" :iteration "1" :channel "c"
-                   :worker-agent "scrapper" :worker-timeout 1800}
-            args (runner/build-worker-args {} spawn)
-            key-idx (.indexOf args "--session-key")]
-        (should= "agent:scrapper:braids-test-abc-worker" (nth args (inc key-idx)))))
 
     (it "uses default thinking=high"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 1800}
@@ -119,41 +107,29 @@
     (it "uses default timeout=1800 when not provided"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c"}
             args (runner/build-worker-args {} spawn)
-            timeout-idx (.indexOf args "--timeout-seconds")]
+            timeout-idx (.indexOf args "--timeout")]
         (should= "1800" (nth args (inc timeout-idx)))))
 
     (it "uses provided timeout"
       (let [spawn {:path "~/p" :bead "b" :iteration "1" :channel "c" :worker-timeout 3600}
             args (runner/build-worker-args {} spawn)
-            timeout-idx (.indexOf args "--timeout-seconds")]
+            timeout-idx (.indexOf args "--timeout")]
         (should= "3600" (nth args (inc timeout-idx)))))
 
-    (it "sets job name based on bead-id"
+    (it "generates deterministic session-id based on bead-id"
       (let [spawn {:path "~/p" :bead "proj-abc" :iteration "1" :channel "c"}
             args (runner/build-worker-args {} spawn)
-            name-idx (.indexOf args "--name")]
-        (should= "braids-proj-abc-worker" (nth args (inc name-idx)))))
+            sid-idx (.indexOf args "--session-id")]
+        (should (str/includes? (nth args (inc sid-idx)) "braids-proj-abc-worker"))))
 
-    (it "fires immediately with --at +0s"
-      (let [spawn {:path "~/p" :bead "proj-abc" :iteration "1" :channel "c"}
-            args (runner/build-worker-args {} spawn)
-            at-idx (.indexOf args "--at")]
-        (should= "+0s" (nth args (inc at-idx)))))
-
-    (it "generates deterministic session key based on bead-id"
-      (let [spawn {:path "~/p" :bead "proj-abc" :iteration "1" :channel "c"}
-            args (runner/build-worker-args {} spawn)
-            key-idx (.indexOf args "--session-key")]
-        (should (str/includes? (nth args (inc key-idx)) "braids-proj-abc-worker"))))
-
-    (it "generates same session key for same bead across calls"
+    (it "generates same session-id for same bead across calls"
       (let [spawn {:path "~/p" :bead "proj-abc" :iteration "1" :channel "c"}
             args1 (runner/build-worker-args {} spawn)
             args2 (runner/build-worker-args {} spawn)
-            key-idx1 (.indexOf args1 "--session-key")
-            key-idx2 (.indexOf args2 "--session-key")]
-        (should= (nth args1 (inc key-idx1))
-                 (nth args2 (inc key-idx2)))))))
+            sid-idx1 (.indexOf args1 "--session-id")
+            sid-idx2 (.indexOf args2 "--session-id")]
+        (should= (nth args1 (inc sid-idx1))
+                 (nth args2 (inc sid-idx2)))))))
 
   (context "log-line"
 
@@ -164,14 +140,41 @@
 
     (it "shows worker count"
       (let [result {:action "spawn"
-                    :spawns [{:bead "b1"} {:bead "b2"}]}
-            lines (runner/format-spawn-log result)]
+                    :spawns [{:bead "b1" :iteration "1" :channel "c" :path "/p"}
+                             {:bead "b2" :iteration "1" :channel "c" :path "/p"}]}
+            lines (runner/format-spawn-log {} result)]
         (should (some #(str/includes? % "2 worker") lines))))
 
     (it "includes bead IDs"
-      (let [result {:action "spawn" :spawns [{:bead "my-bead-123"}]}
-            lines (runner/format-spawn-log result)]
-        (should (some #(str/includes? % "my-bead-123") lines)))))
+      (let [result {:action "spawn" :spawns [{:bead "my-bead-123" :iteration "1" :channel "c" :path "/p"}]}
+            lines (runner/format-spawn-log {} result)]
+        (should (some #(str/includes? % "my-bead-123") lines))))
+
+    (it "includes spawn cmd line with openclaw agent"
+      (let [result {:action "spawn"
+                    :spawns [{:bead "proj-x1" :iteration "1" :channel "c" :path "/p"
+                              :worker-agent "scrapper" :worker-timeout 1800}]}
+            lines (runner/format-spawn-log {} result)]
+        (should (some #(str/includes? % "spawn cmd: openclaw agent") lines))))
+
+    (it "redacts --message value to <task>"
+      (let [result {:action "spawn"
+                    :spawns [{:bead "proj-x1" :iteration "1" :channel "c" :path "/p"}]}
+            lines (runner/format-spawn-log {} result)]
+        (should (some #(str/includes? % "--message <task>") lines))))
+
+    (it "includes --session-id in spawn cmd"
+      (let [result {:action "spawn"
+                    :spawns [{:bead "proj-x1" :iteration "1" :channel "c" :path "/p"}]}
+            lines (runner/format-spawn-log {} result)]
+        (should (some #(str/includes? % "--session-id braids-proj-x1-worker") lines))))
+
+    (it "includes --agent in spawn cmd when set"
+      (let [result {:action "spawn"
+                    :spawns [{:bead "proj-x1" :iteration "1" :channel "c" :path "/p"
+                              :worker-agent "scrapper"}]}
+            lines (runner/format-spawn-log {} result)]
+        (should (some #(str/includes? % "--agent scrapper") lines)))))
 
   (context "format-idle-log"
 

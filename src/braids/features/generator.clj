@@ -88,7 +88,7 @@
   (if (:pattern node)
     node
     (let [classified (classify-step (:text node))]
-      (-> (merge classified (select-keys node [:type :table]))
+      (-> (merge classified (select-keys node [:type :table :doc-string]))
           (assoc :text (:text node))))))
 
 (defn- classify-steps

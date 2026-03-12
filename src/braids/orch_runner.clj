@@ -33,24 +33,18 @@ Announcement-Prefix: %s")
     (str "agent:" agent-id ":braids-" bead "-worker")))
 
 (defn build-worker-args
-  "Build the openclaw cron add CLI args for a spawn entry.
-   Uses one-shot cron jobs with isolated session keys to avoid
-   inheriting Discord channel context from the agent's main session.
+  "Build the openclaw agent CLI args for a spawn entry.
    Returns a vector of strings."
   [config {:keys [bead path iteration channel worker-agent thinking worker-timeout] :as spawn}]
   (let [task (build-worker-task spawn)
-        session-key (build-worker-session-key worker-agent bead)
+        session-id (str "braids-" bead "-worker")
         thinking (or thinking (:worker-thinking config) "high")
         timeout (str (or worker-timeout 1800))
-        base-args ["cron" "add"
-                   "--name" (str "braids-" bead "-worker")
+        base-args ["agent"
                    "--message" task
-                   "--session-key" session-key
-                   "--session" "isolated"
-                   "--at" "+0s"
-                   "--delete-after-run"
+                   "--session-id" session-id
                    "--thinking" thinking
-                   "--timeout-seconds" timeout]]
+                   "--timeout" timeout]]
     (if (and worker-agent (not (str/blank? worker-agent)))
       (into base-args ["--agent" worker-agent])
       (vec base-args))))
@@ -60,15 +54,27 @@ Announcement-Prefix: %s")
   [msg]
   msg)
 
+(defn- redact-message-arg
+  "Replace the --message value in an args vector with \"<task>\" for log readability."
+  [args]
+  (let [msg-idx (.indexOf ^java.util.List args "--message")]
+    (if (and (>= msg-idx 0) (< (inc msg-idx) (count args)))
+      (assoc (vec args) (inc msg-idx) "<task>")
+      (vec args))))
+
 (defn format-spawn-log
-  "Format log lines for a spawn action. Returns vector of strings."
-  [tick-result]
+  "Format log lines for a spawn action. Returns vector of strings.
+   Calls build-worker-args for each spawn to log the actual command."
+  [config tick-result]
   (let [spawns (:spawns tick-result)
         n (count spawns)]
     (into [(log-line (str "Spawning " n " worker(s)"))]
-          (map (fn [{:keys [bead worker-agent]}]
-                 (log-line (str "  → bead=" bead " agent=" (or worker-agent "default"))))
-               spawns))))
+          (mapcat (fn [{:keys [bead worker-agent] :as spawn}]
+                    (let [args (build-worker-args config spawn)
+                          redacted (redact-message-arg args)]
+                      [(log-line (str "  → bead=" bead " agent=" (or worker-agent "default")))
+                       (log-line (str "  spawn cmd: openclaw " (str/join " " redacted)))]))
+                  spawns))))
 
 (defn format-idle-log
   "Format log lines for an idle action. Returns vector of strings."

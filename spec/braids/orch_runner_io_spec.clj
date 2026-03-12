@@ -73,7 +73,7 @@
           (should= "openclaw" (first (:args @process-args)))
           (should= :discard (get-in @process-args [:opts :out])))))
 
-    (it "passes built worker args to the process using cron add"
+    (it "passes built worker args to the process using agent subcommand"
       (let [process-args (atom nil)]
         (with-redefs [config-io/load-config (fn [] sample-config)
                       sys/subprocess-env (fn [_] {"PATH" "/usr/local/bin"})
@@ -83,10 +83,9 @@
                                      nil)]
           (with-out-str (rio/spawn-worker! sample-spawn {:dry-run false}))
           (let [args (vec (rest @process-args))]
-            (should (some #{"cron"} args))
-            (should (some #{"add"} args))
+            (should (some #{"agent"} args))
             (should (some #{"--message"} args))
-            (should (some #{"--session-key"} args))))))
+            (should (some #{"--session-id"} args))))))
 
     (it "does not call proc/process in dry-run mode"
       (let [process-called (atom false)]
@@ -181,10 +180,9 @@
           (with-out-str (rio/run-orch! {:dry-run false}))
           (should= 1 (count @spawned))
           (should= "openclaw" (first (first @spawned)))
-          ;; Verify cron add subcommand is used
+          ;; Verify agent subcommand is used
           (let [args (vec (rest (first @spawned)))]
-            (should= "cron" (first args))
-            (should= "add" (second args))))))
+            (should= "agent" (first args))))))
 
     (it "does not spawn workers in dry-run mode even with spawn action"
       (let [spawned (atom [])]

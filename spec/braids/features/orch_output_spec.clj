@@ -98,4 +98,17 @@
         [["alpha" "active" "normal" "1" "001" "0"] ["beta" "paused" "normal" "1" "001" "0"]])
       (h/orch-tick!)
       (should (h/output-contains-line? "alpha"))
-      (should-not (h/output-contains? "beta")))))
+      (should-not (h/output-contains? "beta"))))
+
+  (context "spawn log prints full worker command"
+    (it "spawn log prints full worker command"
+      (h/reset!)
+      (h/configure-projects-from-table
+        ["slug" "status" "priority" "max-workers" "active-iteration" "active-workers" "path" "worker-agent" "worker-timeout" "channel"]
+        [["alpha" "active" "normal" "1" "001" "0" "/projects/alpha" "scrapper" "1800" "#alpha"]])
+      (h/set-project-beads "alpha"
+        ["id" "title" "status"]
+        [["alpha-aa1" "Task 1" "ready"]])
+      (h/orch-tick!)
+      (should (h/output-contains-line-matching?
+        "spawn cmd: openclaw agent --message .+ --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper")))))

@@ -21,11 +21,10 @@
       (h/set-spawn-entry {:bead "proj-abc"})
       (h/build-worker-args!)
       (should (some #(= "--message" %) (h/worker-args)))
-      (should (some #(= "--session-key" %) (h/worker-args)))
-      (should (some #(= "cron" %) (h/worker-args)))
-      (should (some #(= "add" %) (h/worker-args)))
+      (should (some #(= "--session-id" %) (h/worker-args)))
+      (should (some #(= "agent" %) (h/worker-args)))
       (should (some #(= "--thinking" %) (h/worker-args)))
-      (should (some #(= "--timeout-seconds" %) (h/worker-args)))
+      (should (some #(= "--timeout" %) (h/worker-args)))
       (should-not (some #(= "--agent" %) (h/worker-args)))))
 
   (context "Build args with custom agent"

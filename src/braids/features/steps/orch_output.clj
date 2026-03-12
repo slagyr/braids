@@ -22,6 +22,9 @@
    :then  [[#"^the output contains lines matching$"
             (fn [_] {:pattern :output-contains-lines-matching})]
 
+           [#"^the output contains a line matching$"
+            (fn [_] {:pattern :output-contains-a-line-matching})]
+
            [#"^the output does not contain$"
             (fn [_] {:pattern :output-does-not-contain})]
 
@@ -59,6 +62,12 @@
                                (let [text (first row)]
                                  (str "(should (h/output-contains-line? \"" text "\"))")))
                              rows))))}
+
+   :output-contains-a-line-matching
+   {:text (constantly "the output contains a line matching")
+    :code (fn [{:keys [doc-string]}]
+            (when doc-string
+              (str "(should (h/output-contains-line-matching? \"" (str/replace doc-string "\"" "\\\"") "\"))")))}
 
    :output-does-not-contain
    {:text (constantly "the output does not contain")
