@@ -15,13 +15,13 @@ Feature: Orchestrator runner
     And the task should contain "001"
     And the task should contain "worker.md"
 
-  Scenario: Build worker CLI args with session ID
+  Scenario: Build worker CLI args with sessions spawn
     Given a spawn entry with bead "proj-abc"
     And no custom worker agent
     When building the worker args
-    Then the args should include "--message"
-    And the args should include "--session-id"
-    And the session ID should be "braids-proj-abc-worker"
+    Then the args should include "--task"
+    And the args should include "--label"
+    And the label should be "project:proj:proj-abc"
     And the args should include "--thinking"
     And the args should include "--timeout"
     And the args should not include "--agent"
@@ -69,8 +69,8 @@ Feature: Orchestrator runner
     When the orchestrator ticks
     Then the output contains lines matching
       | Spawning 2 worker(s) |
-      | aa1 → openclaw agent --message .+ --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper |
-      | aa2 → openclaw agent --message .+ --session-id braids-alpha-aa2-worker --thinking high --timeout 1800 --agent scrapper |
+      | aa1 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
+      | aa2 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa2 --agent scrapper |
 
 
 

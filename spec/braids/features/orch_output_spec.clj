@@ -111,6 +111,6 @@
         [["alpha-aa1" "Task 1" "ready"]])
       (h/orch-tick!)
       (should (h/output-contains-line?
-        "→ openclaw agent --message <task> --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper"))
+        "→ openclaw sessions spawn --task <task> --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper"))
       (should-not (h/output-contains? "→ bead="))
       (should-not (h/output-contains? "Spawned worker:")))))

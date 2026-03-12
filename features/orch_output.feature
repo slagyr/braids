@@ -142,8 +142,8 @@ Feature: Orchestrator tick output
     When the orchestrator ticks
     Then the output contains lines matching
       | expression                                                                                                  |
-      | Spawning 1 worker\(s\)                                                                                      |
-      | aa1 → openclaw agent --message <task> --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper |
+      | Spawning 1 worker(s)                                                                                          |
+      |   aa1 → openclaw sessions spawn --task <task> --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
     And the output does not contain
       | text            |
       | → bead=         |
@@ -161,9 +161,9 @@ Feature: Orchestrator tick output
     When the orchestrator ticks
     Then the output contains lines matching
       | expression                                                                                                                    |
-      | Spawning 2 worker\(s\)                                                                                                        |
-      | aa1 → openclaw agent --message .+ --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper |
-      | aa2 → openclaw agent --message .+ --session-id braids-alpha-aa2-worker --thinking high --timeout 1800 --agent scrapper |
+      | Spawning 2 worker(s)                                                                                                        |
+      |   aa1 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
+      |   aa2 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa2 --agent scrapper |
 
   @wip
   Scenario: idle log shows reason

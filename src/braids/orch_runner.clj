@@ -33,18 +33,19 @@ Announcement-Prefix: %s")
     (str "agent:" agent-id ":braids-" bead "-worker")))
 
 (defn build-worker-args
-  "Build the openclaw agent CLI args for a spawn entry.
+  "Build the openclaw sessions spawn CLI args for a spawn entry.
    Returns a vector of strings."
-  [config {:keys [bead path iteration channel worker-agent thinking worker-timeout] :as spawn}]
+  [config {:keys [bead path iteration channel worker-agent thinking worker-timeout label project] :as spawn}]
   (let [task (build-worker-task spawn)
-        session-id (str "braids-" bead "-worker")
         thinking (or thinking (:worker-thinking config) "high")
         timeout (str (or worker-timeout 1800))
-        base-args ["agent"
-                   "--message" task
-                   "--session-id" session-id
+        slug (or project (first (str/split bead #"-")))
+        label (or label (str "project:" slug ":" bead))
+        base-args ["sessions" "spawn"
+                   "--task" task
                    "--thinking" thinking
-                   "--timeout" timeout]]
+                   "--timeout" timeout
+                   "--label" label]]
     (if (and worker-agent (not (str/blank? worker-agent)))
       (into base-args ["--agent" worker-agent])
       (vec base-args))))
@@ -54,10 +55,10 @@ Announcement-Prefix: %s")
   [msg]
   msg)
 
-(defn- redact-message-arg
-  "Replace the --message value in an args vector with \"<task>\" for log readability."
+(defn- redact-task-arg
+  "Replace the --task value in an args vector with \"<task>\" for log readability."
   [args]
-  (let [msg-idx (.indexOf ^java.util.List args "--message")]
+  (let [msg-idx (.indexOf ^java.util.List args "--task")]
     (if (and (>= msg-idx 0) (< (inc msg-idx) (count args)))
       (assoc (vec args) (inc msg-idx) "<task>")
       (vec args))))
@@ -80,7 +81,7 @@ Announcement-Prefix: %s")
     (into [(log-line (str "Spawning " n " worker(s)"))]
           (map (fn [spawn]
                  (let [args (build-worker-args config spawn)
-                       redacted (redact-message-arg args)
+                       redacted (redact-task-arg args)
                        suffix (bead-suffix (:bead spawn))]
                    (log-line (str suffix " → openclaw " (str/join " " redacted)))))
                spawns))))

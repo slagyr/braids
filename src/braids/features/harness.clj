@@ -288,6 +288,11 @@
   []
   (:session-id-result @state))
 
+(defn label-result
+  "Returns the extracted label from build-worker-args."
+  []
+  (:label-result @state))
+
 (defn session-ids-identical?
   "Returns true if the two generated session IDs are identical."
   []
@@ -1079,16 +1084,16 @@
 
 (defn build-worker-args!
   "Build the worker args from the spawn entry.
-   Also extracts the session-id from args for assert-session-key compatibility."
+   Also extracts the label from args for assertion compatibility."
   []
   (let [entry (:runner-spawn-entry @state)
         config (:runner-config @state)
         args (orch-runner/build-worker-args config entry)
-        sid-idx (when args (.indexOf ^java.util.List args "--session-id"))
-        session-id (when (and sid-idx (>= sid-idx 0) (< (inc sid-idx) (count args)))
-                     (nth args (inc sid-idx)))]
+        label-idx (when args (.indexOf ^java.util.List args "--label"))
+        label (when (and label-idx (>= label-idx 0) (< (inc label-idx) (count args)))
+                (nth args (inc label-idx)))]
     (swap! state assoc :runner-worker-args args
-           :session-id-result session-id)))
+           :label-result label)))
 
 (defn worker-args
   "Returns the built worker args."

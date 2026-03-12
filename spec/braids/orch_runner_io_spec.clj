@@ -73,7 +73,7 @@
           (should= "openclaw" (first (:args @process-args)))
           (should= :discard (get-in @process-args [:opts :out])))))
 
-    (it "passes built worker args to the process using agent subcommand"
+    (it "passes built worker args to the process using sessions spawn subcommand"
       (let [process-args (atom nil)]
         (with-redefs [config-io/load-config (fn [] sample-config)
                       sys/subprocess-env (fn [_] {"PATH" "/usr/local/bin"})
@@ -83,9 +83,10 @@
                                      nil)]
           (with-out-str (rio/spawn-worker! sample-spawn {:dry-run false}))
           (let [args (vec (rest @process-args))]
-            (should (some #{"agent"} args))
-            (should (some #{"--message"} args))
-            (should (some #{"--session-id"} args))))))
+            (should (some #{"sessions"} args))
+            (should (some #{"spawn"} args))
+            (should (some #{"--task"} args))
+            (should (some #{"--label"} args))))))
 
     (it "does not call proc/process in dry-run mode"
       (let [process-called (atom false)]
@@ -179,9 +180,10 @@
           (with-out-str (rio/run-orch! {:dry-run false}))
           (should= 1 (count @spawned))
           (should= "openclaw" (first (first @spawned)))
-          ;; Verify agent subcommand is used
+          ;; Verify sessions spawn subcommand is used
           (let [args (vec (rest (first @spawned)))]
-            (should= "agent" (first args))))))
+            (should= "sessions" (first args))
+            (should= "spawn" (second args))))))
 
     (it "does not spawn workers in dry-run mode even with spawn action"
       (let [spawned (atom [])]
