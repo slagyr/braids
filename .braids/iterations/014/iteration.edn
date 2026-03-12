@@ -1,4 +1,12 @@
 {:number "014"
- :status :complete
- :stories ["braids-w57" "braids-965" "braids-8mb" "braids-0m5" "braids-8xm" "braids-j9i" "braids-4b4" "braids-261" "braids-ryb" "braids-rjp" "braids-oc3" "braids-ttx"]
- :notes "Cleanup, polish, and quality improvements: remove dashboard generation, pretty-print EDN files, clean up global braids directory, remove migrate command, fix iteration display bug, add integration tests, establish quality standards, consolidate list/status commands, colorize help/ready output, fix Homebrew path resolution, and fix orchestrator spawning logic."}
+ :status :active
+ :stories [{:id "braids-v4qt" :title "Rename --confirmed to --live-run, remove --confirmed, update system cron"}
+           {:id "braids-0wdv" :title "Update orch header/footer format — DRY-RUN/LIVE-RUN started/completed at timestamp"}
+           {:id "braids-l137" :title "Update @wip spawn log scenario to new multi-spawn format"}
+           {:id "braids-h4a2" :title "Delete stale @wip idle log scenario, implement zombie log scenario"}
+           {:id "braids-tnfp" :title "Implement zombie_detection WIP scenarios"}
+           {:id "braids-wz6k" :title "Implement worker_session_tracking WIP scenarios"}]
+ :notes ["Theme: Output clarity, CLI naming, and complete Gherkin coverage"
+         "v4qt must land before 0wdv (0wdv references --confirmed in its description but should use --live-run)"
+         "l137 and h4a2 are independent cleanup — can run in parallel"
+         "tnfp and wz6k are independent feature implementations — can run in parallel"]}
