@@ -150,20 +150,20 @@ Feature: Orchestrator tick output
       | Spawned worker: |
 
   @wip
-  Scenario: spawn log shows worker count and bead IDs
+  Scenario: spawn log shows multiple worker commands
     Given configured projects:
-      | slug  | status | priority | max-workers | active-iteration | active-workers | path            |
-      | alpha | active | normal   | 2           | 001              | 0              | /projects/alpha |
+      | slug  | status | priority | max-workers | active-iteration | active-workers | path            | worker-agent | worker-timeout | channel |
+      | alpha | active | normal   | 2           | 001              | 0              | /projects/alpha | scrapper     | 1800           | #alpha  |
     And project "alpha" has beads:
       | id        | title  | status |
       | alpha-aa1 | Task 1 | ready  |
       | alpha-aa2 | Task 2 | ready  |
     When the orchestrator ticks
     Then the output contains lines matching
-      | expression            |
-      | Spawning 2 worker(s) |
-      | → bead=alpha-aa1     |
-      | → bead=alpha-aa2     |
+      | expression                                                                                                                    |
+      | Spawning 2 worker\(s\)                                                                                                        |
+      | aa1 → openclaw agent --message .+ --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper |
+      | aa2 → openclaw agent --message .+ --session-id braids-alpha-aa2-worker --thinking high --timeout 1800 --agent scrapper |
 
   @wip
   Scenario: idle log shows reason
