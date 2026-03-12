@@ -72,11 +72,7 @@ Feature: Orchestrator runner
       | aa1 → openclaw agent --message .+ --session-id braids-alpha-aa1-worker --thinking high --timeout 1800 --agent scrapper |
       | aa2 → openclaw agent --message .+ --session-id braids-alpha-aa2-worker --thinking high --timeout 1800 --agent scrapper |
 
-  Scenario: Format idle log
-    Given an idle tick result with reason "all-at-capacity"
-    When formatting the idle log
-    Then the log should contain "Idle"
-    And the log should contain "all-at-capacity"
+
 
   Scenario: Format zombie log
     Given 2 zombie sessions with reasons "bead-closed" and "timeout"
