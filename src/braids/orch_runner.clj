@@ -62,6 +62,15 @@ Announcement-Prefix: %s")
       (assoc (vec args) (inc msg-idx) "<task>")
       (vec args))))
 
+(defn- bead-suffix
+  "Extract the bead suffix from a full bead id.
+   E.g., 'alpha-aa1' -> 'aa1', 'zaap-phs' -> 'phs'."
+  [bead-id]
+  (let [parts (str/split bead-id #"-")]
+    (if (>= (count parts) 2)
+      (str/join "-" (rest parts))
+      bead-id)))
+
 (defn format-spawn-log
   "Format log lines for a spawn action. Returns vector of strings.
    Calls build-worker-args for each spawn to log the actual command."
@@ -71,8 +80,9 @@ Announcement-Prefix: %s")
     (into [(log-line (str "Spawning " n " worker(s)"))]
           (map (fn [spawn]
                  (let [args (build-worker-args config spawn)
-                       redacted (redact-message-arg args)]
-                   (log-line (str "  → openclaw " (str/join " " redacted)))))
+                       redacted (redact-message-arg args)
+                       suffix (bead-suffix (:bead spawn))]
+                   (log-line (str suffix " → openclaw " (str/join " " redacted)))))
                spawns))))
 
 (defn format-idle-log
