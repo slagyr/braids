@@ -111,6 +111,10 @@ Write output to `.braids/iterations/<N>/<id-suffix>-<descriptive-name>.md`
 
 1. `bd update <bead-id> -s closed`
 2. `git add -A && git commit -m "<summary> (<bead-id>)"`
+3. Clean up your worker session to prevent zombie accumulation:
+   ```bash
+   openclaw sessions delete --label project:<slug>:<bead-id>
+   ```
 
 If notifications `bead-complete` is `on`, send a message to the Channel with a summary.
 
