@@ -114,7 +114,7 @@ Feature: Orchestrator tick output
       | text |
       | beta |
 
-  @wip
+
   Scenario: dry-run mode shows DRY-RUN header and footer
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -123,7 +123,7 @@ Feature: Orchestrator tick output
     Then the first line matches "-- DRY-RUN started at"
     And the last line matches "-- DRY-RUN completed at"
 
-  @wip
+
   Scenario: live-run mode shows LIVE-RUN header and footer
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -149,7 +149,7 @@ Feature: Orchestrator tick output
       | → bead=         |
       | Spawned worker: |
 
-  @wip
+
   Scenario: spawn log shows multiple worker commands
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers | path            | worker-agent | worker-timeout | channel |
@@ -165,7 +165,7 @@ Feature: Orchestrator tick output
       |   aa1 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
       |   aa2 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa2 --agent scrapper |
 
-  @wip
+
   Scenario: idle log shows reason
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
@@ -175,7 +175,7 @@ Feature: Orchestrator tick output
       | expression              |
       | Idle: no-ready-beads |
 
-  @wip
+
   Scenario: zombie log shows zombie count and reasons
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
