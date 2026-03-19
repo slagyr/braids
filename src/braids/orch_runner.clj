@@ -102,7 +102,7 @@ Announcement-Prefix: %s")
 
 (defn parse-cli-args
   "Parse CLI args vector into options map.
-   Defaults to dry-run mode. Use --run to actually spawn workers.
+   Defaults to dry-run mode. Use --live-run to actually spawn workers.
    Returns {:dry-run bool :verbose bool} or {:error string}."
   [args]
   (loop [remaining args
@@ -112,7 +112,7 @@ Announcement-Prefix: %s")
       (let [arg (first remaining)]
         (case arg
           "--dry-run"   (recur (rest remaining) (assoc opts :dry-run true))
-          "--confirmed" (recur (rest remaining) (assoc opts :dry-run false))
+          "--live-run" (recur (rest remaining) (assoc opts :dry-run false))
           "--run"       (recur (rest remaining) (assoc opts :dry-run false))
           "--verbose"   (recur (rest remaining) (assoc opts :verbose true))
-          {:error (str "Unknown arg: " arg "\n\nUsage: braids orch [--dry-run] [--confirmed] [--verbose]\n\n  --dry-run    Show what would happen without spawning (default)\n  --confirmed  Actually spawn workers\n  --verbose    Print detailed project/bead information")})))))
+          {:error (str "Unknown arg: " arg "\n\nUsage: braids orch [--dry-run] [--live-run] [--verbose]\n\n  --dry-run    Show what would happen without spawning (default)\n  --live-run   Actually spawn workers\n  --verbose    Print detailed project/bead information")})))))
