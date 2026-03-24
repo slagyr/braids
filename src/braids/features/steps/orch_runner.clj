@@ -99,11 +99,11 @@
 
 (defthen assert-dry-run "dry-run should be {val}"
   [val]
-  (should= (= val "true") (:dry-run (h/parsed-cli-args))))
+  (should= (= val "true") (boolean (:dry-run (h/parsed-cli-args)))))
 
 (defthen assert-verbose "verbose should be {val}"
   [val]
-  (should= (= val "true") (:verbose (h/parsed-cli-args))))
+  (should= (= val "true") (boolean (:verbose (h/parsed-cli-args)))))
 
 (defthen assert-parse-error "parsing should return an error"
   []
