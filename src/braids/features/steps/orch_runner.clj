@@ -1,191 +1,118 @@
 (ns braids.features.steps.orch-runner
-  (:require [clojure.string :as str]))
+  (:require [gherclj.core :refer [defgiven defwhen defthen]]
+            [braids.features.harness :as h]
+            [clojure.string :as str]
+            [speclj.core :refer :all]))
 
-(def step-patterns
-  {:given [[#"^a spawn entry with path \"([^\"]+)\" and bead \"([^\"]+)\"$"
-            (fn [[_ path bead]]
-              {:pattern :spawn-entry-path-bead :path path :bead bead})]
+;; --- Given steps ---
 
-           [#"^iteration \"([^\"]+)\" and channel \"([^\"]+)\"$"
-            (fn [[_ iteration channel]]
-              {:pattern :spawn-iteration-channel :iteration iteration :channel channel})]
+(defgiven spawn-entry-path-bead "a spawn entry with path \"{path}\" and bead \"{bead}\""
+  [path bead]
+  (h/set-spawn-entry {:path path :bead bead}))
 
-           [#"^a spawn entry with bead \"([^\"]+)\"$"
-            (fn [[_ bead]]
-              {:pattern :spawn-entry-bead :bead bead})]
+(defgiven spawn-iteration-channel "iteration \"{iteration}\" and channel \"{channel}\""
+  [iteration channel]
+  (h/update-spawn-entry {:iteration iteration :channel channel}))
 
-           [#"^no custom worker agent$"
-            (fn [_] {:pattern :no-worker-agent})]
+(defgiven spawn-entry-bead "a spawn entry with bead \"{bead}\""
+  [bead]
+  (h/set-spawn-entry {:bead bead}))
 
-           [#"^worker agent \"([^\"]+)\"$"
-            (fn [[_ agent]]
-              {:pattern :worker-agent :agent agent})]
+(defgiven no-worker-agent "no custom worker agent"
+  []
+  nil)
 
-           [#"^no CLI arguments$"
-            (fn [_] {:pattern :no-cli-args})]
+(defgiven worker-agent "worker agent \"{agent}\""
+  [agent]
+  (h/set-worker-agent agent))
 
-           [#"^CLI arguments \"([^\"]+)\"$"
-            (fn [[_ args]]
-              {:pattern :cli-args :args args})]
+(defgiven no-cli-args "no CLI arguments"
+  []
+  (h/set-cli-args []))
 
-           [#"^a spawn tick result with (\d+) workers?$"
-            (fn [[_ count]]
-              {:pattern :spawn-tick-result :count (parse-long count)})]
+(defgiven cli-args "CLI arguments \"{args}\""
+  [args]
+  (h/set-cli-args [args]))
 
-           [#"^beads \"([^\"]+)\" and \"([^\"]+)\"$"
-            (fn [[_ b1 b2]]
-              {:pattern :spawn-beads :beads [b1 b2]})]
+(defgiven spawn-tick-result "a spawn tick result with {count:int} workers"
+  [count]
+  (h/set-spawn-tick-result count []))
 
-           [#"^an idle tick result with reason \"([^\"]+)\"$"
-            (fn [[_ reason]]
-              {:pattern :idle-tick-result :reason reason})]
+(defgiven spawn-beads "beads \"{b1}\" and \"{b2}\""
+  [b1 b2]
+  (h/add-spawn-beads [b1 b2]))
 
-           [#"^(\d+) zombie sessions with reasons \"([^\"]+)\" and \"([^\"]+)\"$"
-            (fn [[_ count r1 r2]]
-              {:pattern :zombie-sessions :count (parse-long count) :reasons [r1 r2]})]]
+(defgiven idle-tick-result "an idle tick result with reason \"{reason}\""
+  [reason]
+  (h/set-idle-tick-result reason))
 
-   :when  [[#"^building the worker task$"
-            (fn [_] {:pattern :build-worker-task})]
+(defgiven zombie-sessions #"^(\d+) zombie sessions with reasons \"([^\"]+)\" and \"([^\"]+)\"$"
+  [count r1 r2]
+  (h/set-zombie-sessions (parse-long count) [r1 r2]))
 
-           [#"^building the worker args$"
-            (fn [_] {:pattern :build-worker-args})]
+;; --- When steps ---
 
-           [#"^parsing CLI args$"
-            (fn [_] {:pattern :parse-cli-args})]
+(defwhen build-worker-task "building the worker task"
+  []
+  (h/build-worker-task!))
 
-           [#"^formatting the spawn log$"
-            (fn [_] {:pattern :format-spawn-log})]
+(defwhen build-worker-args "building the worker args"
+  []
+  (h/build-worker-args!))
 
-           [#"^formatting the idle log$"
-            (fn [_] {:pattern :format-idle-log})]
+(defwhen parse-cli-args "parsing CLI args"
+  []
+  (h/parse-cli-args!))
 
-           [#"^formatting the zombie log$"
-            (fn [_] {:pattern :format-zombie-log})]]
+(defwhen format-spawn-log "formatting the spawn log"
+  []
+  (h/format-spawn-log!))
 
-   :then  [[#"^the task should contain \"([^\"]+)\"$"
-            (fn [[_ expected]]
-              {:pattern :assert-task-contains :expected expected})]
+(defwhen format-idle-log "formatting the idle log"
+  []
+  (h/format-idle-log!))
 
-           [#"^the args should include \"([^\"]+)\"$"
-            (fn [[_ expected]]
-              {:pattern :assert-args-include :expected expected})]
+(defwhen format-zombie-log "formatting the zombie log"
+  []
+  (h/format-zombie-log!))
 
-           [#"^the args should not include \"([^\"]+)\"$"
-            (fn [[_ expected]]
-              {:pattern :assert-args-not-include :expected expected})]
+;; --- Then steps ---
 
-           [#"^the agent value should be \"([^\"]+)\"$"
-            (fn [[_ expected]]
-              {:pattern :assert-agent-value :expected expected})]
+(defthen assert-task-contains "the task should contain \"{expected}\""
+  [expected]
+  (should (str/includes? (h/worker-task) expected)))
 
-           [#"^dry-run should be (true|false)$"
-            (fn [[_ val]]
-              {:pattern :assert-dry-run :expected (= val "true")})]
+(defthen assert-args-include "the args should include \"{expected}\""
+  [expected]
+  (should (some #(= expected %) (h/worker-args))))
 
-           [#"^verbose should be (true|false)$"
-            (fn [[_ val]]
-              {:pattern :assert-verbose :expected (= val "true")})]
+(defthen assert-args-not-include "the args should not include \"{expected}\""
+  [expected]
+  (should-not (some #(= expected %) (h/worker-args))))
 
-           [#"^parsing should return an error$"
-            (fn [_] {:pattern :assert-parse-error})]
+(defthen assert-agent-value "the agent value should be \"{expected}\""
+  [expected]
+  (let [args (h/worker-args)
+        idx (.indexOf args "--agent")]
+    (should (>= idx 0))
+    (should= expected (nth args (inc idx)))))
 
-           [#"^the error should contain \"([^\"]+)\"$"
-            (fn [[_ expected]]
-              {:pattern :assert-error-contains :expected expected})]
+(defthen assert-dry-run "dry-run should be {val}"
+  [val]
+  (should= (= val "true") (:dry-run (h/parsed-cli-args))))
 
-           [#"^the log should contain \"([^\"]+)\"$"
-            (fn [[_ expected]]
-              {:pattern :assert-log-contains :expected expected})]]})
+(defthen assert-verbose "verbose should be {val}"
+  [val]
+  (should= (= val "true") (:verbose (h/parsed-cli-args))))
 
-(def step-registry
-  {:spawn-entry-path-bead {:text (fn [{:keys [path bead]}]
-                                   (str "a spawn entry with path \"" path "\" and bead \"" bead "\""))
-                           :code (fn [{:keys [path bead]}]
-                                   (str "(h/set-spawn-entry {:path \"" path "\" :bead \"" bead "\"})"))}
-   :spawn-iteration-channel {:text (fn [{:keys [iteration channel]}]
-                                     (str "iteration \"" iteration "\" and channel \"" channel "\""))
-                             :code (fn [{:keys [iteration channel]}]
-                                     (str "(h/update-spawn-entry {:iteration \"" iteration "\" :channel \"" channel "\"})"))}
-   :spawn-entry-bead     {:text (fn [{:keys [bead]}]
-                                  (str "a spawn entry with bead \"" bead "\""))
-                          :code (fn [{:keys [bead]}]
-                                  (str "(h/set-spawn-entry {:bead \"" bead "\"})"))}
-   :no-worker-agent      {:text (constantly "no custom worker agent")
-                          :code (constantly nil)}
-   :worker-agent         {:text (fn [{:keys [agent]}]
-                                  (str "worker agent \"" agent "\""))
-                          :code (fn [{:keys [agent]}]
-                                  (str "(h/set-worker-agent \"" agent "\")"))}
-   :no-cli-args          {:text (constantly "no CLI arguments")
-                          :code (constantly "(h/set-cli-args [])")}
-   :cli-args             {:text (fn [{:keys [args]}]
-                                  (str "CLI arguments \"" args "\""))
-                          :code (fn [{:keys [args]}]
-                                  (str "(h/set-cli-args [\"" args "\"])"))}
-   :spawn-tick-result    {:text (fn [{:keys [count]}]
-                                  (str "a spawn tick result with " count " workers"))
-                          :code (fn [{:keys [count]}]
-                                  (str "(h/set-spawn-tick-result " count " [])"))}
-   :spawn-beads          {:text (fn [{:keys [beads]}]
-                                  (let [[b1 b2] beads]
-                                    (str "beads \"" b1 "\" and \"" b2 "\"")))
-                          :code (fn [{:keys [beads]}]
-                                  (str "(h/add-spawn-beads " (pr-str beads) ")"))}
-   :idle-tick-result     {:text (fn [{:keys [reason]}]
-                                  (str "an idle tick result with reason \"" reason "\""))
-                          :code (fn [{:keys [reason]}]
-                                  (str "(h/set-idle-tick-result \"" reason "\")"))}
-   :zombie-sessions      {:text (fn [{:keys [count reasons]}]
-                                  (let [[r1 r2] reasons]
-                                    (str count " zombie sessions with reasons \"" r1 "\" and \"" r2 "\"")))
-                          :code (fn [{:keys [count reasons]}]
-                                  (str "(h/set-zombie-sessions " count " " (pr-str reasons) ")"))}
-   :build-worker-task    {:text (constantly "building the worker task")
-                          :code (constantly "(h/build-worker-task!)")}
-   :build-worker-args    {:text (constantly "building the worker args")
-                          :code (constantly "(h/build-worker-args!)")}
-   :parse-cli-args       {:text (constantly "parsing CLI args")
-                          :code (constantly "(h/parse-cli-args!)")}
-   :format-spawn-log     {:text (constantly "formatting the spawn log")
-                          :code (constantly "(h/format-spawn-log!)")}
-   :format-idle-log      {:text (constantly "formatting the idle log")
-                          :code (constantly "(h/format-idle-log!)")}
-   :format-zombie-log    {:text (constantly "formatting the zombie log")
-                          :code (constantly "(h/format-zombie-log!)")}
-   :assert-task-contains {:text (fn [{:keys [expected]}]
-                                  (str "the task should contain \"" expected "\""))
-                          :code (fn [{:keys [expected]}]
-                                  (str "(should (clojure.string/includes? (h/worker-task) \"" expected "\"))"))}
-   :assert-args-include  {:text (fn [{:keys [expected]}]
-                                  (str "the args should include \"" expected "\""))
-                          :code (fn [{:keys [expected]}]
-                                  (str "(should (some #(= \"" expected "\" %) (h/worker-args)))"))}
-   :assert-args-not-include {:text (fn [{:keys [expected]}]
-                                     (str "the args should not include \"" expected "\""))
-                             :code (fn [{:keys [expected]}]
-                                     (str "(should-not (some #(= \"" expected "\" %) (h/worker-args)))"))}
-   :assert-agent-value   {:text (fn [{:keys [expected]}]
-                                  (str "the agent value should be \"" expected "\""))
-                          :code (fn [{:keys [expected]}]
-                                  (str "(let [args (h/worker-args)\n"
-                                       "      idx (.indexOf args \"--agent\")]\n"
-                                       "  (should (>= idx 0))\n"
-                                       "  (should= \"" expected "\" (nth args (inc idx))))"))}
-   :assert-dry-run       {:text (fn [{:keys [expected]}]
-                                  (str "dry-run should be " expected))
-                          :code (fn [{:keys [expected]}]
-                                  (str "(should= " expected " (:dry-run (h/parsed-cli-args)))"))}
-   :assert-verbose       {:text (fn [{:keys [expected]}]
-                                  (str "verbose should be " expected))
-                          :code (fn [{:keys [expected]}]
-                                  (str "(should= " expected " (:verbose (h/parsed-cli-args)))"))}
-   :assert-parse-error   {:text (constantly "parsing should return an error")
-                          :code (constantly "(should (:error (h/parsed-cli-args)))")}
-   :assert-error-contains {:text (fn [{:keys [expected]}]
-                                   (str "the error should contain \"" expected "\""))
-                           :code (fn [{:keys [expected]}]
-                                   (str "(should (clojure.string/includes? (:error (h/parsed-cli-args)) \"" expected "\"))"))}
-   :assert-log-contains  {:text (fn [{:keys [expected]}]
-                                  (str "the log should contain \"" expected "\""))
-                          :code (fn [{:keys [expected]}]
-                                  (str "(should (some #(clojure.string/includes? % \"" expected "\") (h/runner-log)))"))}})
+(defthen assert-parse-error "parsing should return an error"
+  []
+  (should (:error (h/parsed-cli-args))))
+
+(defthen assert-error-contains "the error should contain \"{expected}\""
+  [expected]
+  (should (str/includes? (:error (h/parsed-cli-args)) expected)))
+
+(defthen assert-log-contains "the log should contain \"{expected}\""
+  [expected]
+  (should (some #(str/includes? % expected) (h/runner-log))))

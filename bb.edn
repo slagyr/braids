@@ -1,4 +1,6 @@
 {:paths ["src" "spec"]
+ :deps {io.github.slagyr/gherclj {:git/url "https://github.com/slagyr/gherclj"
+                                   :git/sha "4966b48d2db1a4796ec7163502286411b7b40873"}}
  :tasks {spec              {:doc        "Run unit specs"
                             :extra-deps {speclj/speclj {:mvn/version "3.12.1"}}
                             :requires   ([speclj.main :as speclj])
@@ -7,21 +9,24 @@
                                           "-s" "src"
                                           *command-line-args*)}
          features:parse    {:doc      "Parse .feature files to .edn IR"
-                            :requires ([braids.features.parser :as parser])
-                            :task     (let [source (or (first *command-line-args*) "features")
-                                            output (or (second *command-line-args*) "features/edn")]
-                                        (parser/parse-features! source output))}
+                            :requires ([gherclj.pipeline :as pipeline])
+                            :task     (pipeline/parse!
+                                        {:features-dir (or (first *command-line-args*) "features")
+                                         :edn-dir (or (second *command-line-args*) "features/edn")})}
          features:generate {:doc      "Generate speclj specs from .edn IR"
-                            :requires ([braids.features.generator :as gen])
-                            :task     (let [edn-dir (or (first *command-line-args*) "features/edn")
-                                            output (or (second *command-line-args*) "features/generated")]
-                                        (gen/generate-features! edn-dir output))}
+                            :requires ([braids.features.runner :as runner]
+                                       [gherclj.pipeline :as pipeline])
+                            :task     (pipeline/generate!
+                                        (merge runner/config
+                                               {:edn-dir (or (first *command-line-args*) "features/edn")
+                                                :output-dir (or (second *command-line-args*) "features/generated")}))}
          features          {:doc        "Parse, generate, and run feature specs"
                             :extra-deps {speclj/speclj {:mvn/version "3.12.1"}}
-                            :requires   ([braids.features.pipeline :as pipeline]
+                            :requires   ([braids.features.runner :as runner]
+                                         [gherclj.pipeline :as pipeline]
                                          [speclj.main :as speclj])
                             :task       (do
-                                          (pipeline/run-pipeline!)
+                                          (pipeline/run! runner/config)
                                           (apply speclj/-main "-c"
                                             "features/generated"
                                             "-s" "src"

@@ -1,7 +1,9 @@
 {:deps {speclj/speclj {:mvn/version "3.12.1"}
         babashka/fs {:mvn/version "0.5.25"}
         babashka/process {:mvn/version "0.5.22"}
-        cheshire/cheshire {:mvn/version "5.13.0"}}
+        cheshire/cheshire {:mvn/version "5.13.0"}
+        io.github.slagyr/gherclj {:git/url "https://github.com/slagyr/gherclj"
+                                   :git/sha "4966b48d2db1a4796ec7163502286411b7b40873"}}
  :paths ["src" "spec"]
  :aliases
  {:spec {:main-opts ["-m" "speclj.main" "-c" "spec/braids" "-s" "src"]}

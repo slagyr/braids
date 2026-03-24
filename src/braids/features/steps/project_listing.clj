@@ -1,116 +1,80 @@
 (ns braids.features.steps.project-listing
-  (:require [clojure.string :as str]))
+  (:require [gherclj.core :refer [defgiven defwhen defthen]]
+            [braids.features.harness :as h]
+            [clojure.string :as str]
+            [speclj.core :refer :all]))
 
-(def step-patterns
-  {:given [[#"^a project list with the following projects:$"
-            (fn [_] {:pattern :project-list-with-table})]
+(defgiven project-list-with-table "a project list with the following projects:"
+  [table]
+  (let [{:keys [headers rows]} table]
+    (h/set-project-list-from-table headers rows)))
 
-           [#"^an empty project list$"
-            (fn [_] {:pattern :empty-project-list})]]
+(defgiven empty-project-list "an empty project list"
+  []
+  (h/set-empty-project-list))
 
-   :when  [[#"^formatting the project list as JSON$"
-            (fn [_] {:pattern :format-list-json})]
+(defwhen format-list "formatting the project list"
+  []
+  (h/format-list!))
 
-           [#"^formatting the project list$"
-            (fn [_] {:pattern :format-list})]]
+(defwhen format-list-json "formatting the project list as JSON"
+  []
+  (h/format-list-json!))
 
-   :then  [[#"^the output should contain column headers (.+)$"
-            (fn [[_ headers-str]]
-              {:pattern :assert-column-headers :headers (re-seq #"\"([^\"]+)\"" headers-str)})]
+(defthen assert-column-headers #"^the output should contain column headers (.+)$"
+  [headers-str]
+  (let [headers (mapv second (re-seq #"\"([^\"]+)\"" headers-str))]
+    (doseq [header headers]
+      (should (str/includes? (h/list-output) header)))))
 
-           [#"^the output should contain slug \"([^\"]+)\"$"
-            (fn [[_ slug]]
-              {:pattern :assert-output-contains-slug :slug slug})]
+(defthen assert-output-contains-slug "the output should contain slug \"{slug}\""
+  [slug]
+  (should (str/includes? (h/list-output) slug)))
 
-           [#"^the output should contain iteration \"([^\"]+)\"$"
-            (fn [[_ iteration]]
-              {:pattern :assert-output-contains-iteration :iteration iteration})]
+(defthen assert-output-contains-iteration "the output should contain iteration \"{iteration}\""
+  [iteration]
+  (should (str/includes? (h/list-output) iteration)))
 
-           [#"^the output should contain progress \"([^\"]+)\"$"
-            (fn [[_ progress]]
-              {:pattern :assert-output-contains-progress :progress progress})]
+(defthen assert-output-contains-progress "the output should contain progress \"{progress}\""
+  [progress]
+  (should (str/includes? (h/list-output) progress)))
 
-           [#"^the output should contain workers \"([^\"]+)\"$"
-            (fn [[_ workers]]
-              {:pattern :assert-output-contains-workers :workers workers})]
+(defthen assert-output-contains-workers "the output should contain workers \"{workers}\""
+  [workers]
+  (should (str/includes? (h/list-output) workers)))
 
-           [#"^the line for \"([^\"]+)\" should contain a dash for (\S+)$"
-            (fn [[_ slug field]]
-              {:pattern :assert-dash-placeholder :slug slug :field field})]
+(defthen assert-dash-placeholder "the line for \"{slug}\" should contain a dash for {field}"
+  [slug field]
+  (should (h/line-contains-dash? slug)))
 
-           [#"^the output should be \"([^\"]+)\"$"
-            (fn [[_ expected]]
-              {:pattern :assert-output-equals :expected expected})]
+(defthen assert-output-equals "the output should be \"{expected}\""
+  [expected]
+  (should= expected (h/output)))
 
-           [#"^\"([^\"]+)\" status should be colorized (\w+)$"
-            (fn [[_ status color]]
-              {:pattern :assert-status-color :status status :color color})]
+(defthen assert-status-color "\"{status}\" status should be colorized {color}"
+  [status color]
+  (should (h/colorized? (h/list-output) status color)))
 
-           [#"^\"([^\"]+)\" priority should be colorized (\w+)$"
-            (fn [[_ priority color]]
-              {:pattern :assert-priority-color :priority priority :color color})]
+(defthen assert-priority-color "\"{priority}\" priority should be colorized {color}"
+  [priority color]
+  (should (h/colorized? (h/list-output) priority color)))
 
-           [#"^(\d+) percent progress should be colorized (\w+)$"
-            (fn [[_ percent color]]
-              {:pattern :assert-progress-color :percent (parse-long percent) :color color})]
+(defthen assert-progress-color "{percent:int} percent progress should be colorized {color}"
+  [percent color]
+  (should (h/colorized? (h/list-output) (str percent "%") color)))
 
-           [#"^the JSON output should contain a project with slug \"([^\"]+)\"$"
-            (fn [[_ slug]]
-              {:pattern :assert-json-project-exists :slug slug})]
+(defthen assert-json-project-exists "the JSON output should contain a project with slug \"{slug}\""
+  [slug]
+  (should (h/json-project slug)))
 
-           [#"^the JSON project \"([^\"]+)\" should have (\S+) \"([^\"]+)\"$"
-            (fn [[_ slug key expected]]
-              {:pattern :assert-json-project-string :slug slug :key key :expected expected})]
+(defthen assert-json-project-string "the JSON project \"{slug}\" should have {key} \"{expected}\""
+  [slug key expected]
+  (should= expected (get (h/json-project slug) key)))
 
-           [#"^the JSON project \"([^\"]+)\" should have (\S+) (\d+)$"
-            (fn [[_ slug key expected]]
-              {:pattern :assert-json-project-number :slug slug :key key :expected (parse-long expected)})]
+(defthen assert-json-project-number "the JSON project \"{slug}\" should have {key} {expected:int}"
+  [slug key expected]
+  (should= expected (get (h/json-project slug) key)))
 
-           [#"^the JSON project \"([^\"]+)\" should have iteration number \"([^\"]+)\"$"
-            (fn [[_ slug number]]
-              {:pattern :assert-json-iteration-number :slug slug :number number})]]})
-
-(def step-registry
-  {:project-list-with-table {:text (constantly "a project list with the following projects:")
-                             :code (fn [{:keys [table]}]
-                                     (when table
-                                       (let [{:keys [headers rows]} table]
-                                         (str "(h/set-project-list-from-table\n"
-                                              "  " (pr-str headers) "\n"
-                                              "  " (pr-str rows) ")"))))}
-   :empty-project-list    {:text (constantly "an empty project list")
-                           :code (constantly "(h/set-empty-project-list)")}
-   :format-list           {:text (constantly "formatting the project list")
-                           :code (constantly "(h/format-list!)")}
-   :format-list-json      {:text (constantly "formatting the project list as JSON")
-                           :code (constantly "(h/format-list-json!)")}
-   :assert-column-headers {:text (fn [{:keys [headers]}]              (str "the output should contain column headers"))
-                           :code (fn [{:keys [headers]}]
-                                   (let [header-strs (mapv second headers)]
-                                     (str/join "\n" (map #(str "(should (clojure.string/includes? (h/list-output) \"" % "\"))") header-strs))))}
-   :assert-output-contains-slug {:text (fn [{:keys [slug]}]           (str "the output should contain slug \"" slug "\""))
-                                 :code (fn [{:keys [slug]}]           (str "(should (clojure.string/includes? (h/list-output) \"" slug "\"))"))}
-   :assert-output-contains-iteration {:text (fn [{:keys [iteration]}] (str "the output should contain iteration \"" iteration "\""))
-                                      :code (fn [{:keys [iteration]}] (str "(should (clojure.string/includes? (h/list-output) \"" iteration "\"))"))}
-   :assert-output-contains-progress {:text (fn [{:keys [progress]}]   (str "the output should contain progress \"" progress "\""))
-                                     :code (fn [{:keys [progress]}]   (str "(should (clojure.string/includes? (h/list-output) \"" progress "\"))"))}
-   :assert-output-contains-workers {:text (fn [{:keys [workers]}]     (str "the output should contain workers \"" workers "\""))
-                                    :code (fn [{:keys [workers]}]     (str "(should (clojure.string/includes? (h/list-output) \"" workers "\"))"))}
-   :assert-dash-placeholder {:text (fn [{:keys [slug field]}]         (str "the line for \"" slug "\" should contain a dash for " field))
-                             :code (fn [{:keys [slug]}]               (str "(should (h/line-contains-dash? \"" slug "\"))"))}
-   :assert-output-equals  {:text (fn [{:keys [expected]}]             (str "the output should be \"" expected "\""))
-                            :code (fn [{:keys [expected]}]             (str "(should= \"" expected "\" (h/output))"))}
-   :assert-status-color   {:text (fn [{:keys [status color]}]        (str "\"" status "\" status should be colorized " color))
-                           :code (fn [{:keys [status color]}]        (str "(should (h/colorized? (h/list-output) \"" status "\" \"" color "\"))"))}
-   :assert-priority-color {:text (fn [{:keys [priority color]}]      (str "\"" priority "\" priority should be colorized " color))
-                           :code (fn [{:keys [priority color]}]      (str "(should (h/colorized? (h/list-output) \"" priority "\" \"" color "\"))"))}
-   :assert-progress-color {:text (fn [{:keys [percent color]}]       (str percent " percent progress should be colorized " color))
-                           :code (fn [{:keys [percent color]}]       (str "(should (h/colorized? (h/list-output) \"" percent "%\" \"" color "\"))"))}
-   :assert-json-project-exists {:text (fn [{:keys [slug]}]           (str "the JSON output should contain a project with slug \"" slug "\""))
-                                :code (fn [{:keys [slug]}]           (str "(should (h/json-project \"" slug "\"))"))}
-   :assert-json-project-string {:text (fn [{:keys [slug key expected]}] (str "the JSON project \"" slug "\" should have " key " \"" expected "\""))
-                                :code (fn [{:keys [slug key expected]}] (str "(should= \"" expected "\" (get (h/json-project \"" slug "\") \"" key "\"))"))}
-   :assert-json-project-number {:text (fn [{:keys [slug key expected]}] (str "the JSON project \"" slug "\" should have " key " " expected))
-                                :code (fn [{:keys [slug key expected]}] (str "(should= " expected " (get (h/json-project \"" slug "\") \"" key "\"))"))}
-   :assert-json-iteration-number {:text (fn [{:keys [slug number]}]  (str "the JSON project \"" slug "\" should have iteration number \"" number "\""))
-                                   :code (fn [{:keys [slug number]}]  (str "(should= \"" number "\" (get-in (h/json-project \"" slug "\") [\"iteration\" \"number\"]))"))}})
+(defthen assert-json-iteration-number "the JSON project \"{slug}\" should have iteration number \"{number}\""
+  [slug number]
+  (should= number (get-in (h/json-project slug) ["iteration" "number"])))
