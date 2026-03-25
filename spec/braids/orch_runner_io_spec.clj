@@ -295,7 +295,7 @@
         (with-redefs [rio/run-orch! (fn [opts]
                                       (reset! received-opts opts)
                                       0)]
-          (with-out-str (rio/run-orch-command! ["--confirmed" "--verbose"]))
+          (with-out-str (rio/run-orch-command! ["--live-run" "--verbose"]))
           (should= false (:dry-run @received-opts))
           (should= true (:verbose @received-opts)))))
 
