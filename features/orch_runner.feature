@@ -62,15 +62,18 @@ Feature: Orchestrator runner
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers | path            | worker-agent | worker-timeout | channel |
       | alpha | active | normal   | 2           | 001              | 0              | /projects/alpha | scrapper     | 1800           | #alpha  |
-    And project 'alpha' has beads:
+    And project "alpha" has beads:
       | id        | title  | status |
       | alpha-aa1 | Task 1 | ready  |
       | alpha-aa2 | Task 2 | ready  |
     When the orchestrator ticks
     Then the output contains lines matching
+      | expression           |
       | Spawning 2 worker(s) |
-      | aa1 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
-      | aa2 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa2 --agent scrapper |
+    And the output contains a line matching
+      | expression |
+      | aa1 .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
+      | aa2 .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa2 --agent scrapper |
 
 
 

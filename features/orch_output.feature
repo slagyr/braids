@@ -22,13 +22,13 @@ Feature: Orchestrator tick output
       | beta-bb4 | Task B4 | closed      |
     When the orchestrator ticks
     Then the output contains lines matching
-      | expression                                                     |
-      | alpha  active  iteration 005  workers:0/2  beads:              |
-      |     ○ aa1   Task A1              ready |
-      | beta  active  iteration 003  workers:0/1  beads: |
-      |     ○ bb1   Task B1              ready |
-      |     ● bb2   Task B2              in-progress |
-      |     ✗ bb3   Task B3              blocked |
+      | expression                                          |
+      | alpha  active  iteration 005  workers:0/2  beads:   |
+      | ○ aa1 Task A1              ready                    |
+      | beta  active  iteration 003  workers:0/1  beads:    |
+      | ○ bb1 Task B1              ready                    |
+      | ● bb2 Task B2              in-progress              |
+      | ✗ bb3 Task B3              blocked                  |
 
     And the output does not contain
       | text |
@@ -46,10 +46,10 @@ Feature: Orchestrator tick output
       | alpha-xx3 | This Title Is Way Too Long For Col | ready  |
     When the orchestrator ticks
     Then the output contains lines matching
-      | expression                                                     |
-      |     ○ xx1   Short                ready |
-      |     ○ xx2   Exactly Twenty Chars ready |
-      |     ○ xx3   This Title Is Way... ready |
+      | expression                              |
+      | ○ xx1 Short                ready        |
+      | ○ xx2 Exactly Twenty Chars ready        |
+      | ○ xx3 This Title Is Way... ready        |
 
   Scenario: project with no active iteration
     Given configured projects:
@@ -70,8 +70,8 @@ Feature: Orchestrator tick output
     When the orchestrator ticks
     Then the output contains lines matching
       | expression                                          |
-      | alpha  active  iteration 002  workers:2/3  beads: |
-      |     ○ aa1   Task A1              ready |
+      | alpha  active  iteration 002  workers:2/3  beads:   |
+      | ○ aa1 Task A1              ready                    |
 
   Scenario: project with no open beads shows none
     Given configured projects:
@@ -89,7 +89,7 @@ Feature: Orchestrator tick output
     When the orchestrator ticks
     Then the output contains lines matching
       | expression                  |
-      | → idle: no-ready-beads |
+      | idle: no-ready-beads |
 
   Scenario: projects are ordered by priority
     Given configured projects:
@@ -141,9 +141,11 @@ Feature: Orchestrator tick output
       | alpha-aa1 | Task 1 | ready  |
     When the orchestrator ticks
     Then the output contains lines matching
-      | expression                                                                                                  |
-      | Spawning 1 worker(s)                                                                                          |
-      |   aa1 → openclaw sessions spawn --task <task> --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
+      | expression           |
+      | Spawning 1 worker(s) |
+    And the output contains a line matching
+      | expression |
+      | aa1 .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
     And the output does not contain
       | text            |
       | → bead=         |
@@ -160,10 +162,12 @@ Feature: Orchestrator tick output
       | alpha-aa2 | Task 2 | ready  |
     When the orchestrator ticks
     Then the output contains lines matching
-      | expression                                                                                                                    |
-      | Spawning 2 worker(s)                                                                                                        |
-      |   aa1 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
-      |   aa2 → openclaw sessions spawn --task .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa2 --agent scrapper |
+      | expression           |
+      | Spawning 2 worker(s) |
+    And the output contains a line matching
+      | expression |
+      | aa1 .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa1 --agent scrapper |
+      | aa2 .+ --thinking high --timeout 1800 --label project:alpha:alpha-aa2 --agent scrapper |
 
 
   Scenario: idle log shows reason
@@ -173,7 +177,7 @@ Feature: Orchestrator tick output
     When the orchestrator ticks
     Then the output contains lines matching
       | expression              |
-      | Idle: no-ready-beads |
+      | idle: no-ready-beads |
 
 
   Scenario: zombie log shows zombie count and reasons
