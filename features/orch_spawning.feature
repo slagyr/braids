@@ -7,6 +7,7 @@ Feature: Orchestrator spawning behavior
   invoke the worker agents.
 
   Background:
+    Given the harness is reset
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers | path            |
       | alpha | active | normal   | 2           | 003              | 0              | /projects/alpha |

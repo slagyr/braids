@@ -27,8 +27,8 @@
                      'braids.features.steps.ready-beads
                      'braids.features.steps.worker-session
                      'braids.features.steps.zombie-detection]
-   :harness-ns      'braids.features.harness
-   :test-framework  :speclj})
+   :test-framework  :speclj
+   :verbose         true})
 
 (defn -main [& _args]
   (pipeline/run! config))

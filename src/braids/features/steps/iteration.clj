@@ -1,36 +1,74 @@
 (ns braids.features.steps.iteration
-  (:require [gherclj.core :refer [defgiven defwhen defthen]]
-            [braids.features.harness :as h]
+  (:require [gherclj.core :as g :refer [defgiven defwhen defthen]]
+            [braids.iteration :as iteration]
             [clojure.string :as str]
             [speclj.core :refer :all]))
 
+;; --- Helper functions ---
+
+(defn- parse-iteration-edn* []
+  (let [edn-str (g/get :iter-edn-str)
+        result (iteration/parse-iteration-edn edn-str)]
+    (g/assoc! :iter-parsed result)))
+
+(defn- validate-iteration* []
+  (let [data (g/get :iter-data)
+        errors (iteration/validate-iteration data)]
+    (g/assoc! :validation-result errors)))
+
+(defn- annotate-stories* []
+  (let [stories (g/get :iter-stories)
+        beads (g/get :iter-beads)
+        result (iteration/annotate-stories stories beads)]
+    (g/assoc! :iter-annotated result)))
+
+(defn- calculate-completion-stats* []
+  (let [stories (g/get :iter-annotated)
+        result (iteration/completion-stats stories)]
+    (g/assoc! :iter-stats result)))
+
+(defn- format-iteration* []
+  (let [data (g/get :iter-format-data)
+        result (iteration/format-iteration data)]
+    (g/assoc! :output result)))
+
+(defn- format-iteration-json* []
+  (let [data (g/get :iter-format-data)
+        result (iteration/format-iteration-json data)]
+    (g/assoc! :iter-json-output result)))
+
+;; --- Given steps ---
+
 (defgiven iteration-edn #"^iteration EDN with number \"([^\"]+)\" and status \"([^\"]+)\" and (\d+) stor(?:y|ies)$"
   [number status count]
-  (h/set-iteration-edn number status (parse-long count)))
+  (let [story-count (parse-long count)
+        stories (vec (repeat story-count (str "story-" (rand-int 10000))))
+        edn-str (pr-str {:number number :status (keyword status) :stories stories})]
+    (g/assoc! :iter-edn-str edn-str)))
 
 (defgiven edn-no-guardrails-or-notes "the EDN has no guardrails or notes"
   []
   nil)
 
-(defgiven iteration-with-status "an iteration with number \"{number}\" and status \"{status}\" and stories"
+(defgiven iteration-with-status "an iteration with number {number:string} and status {status:string} and stories"
   [number status]
-  (h/set-iteration-with-status number status))
+  (g/assoc! :iter-data {:number number :status (keyword status) :stories []}))
 
 (defgiven iteration-no-number "an iteration with no number"
   []
-  (h/set-iteration-no-number))
+  (g/assoc! :iter-data {:status :planning :stories []}))
 
-(defgiven iteration-with-stories "an iteration with stories \"{id1}\" and \"{id2}\""
+(defgiven iteration-with-stories "an iteration with stories {id1:string} and {id2:string}"
   [id1 id2]
-  (h/set-iteration-stories [id1 id2]))
+  (g/assoc! :iter-stories [id1 id2]))
 
-(defgiven iteration-with-story "an iteration with story \"{story-id}\""
+(defgiven iteration-with-story "an iteration with story {story-id:string}"
   [story-id]
-  (h/set-iteration-stories [story-id]))
+  (g/assoc! :iter-stories [story-id]))
 
-(defgiven iter-bead-status "bead \"{bead-id}\" has status \"{status}\" and priority {priority:int}"
+(defgiven iter-bead-status "bead {bead-id:string} has status {status:string} and priority {priority:int}"
   [bead-id status priority]
-  (h/add-iter-bead bead-id status priority))
+  (g/update! :iter-beads (fnil conj []) {"id" bead-id "status" status "priority" priority}))
 
 (defgiven no-bead-data "no bead data exists"
   []
@@ -38,80 +76,90 @@
 
 (defgiven annotated-stories "annotated stories with {closed:int} closed and {open:int} open out of {total:int} total"
   [closed open total]
-  (h/set-annotated-stories closed open total))
+  (let [closed-stories (repeat closed {:id "c" :status "closed"})
+        open-stories (repeat open {:id "o" :status "open"})
+        stories (vec (concat closed-stories open-stories))]
+    (g/assoc! :iter-annotated stories)))
 
 (defgiven iteration-no-stories "an iteration with no stories"
   []
-  (h/set-iteration-stories []))
+  (g/assoc! :iter-stories []))
 
-(defgiven iteration-number-status "an iteration \"{number}\" with status \"{status}\""
+(defgiven iteration-number-status "an iteration {number:string} with status {status:string}"
   [number status]
-  (h/set-iteration-number-status number status))
+  (g/assoc! :iter-format-data {:number number :status status :stories [] :stats nil}))
 
-(defgiven story-with-status "a story \"{story-id}\" with status \"{status}\""
+(defgiven story-with-status "a story {story-id:string} with status {status:string}"
   [story-id status]
-  (h/add-story-with-status story-id status))
+  (g/update-in! [:iter-format-data :stories] conj
+                {:id story-id :title story-id :status status :priority nil :deps []}))
 
 (defgiven completion-stats "completion stats of {closed:int} closed out of {total:int}"
   [closed total]
-  (h/set-completion-stats closed total))
+  (let [percent (if (zero? total) 0 (int (* 100 (/ closed total))))]
+    (g/assoc-in! [:iter-format-data :stats]
+                 {:total total :closed closed :percent percent})))
+
+;; --- When steps ---
 
 (defwhen parse-iteration-edn "parsing the iteration EDN"
   []
-  (h/parse-iteration-edn!))
+  (parse-iteration-edn*))
 
 (defwhen validate-iteration "validating the iteration"
   []
-  (h/validate-iteration!))
+  (validate-iteration*))
 
 (defwhen annotate-stories "annotating stories with bead data"
   []
-  (h/annotate-stories!))
+  (annotate-stories*))
 
 (defwhen calculate-completion-stats "calculating completion stats"
   []
-  (h/calculate-completion-stats!))
+  (calculate-completion-stats*))
 
 (defwhen format-iteration "formatting the iteration"
   []
-  (h/format-iteration!))
+  (format-iteration*))
 
 (defwhen format-iteration-json "formatting the iteration as JSON"
   []
-  (h/format-iteration-json!))
+  (format-iteration-json*))
 
-(defthen assert-iteration-number "the iteration number should be \"{expected}\""
-  [expected]
-  (should= expected (h/iteration-number)))
+;; --- Then steps ---
 
-(defthen assert-iteration-status "the iteration status should be \"{expected}\""
+(defthen assert-iteration-number "the iteration number should be {expected:string}"
   [expected]
-  (should= expected (h/iteration-status)))
+  (should= expected (:number (g/get :iter-parsed))))
+
+(defthen assert-iteration-status "the iteration status should be {expected:string}"
+  [expected]
+  (should= expected (name (:status (g/get :iter-parsed)))))
 
 (defthen assert-iteration-guardrails-empty "the iteration guardrails should be empty"
   []
-  (should (empty? (h/iteration-guardrails))))
+  (should (empty? (:guardrails (g/get :iter-parsed)))))
 
 (defthen assert-iteration-notes-empty "the iteration notes should be empty"
   []
-  (should (empty? (h/iteration-notes))))
+  (should (empty? (:notes (g/get :iter-parsed)))))
 
-(defthen assert-story-status "story \"{story-id}\" should have status \"{expected}\""
+(defthen assert-story-status "story {story-id:string} should have status {expected:string}"
   [story-id expected]
-  (should= expected (h/story-status story-id)))
+  (should= expected (:status (first (filter #(= story-id (:id %)) (g/get :iter-annotated))))))
 
 (defthen assert-total "the total should be {expected:int}"
   [expected]
-  (should= expected (h/stats-total)))
+  (should= expected (:total (g/get :iter-stats))))
 
 (defthen assert-closed-count "the closed count should be {expected:int}"
   [expected]
-  (should= expected (h/stats-closed)))
+  (should= expected (:closed (g/get :iter-stats))))
 
 (defthen assert-completion-percent "the completion percent should be {expected:int}"
   [expected]
-  (should= expected (h/stats-percent)))
+  (should= expected (:percent (g/get :iter-stats))))
 
-(defthen assert-json-contains "the JSON should contain \"{expected}\""
+(defthen assert-json-contains #"^the JSON should contain \"([^\"]+)\"$"
   [expected]
-  (should (str/includes? (h/iter-json-output) expected)))
+  (should (str/includes? (g/get :iter-json-output) expected)))

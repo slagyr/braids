@@ -5,6 +5,7 @@ Feature: Zombie detection
   session status, bead status, and session age against timeouts.
 
   Background:
+    Given the harness is reset
     Given a project "proj" with worker-timeout 3600
 
   Scenario: Detect zombie when bead is closed but session still running
