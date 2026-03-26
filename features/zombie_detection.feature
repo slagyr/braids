@@ -43,14 +43,12 @@ Feature: Zombie detection
     When checking for zombies
     Then no zombies should be detected
 
-  @wip
   Scenario: Zombie cleanup kills sessions and reports results
     Given zombies have been detected
     When cleaning up zombies
     Then the zombie sessions should be killed
     And a cleanup report should list each killed session and its reason
 
-  @wip
   Scenario: Zombie detection across multiple projects
     Given a project "other" with worker-timeout 1800
     And a session "s6" with label "project:proj:proj-p1"

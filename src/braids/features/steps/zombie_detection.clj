@@ -1,6 +1,8 @@
 (ns braids.features.steps.zombie-detection
   (:require [gherclj.core :as g :refer [defgiven defwhen defthen]]
             [braids.orch :as orch]
+            [braids.orch-runner :as runner]
+            [clojure.string :as str]
             [speclj.core :refer :all]))
 
 (defn- check-zombies* []
@@ -48,3 +50,34 @@
 (defthen assert-no-zombies "no zombies should be detected"
   []
   (should= [] (g/get :zombies)))
+
+(defgiven zombies-detected "zombies have been detected"
+  []
+  (g/assoc-in! [:sessions "z1"] {:label "project:proj:proj-z1" :status "running" :age-seconds 100})
+  (g/assoc-in! [:sessions "z2"] {:label "project:proj:proj-z2" :status "completed" :age-seconds 50})
+  (g/assoc-in! [:bead-statuses "proj-z1"] "closed")
+  (g/assoc-in! [:bead-statuses "proj-z2"] "open")
+  (check-zombies*))
+
+(defwhen cleanup-zombies "cleaning up zombies"
+  []
+  (let [zombies (g/get :zombies)
+        kills (filterv :session-id zombies)
+        report (runner/format-zombie-log zombies)]
+    (g/assoc! :kills kills)
+    (g/assoc! :cleanup-report report)))
+
+(defthen zombie-sessions-killed "the zombie sessions should be killed"
+  []
+  (let [kills (g/get :kills)
+        zombies (g/get :zombies)]
+    (should (pos? (count zombies)))
+    (should= (count zombies) (count kills))))
+
+(defthen cleanup-report-lists-killed "a cleanup report should list each killed session and its reason"
+  []
+  (let [report (g/get :cleanup-report)
+        zombies (g/get :zombies)]
+    (should (seq report))
+    (doseq [{:keys [bead reason]} zombies]
+      (should (some #(and (str/includes? % bead) (str/includes? % reason)) report)))))
