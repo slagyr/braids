@@ -67,3 +67,40 @@
 (defthen assert-bead-id "the extracted bead ID should be {expected:string}"
   [expected]
   (should= expected (g/get :parsed-bead-id)))
+
+(defgiven session-already-active "a session {session-id:string} is already active"
+  [session-id]
+  (g/update! :active-session-ids (fnil conj #{}) session-id))
+
+(defgiven session-with-id "a session with id {session-id:string}"
+  [session-id]
+  (g/assoc! :session-id-literal session-id))
+
+(defgiven no-bead-exists "no bead exists with id {bead-id:string}"
+  [bead-id]
+  nil)
+
+(defwhen consider-spawning "the orchestrator considers spawning for bead {bead-id:string}"
+  [bead-id]
+  (let [active-ids (g/get :active-session-ids)
+        result (orch/check-spawn-allowed bead-id active-ids)]
+    (g/assoc! :spawn-check-result result)))
+
+(defwhen check-session-validity "checking session validity"
+  []
+  (let [session-id (g/get :session-id-literal)
+        bead-ids (or (g/get :known-bead-ids) #{})
+        result (orch/check-session-validity session-id bead-ids)]
+    (g/assoc! :validity-result result)))
+
+(defthen spawning-prevented "spawning should be prevented with reason {reason:string}"
+  [reason]
+  (let [result (g/get :spawn-check-result)]
+    (should= false (:allowed result))
+    (should= reason (:reason result))))
+
+(defthen flagged-for-cleanup "the session should be flagged for cleanup"
+  []
+  (let [result (g/get :validity-result)]
+    (should= false (:valid result))
+    (should= true (:cleanup result))))

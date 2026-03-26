@@ -144,6 +144,24 @@
       (when (= 3 (count parts))
         [(nth parts 1) (nth parts 2)]))))
 
+(defn check-spawn-allowed
+  "Check if spawning a worker for a bead is allowed given active session IDs.
+   Returns {:allowed true} or {:allowed false :reason \"session-already-active\"}."
+  [bead-id active-session-ids]
+  (let [expected-id (worker-session-id bead-id)]
+    (if (contains? (set active-session-ids) expected-id)
+      {:allowed false :reason "session-already-active"}
+      {:allowed true})))
+
+(defn check-session-validity
+  "Check if a worker session references an existing bead.
+   Returns {:valid true} or {:valid false :cleanup true :bead-id bead-id}."
+  [session-id bead-ids]
+  (let [bead-id (parse-worker-session-id session-id)]
+    (if (and bead-id (not (contains? (set bead-ids) bead-id)))
+      {:valid false :cleanup true :bead-id bead-id}
+      {:valid true})))
+
 (def ^:private ended-statuses #{"completed" "failed" "error" "stopped"})
 
 (defn detect-zombies

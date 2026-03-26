@@ -25,14 +25,12 @@ Feature: Worker session tracking
     When parsing the session ID
     Then the extracted bead ID should be "proj-abc"
 
-  @wip
   Scenario: Prevent duplicate spawning when session already active
     Given a bead with id "proj-dup"
     And a session "braids-proj-dup-worker" is already active
     When the orchestrator considers spawning for bead "proj-dup"
     Then spawning should be prevented with reason "session-already-active"
 
-  @wip
   Scenario: Session with missing bead data is marked for cleanup
     Given a session with id "braids-proj-gone-worker"
     And no bead exists with id "proj-gone"
