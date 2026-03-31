@@ -120,3 +120,65 @@
 (defthen output-has-before "the output has {first-text:string} before {second-text:string}"
   [first-text second-text]
   (should (output-has-before? first-text second-text)))
+
+;; --- Steps for header/footer scenarios ---
+
+(defn- orch-tick-with-mode! [dry-run]
+  (let [registry (g/get :registry)
+        configs (g/get :configs)
+        iterations (g/get :iterations)
+        beads (g/get :beads)
+        workers (g/get :workers)
+        open-beads (or (g/get :open-beads) {})
+        result (orch/tick registry configs iterations beads workers {})
+        zombies (g/get :tick-zombies)
+        result (if (seq zombies) (assoc result :zombies zombies) result)
+        mode-label (if dry-run "DRY-RUN" "LIVE-RUN")
+        ts (.format (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss")
+                    (java.time.LocalDateTime/now))
+        header (str "-- " mode-label " started at " ts " --")
+        debug-output (orch/format-debug-output registry configs iterations open-beads result workers)
+        spawn-lines (when (= "spawn" (:action result))
+                      (orch-runner/format-spawn-log {} result))
+        zombie-lines (when (seq zombies)
+                       (orch-runner/format-zombie-log zombies))
+        footer (str "-- " mode-label " completed at " ts " --")
+        parts (cond-> [header "" debug-output]
+                spawn-lines (into spawn-lines)
+                zombie-lines (into zombie-lines)
+                true (conj footer))
+        output (str/join "\n" parts)]
+    (g/assoc! :tick-result result :tick-output output :output output)))
+
+(defgiven zombie-sessions-table "zombie sessions:"
+  [table]
+  (let [{:keys [headers rows]} table
+        zombies (mapv (fn [row]
+                        (let [m (zipmap headers row)]
+                          {:bead (get m "bead")
+                           :reason (get m "reason")
+                           :slug (first (str/split (get m "bead") #"-"))
+                           :label (str "project:" (first (str/split (get m "bead") #"-")) ":" (get m "bead"))}))
+                      rows)]
+    (g/assoc! :tick-zombies zombies)))
+
+(defwhen orch-tick-dry-run "the orchestrator ticks in dry-run mode"
+  []
+  (orch-tick-with-mode! true))
+
+(defwhen orch-tick-confirmed "the orchestrator ticks in confirmed mode"
+  []
+  (orch-tick-with-mode! false))
+
+(defthen first-line-matches "the first line matches {text:string}"
+  [text]
+  (let [output (g/get :tick-output)
+        first-line (first (str/split-lines output))]
+    (should (str/includes? (strip-ansi first-line) text))))
+
+(defthen last-line-matches "the last line matches {text:string}"
+  [text]
+  (let [output (g/get :tick-output)
+        lines (str/split-lines output)
+        last-line (last lines)]
+    (should (str/includes? (strip-ansi last-line) text))))

@@ -38,11 +38,10 @@
              zombies (seq (:zombies result))]
 
          ;; Mode banner at the very top
-         (let [ts (.format (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss")
+         (let [mode-label (if dry-run "DRY-RUN" "LIVE-RUN")
+               ts (.format (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss")
                            (java.time.LocalDateTime/now))]
-           (println (if dry-run
-                      (str "── DRY-RUN ── " ts)
-                      (str "── CONFIRMED ── " ts))))
+           (println (str "-- " mode-label " started at " ts " --")))
          (println)
 
          ;; Always print the human-readable summary
@@ -75,6 +74,12 @@
                (println line))
              (doseq [spawn spawns]
                (spawn-worker! spawn opts))))
+
+         ;; Footer
+         (let [mode-label (if dry-run "DRY-RUN" "LIVE-RUN")
+               ts (.format (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd HH:mm:ss")
+                           (java.time.LocalDateTime/now))]
+           (println (str "-- " mode-label " completed at " ts " --")))
 
          0)
        (catch Exception e

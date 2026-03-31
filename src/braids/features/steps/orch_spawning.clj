@@ -12,7 +12,9 @@
         beads (g/get :beads)
         workers (g/get :workers)
         open-beads (or (g/get :open-beads) {})
+        zombies (g/get :tick-zombies)
         result (orch/tick registry configs iterations beads workers {})
+        result (if (seq zombies) (assoc result :zombies zombies) result)
         debug-output (orch/format-debug-output registry configs iterations open-beads result workers)
         spawn-lines (when (= "spawn" (:action result))
                       (let [spawn-config (reduce (fn [cfg spawn]
@@ -23,9 +25,11 @@
                                                  {}
                                                  (:spawns result))]
                         (orch-runner/format-spawn-log spawn-config result)))
-        output (if spawn-lines
-                 (str debug-output "\n" (str/join "\n" spawn-lines))
-                 debug-output)]
+        zombie-lines (when (seq zombies)
+                       (orch-runner/format-zombie-log zombies))
+        output (cond-> debug-output
+                 spawn-lines (str "\n" (str/join "\n" spawn-lines))
+                 zombie-lines (str "\n" (str/join "\n" zombie-lines)))]
     (g/assoc! :tick-result result :tick-output output :output output)))
 
 (defn- spawn-includes? [expected]

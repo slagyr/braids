@@ -155,11 +155,11 @@
         (let [output (with-out-str (rio/run-orch!))]
           (should-contain "DRY-RUN" output))))
 
-    (it "shows CONFIRMED banner when dry-run is false"
+    (it "shows LIVE-RUN banner when dry-run is false"
       (with-redefs [orch-io/gather-and-tick-from-stores-debug (fn [_] idle-result)
                     orch/format-debug-output (fn [& _] "")]
         (let [output (with-out-str (rio/run-orch! {:dry-run false}))]
-          (should-contain "CONFIRMED" output))))
+          (should-contain "LIVE-RUN" output))))
 
     (it "prints debug output from orch/format-debug-output"
       (with-redefs [orch-io/gather-and-tick-from-stores-debug (fn [_] idle-result)
