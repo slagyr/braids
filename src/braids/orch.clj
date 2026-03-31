@@ -304,7 +304,7 @@
                                                                     title)
                                                   padded-title (format "%-20s" truncated-title)
                                                   colored-status (c bs (bead-status-color bs))]
-                                              (str "    " icon " " id-suffix " " padded-title " " colored-status)))
+                                              (str "    " icon " " (format "%-5s" id-suffix) " " padded-title " " colored-status)))
                                           visible-beads)]
                       (clojure.string/join "\n" (cons header bead-lines))))))
               active-projects)

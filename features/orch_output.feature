@@ -24,11 +24,11 @@ Feature: Orchestrator tick output
     Then the output contains lines matching
       | expression                                          |
       | alpha  active  iteration 005  workers:0/2  beads:   |
-      | ○ aa1 Task A1              ready                    |
+      | ○ aa1   Task A1              ready                    |
       | beta  active  iteration 003  workers:0/1  beads:    |
-      | ○ bb1 Task B1              ready                    |
-      | ● bb2 Task B2              in-progress              |
-      | ✗ bb3 Task B3              blocked                  |
+      | ○ bb1   Task B1              ready                    |
+      | ● bb2   Task B2              in-progress              |
+      | ✗ bb3   Task B3              blocked                  |
 
     And the output does not contain
       | text |
@@ -47,9 +47,9 @@ Feature: Orchestrator tick output
     When the orchestrator ticks
     Then the output contains lines matching
       | expression                              |
-      | ○ xx1 Short                ready        |
-      | ○ xx2 Exactly Twenty Chars ready        |
-      | ○ xx3 This Title Is Way... ready        |
+      | ○ xx1   Short                ready        |
+      | ○ xx2   Exactly Twenty Chars ready        |
+      | ○ xx3   This Title Is Way... ready        |
 
   Scenario: project with no active iteration
     Given configured projects:
@@ -71,7 +71,7 @@ Feature: Orchestrator tick output
     Then the output contains lines matching
       | expression                                          |
       | alpha  active  iteration 002  workers:2/3  beads:   |
-      | ○ aa1 Task A1              ready                    |
+      | ○ aa1   Task A1              ready                    |
 
   Scenario: project with no open beads shows none
     Given configured projects:
