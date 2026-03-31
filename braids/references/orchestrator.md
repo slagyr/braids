@@ -9,13 +9,13 @@ computes spawn decisions, and optionally starts workers.
 2. Checks worker concurrency (MaxWorkers) and ready beads
 3. Detects zombie sessions (closed beads, timed-out workers)
 4. Prints a human-readable summary to stdout
-5. In `--confirmed` mode, spawns workers via `openclaw agent`
+5. In `--live-run` mode, spawns workers via `openclaw agent`
 
 ## Usage
 
 ```bash
 braids orch              # Dry-run: show what would happen (default)
-braids orch --confirmed        # Actually spawn workers
+braids orch --live-run        # Actually spawn workers
 braids orch --verbose    # Print detailed output
 braids orch --help       # Show help
 ```
@@ -28,7 +28,7 @@ Use system cron or launchd to run the orchestrator periodically, appending outpu
 
 ```bash
 # System crontab — runs every 5 minutes, appends to /tmp/braids.log
-*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1
+*/5 * * * * /usr/local/bin/braids orch --live-run >> /tmp/braids.log 2>&1
 ```
 
 Or via OpenClaw cron:
@@ -37,7 +37,7 @@ Or via OpenClaw cron:
 openclaw cron add \
   --name braids-orchestrator \
   --every 5m \
-  --message "Run: braids orch --confirmed >> /tmp/braids.log 2>&1" \
+  --message "Run: braids orch --live-run >> /tmp/braids.log 2>&1" \
   --timeout-seconds 60
 ```
 

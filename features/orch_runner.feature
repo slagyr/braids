@@ -39,8 +39,8 @@ Feature: Orchestrator runner
     Then dry-run should be true
     And verbose should be false
 
-  Scenario: Parse --confirmed enables run
-    Given CLI arguments "--confirmed"
+  Scenario: Parse --live-run enables run
+    Given CLI arguments "--live-run"
     When parsing CLI args
     Then dry-run should be false
 

@@ -67,13 +67,13 @@ These are stored in `~/.openclaw/braids/config.edn` and used by the orchestrator
 Add to the system crontab (`crontab -e`):
 
 ```bash
-*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1
+*/5 * * * * /usr/local/bin/braids orch --live-run >> /tmp/braids.log 2>&1
 ```
 
 Or via one-liner:
 
 ```bash
-(crontab -l 2>/dev/null; echo '*/5 * * * * /usr/local/bin/braids orch --confirmed >> /tmp/braids.log 2>&1') | crontab -
+(crontab -l 2>/dev/null; echo '*/5 * * * * /usr/local/bin/braids orch --live-run >> /tmp/braids.log 2>&1') | crontab -
 ```
 
 Verify it was added:
@@ -84,7 +84,7 @@ crontab -l
 
 The orchestrator runs every 5 minutes, checks for active projects, and spawns workers as needed. Test with `braids orch` (dry-run by default) before enabling.
 
-> **Note:** Use the system crontab, not OpenClaw cron. The braids orchestrator is a standalone CLI (`braids orch --confirmed`) and does not require OpenClaw's cron scheduler.
+> **Note:** Use the system crontab, not OpenClaw cron. The braids orchestrator is a standalone CLI (`braids orch --live-run`) and does not require OpenClaw's cron scheduler.
 >
 > **Note:** No `PATH=` line is needed in crontab if you configured `env-path` in step 4.
 

@@ -166,7 +166,7 @@
   []
   (orch-tick-with-mode! true))
 
-(defwhen orch-tick-confirmed "the orchestrator ticks in confirmed mode"
+(defwhen orch-tick-live-run "the orchestrator ticks in live-run mode"
   []
   (orch-tick-with-mode! false))
 

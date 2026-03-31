@@ -34,7 +34,7 @@
                 :doc     "Show this help message"}
    "orch"      {:command :orch
                 :doc     "Run orchestrator: compute spawns, start workers (defaults to dry run)"
-                :help    "Usage: braids orch [--dry-run] [--confirmed] [--verbose]\n\nRun the orchestrator: scan projects, compute spawn decisions, start workers.\nDefaults to dry-run mode (no workers spawned).\n\nOptions:\n  --dry-run    Show what would happen without spawning (default)\n  --confirmed  Actually spawn workers\n  --verbose    Print detailed project/bead information"}})
+                :help    "Usage: braids orch [--dry-run] [--live-run] [--verbose]\n\nRun the orchestrator: scan projects, compute spawn decisions, start workers.\nDefaults to dry-run mode (no workers spawned).\n\nOptions:\n  --dry-run    Show what would happen without spawning (default)\n  --live-run   Actually spawn workers\n  --verbose    Print detailed project/bead information"}})
 
 (def ^:private ansi
   {:bold-white  "\033[1;37m"

@@ -128,7 +128,7 @@ Feature: Orchestrator tick output
     Given configured projects:
       | slug  | status | priority | max-workers | active-iteration | active-workers |
       | alpha | active | normal   | 1           | 001              | 0              |
-    When the orchestrator ticks in confirmed mode
+    When the orchestrator ticks in live-run mode
     Then the first line matches "-- LIVE-RUN started at"
     And the last line matches "-- LIVE-RUN completed at"
 
